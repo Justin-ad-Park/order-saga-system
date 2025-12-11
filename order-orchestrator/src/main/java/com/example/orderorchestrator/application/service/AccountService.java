@@ -1,0 +1,56 @@
+package com.example.orderorchestrator.application.service;
+
+import com.example.orderorchestrator.application.port.in.CreateAccountUseCase;
+import com.example.orderorchestrator.application.port.in.DepositUseCase;
+import com.example.orderorchestrator.application.port.in.WithdrawUseCase;
+import com.example.orderorchestrator.application.port.in.command.DepositCommand;
+import com.example.orderorchestrator.application.port.in.command.WithdrawCommand;
+import com.example.orderorchestrator.application.port.out.LoadAccountPort;
+import com.example.orderorchestrator.application.port.out.SaveAccountPort;
+import com.example.orderorchestrator.domain.model.Account;
+import com.example.orderorchestrator.domain.model.Amount;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * [ver02 변경사항]
+ * public class와 생성자를 package-private으로 변경
+ *
+ * - package-private: 외부 패키지에서 직접 접근 금지.
+ * - 외부에서는 오직 Port 인터페이스(Create/Deposit/WithdrawUseCase)로만 접근합니다.
+ */
+@Service // 유스케이스 구현은 애플리케이션 계층의 빈
+@Transactional
+class AccountService implements CreateAccountUseCase, DepositUseCase, WithdrawUseCase {
+
+    private final LoadAccountPort loadAccountPort;
+    private final SaveAccountPort saveAccountPort;
+
+    AccountService(LoadAccountPort loadAccountPort, SaveAccountPort saveAccountPort) {
+        this.loadAccountPort = loadAccountPort;
+        this.saveAccountPort = saveAccountPort;
+    }
+
+    @Override
+    public Account createAccount(String accountNumber, String name, long initialBalance) {
+        Account account = Account.of(accountNumber, name, initialBalance);
+        saveAccountPort.save(account);
+        return account;
+    }
+
+    @Override
+    public Account deposit(DepositCommand depositCommand) {
+        Account account = loadAccountPort.load(depositCommand.accountNumber());
+        account.deposit(new Amount(depositCommand.amount()));
+        saveAccountPort.save(account);
+        return account;
+    }
+
+    @Override
+    public Account withdraw(WithdrawCommand withdrawCommand) {
+        Account account = loadAccountPort.load(withdrawCommand.accountNumber());
+        account.withdraw(new Amount(withdrawCommand.amount()));
+        saveAccountPort.save(account);
+        return account;
+    }
+}
