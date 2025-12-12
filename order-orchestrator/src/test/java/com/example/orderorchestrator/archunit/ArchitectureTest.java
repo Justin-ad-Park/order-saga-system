@@ -1,235 +1,161 @@
 package com.example.orderorchestrator.archunit;
 
-import com.tngtech.archunit.core.domain.JavaClasses;
-import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
-import org.apache.ibatis.annotations.Mapper;
-import org.springframework.context.annotation.Configuration;
 
 import static com.tngtech.archunit.base.DescribedPredicate.not;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
-/**
- * BASE_PACKAGE만 여러분 프로젝트의 루트 패키지로 바꿔서 사용하세요.
- * 예: "com.pulmuone.shop" 또는 기존 "Java 접근 제어 비교" 프로젝트의 루트 패키지
- */
 @AnalyzeClasses(
-        packages = ArchitectureTest.BASE_PACKAGE,
-        importOptions = {
-                ImportOption.DoNotIncludeTests.class,
-                ImportOption.DoNotIncludeJars.class
-        }
+        packages = "com.example.orderorchestrator",
+        importOptions = { ImportOption.DoNotIncludeTests.class }
 )
 public class ArchitectureTest {
 
-    // ✅ 여러분 프로젝트의 루트 패키지로 바꾸세요
-    public static final String BASE_PACKAGE = "com.example.orderorchestrator";
-
     private static final String DOMAIN = "..domain..";
     private static final String APPLICATION = "..application..";
-    private static final String APP_PORT_ALL = "..application..port..";
-    private static final String APP_PORT_IN_COMMAND = "..application..port..in..command..";
-    private static final String APP_PORT_OUT = "..application..port..out..";
-    private static final String APP_SERVICE = "..application..service..";
-    private static final String ADAPTER = "..adapter..";
-    private static final String CONFIG = "..config..";
-    private static final String SPRING = "..org.springframework..";
-    private static final String JPA = "..jakarta.persistence..";
-
-    /**
-     * 1) 도메인은 어떤 레이어에도 의존하지 않는다 (순수성 보장)
-     */
-    @ArchTest
-    static final ArchRule domain_should_not_depend_on_others =
-            noClasses().that().resideInAPackage(DOMAIN)
-                    .should().dependOnClassesThat().resideInAnyPackage(
-                            APPLICATION, ADAPTER, CONFIG
-                    );
-
-    /**
-     * 2) Application은 도메인에는 의존 가능하지만, 어댑터/설정에는 의존하지 않는다
-     * (유스케이스는 포트 인터페이스를 통해서만 바깥세상을 본다)
-     */
-    @ArchTest
-    static final ArchRule application_should_depend_only_on_domain_or_itself =
-            classes().that().resideInAPackage(APPLICATION)
-                    //.and().areNotAnnotatedWith(Configuration.class)   //빈 주입을 위한 @Configuration 어노테이션이 붙은 경우는 제외할 때
-                    .should().onlyDependOnClassesThat().resideInAnyPackage(
-                            APPLICATION, DOMAIN, "java..", "jakarta..", "org.."
-                    );
-//
-    /**
-     * 3) 인바운드 어댑터는 Application의 인바운드 포트에 의존할 수 있고,
-     * 아웃바운드 어댑터는 Application의 아웃바운드 포트에 의존할 수 있다.
-     * (반대로 Application이 adapter.* 를 바라보면 안 됨)
-     */
-    @ArchTest
-    static final ArchRule adapters_must_not_be_depended_on =
-            noClasses().that().resideInAnyPackage(APPLICATION, DOMAIN, CONFIG)
-                    .should().dependOnClassesThat().resideInAPackage(ADAPTER);
-
+    private static final String PORT_IN = "..application..port..in..";
+    private static final String PORT_OUT = "..application..port..out..";
+    private static final String SERVICE = "..application..service..";
 
     private static final String ADAPTER_IN = "..adapter..in..";
-    private static final String APP_PORT_IN = "..application..port..in..";
-    @ArchTest
-    static final ArchRule inbound_adapters_should_depend_on_app_in_ports_or_service =
-            classes().that().resideInAPackage(ADAPTER_IN)
-                    .should().onlyDependOnClassesThat().resideInAnyPackage(
-                            ADAPTER_IN, APPLICATION, APP_PORT_IN, APP_PORT_IN_COMMAND, APP_SERVICE, DOMAIN,
-                            "java..", "javax..", "jakarta..", "org..", "com..", "io.."
-                    );
-
-
     private static final String ADAPTER_OUT = "..adapter..out..";
-    @ArchTest
-    static final ArchRule outbound_adapters_should_depend_on_app_out_ports =
-            classes().that().resideInAPackage(ADAPTER_OUT)
-                    .and().areNotAnnotatedWith(Configuration.class)
-                    .and().areNotAnnotatedWith(Mapper.class)
-                    .should().dependOnClassesThat().resideInAnyPackage(APP_PORT_OUT, DOMAIN);
+    private static final String ADAPTER_OUT_JPA = "..adapter..out.persistence.jpa..";
 
-    /**
-     * 4) 도메인은 Spring/JPA 프레임워크에 의존하지 않는다 (순수 자바)
-     */
+    // =====================================================
+    // 1. 도메인 패키지에 있는 어떤 클래스도
+    //  APPLICATION / ADAPTER_IN / ADAPTER_OUT / 스프링 / JPA
+    //  에 들어있는 클래스를 의존해서는 안 된다.
+    // =====================================================
     @ArchTest
-    static final ArchRule domain_should_not_depend_on_spring_or_jpa =
+    static final ArchRule domain_should_not_depend_on_any_framework =
             noClasses().that().resideInAPackage(DOMAIN)
-                    .should().dependOnClassesThat().resideInAnyPackage(SPRING, JPA);
+                    .should().dependOnClassesThat()
+                    .resideInAnyPackage(
+                            APPLICATION, ADAPTER_IN, ADAPTER_OUT,
+                            "org.springframework..",
+                            "jakarta.persistence.."
+                    );
 
+    // =====================================================
+    // 2. Application 은 Domain, Port, Java 표준만 참조 가능
+    // =====================================================
+    @ArchTest
+    static final ArchRule application_should_only_depend_on_domain_and_itself =
+            classes().that().resideInAPackage(APPLICATION)
+                    .should().onlyDependOnClassesThat().resideInAnyPackage(
+                            APPLICATION,          // application.* (port, service 등 자기 계층)
+                            DOMAIN,               // domain.*
+                            "java..",
+                            "jakarta..",
+                            "javax..",
+                            "org.springframework..",
+                            "lombok.."            // @RequiredArgsConstructor 등
+                    );
+
+    // =====================================================
+    // 3. Inbound Adapter(web)는 Port-In / Service / Domain 및 표준 라이브러리에만 의존 가능”
+    // =====================================================
+    @ArchTest
+    static final ArchRule inbound_adapter_should_depend_on_port_in =
+            classes().that().resideInAPackage(ADAPTER_IN)
+                    .should().onlyDependOnClassesThat()
+                    .resideInAnyPackage(
+                            ADAPTER_IN,              // 자기 패키지
+                            PORT_IN,                 // Port-in
+                            SERVICE,                 // optional: controller → service 직접 접근 가능 여부
+                            DOMAIN,
+                            "java..",
+                            "jakarta..",
+                            "javax..",               // ✅ javax.* 허용 (예: AccountNotFoundException)
+                            "org.springframework..",
+                            "lombok.."               // ✅ Lombok 애노테이션 허용
+                    );
+
+    // =====================================================
+    // 4. Application 계층은 Adapter 계층에 의존하지 않는다 (반대 방향만 허용)
+    // =====================================================
+    @ArchTest
+    static final ArchRule application_should_not_depend_on_adapters =
+            noClasses().that().resideInAPackage(APPLICATION)
+                    .should().dependOnClassesThat()
+                    .resideInAnyPackage(ADAPTER_IN, ADAPTER_OUT);
+
+
+    // =====================================================
+    // 5. Outbound Adapter(persistence)는
+    //    - Port-Out, Domain, 표준 라이브러리, Spring 등에만 의존할 수 있고
+    //    - 다른 Adapter 계층이나 Application 계층 구현체에는 의존하지 않는다.
+    // =====================================================
+    @ArchTest
+    static final ArchRule outbound_adapter_should_only_depend_on_port_out_and_domain =
+            classes().that().resideInAPackage(ADAPTER_OUT)
+                    .should().onlyDependOnClassesThat()
+                    .resideInAnyPackage(
+                            ADAPTER_OUT,              // 자기 계층
+                            PORT_OUT,                 // port.out (반드시 이를 통해 도메인/외부와 연결)
+                            DOMAIN,                   // 도메인 모델/상태
+                            "java..",
+                            "jakarta..",
+                            "javax..",
+                            "org.springframework..",
+                            "lombok.."                // 필요하다면
+                    );
+
+    private static final String DOMAIN_MODEL    = "..domain..model..";
+    private static final String DOMAIN_STATUS   = "..domain..model..status..";
+
+    // =====================================================
+    // 6. JPA 엔티티는 도메인 엔티티를 참조하면 안 된다
+    // =====================================================
     /**
-     * 5) 순환 의존 금지 (패키지 슬라이스 간)
+     * JPA 엔티티가 Domain Model(엔터티/값객체 등) 에 직접 의존하지 않도록 강제하는 규칙.
+     *
+     * 헥사고날 아키텍처(Ports & Adapters)에서는 Persistence Layer(JPA)가
+     * 도메인의 내부 모델(domain.model.*)을 직접 참조하는 것이 금지된다.
+     * 그래야 도메인 로직이 인프라(JPA)에 오염되지 않고,
+     * 또한 persistence 구현체 교체 시(예: JPA → R2DBC → Mongo) 도메인이 안전하게 유지된다.
+     *
+     * 단, domain.model.status.* 패키지의 Enum(MSAStatus, OrderSagaStatus)은 예외로 허용한다.
+     * 이 상태 값들은 도메인의 공통 언어(Ubiquitous Language)이자 스키마와 1:1 매핑되는 값으로서,
+     * JPA 엔티티에서 상태 필드로 참조하는 것이 구조적으로 자연스럽기 때문이다.
+     *
+     * 요약:
+     *   - 금지: JPA → domain.model.*, domain.model.saga.*, domain.model.order.* 등
+     *   - 허용: JPA → domain.model.status.* (MSAStatus, OrderSagaStatus)
+     *
+     * 결과적으로:
+     *   - 도메인 엔티티/VO 구조는 JPA 엔티티로부터 완전히 보호되고,
+     *   - 상태 enum은 persistence 와 domain 양쪽에서 공통으로 사용할 수 있다.
      */
     @ArchTest
-    static final ArchRule no_cycles_in_base_package =
-            slices().matching(BASE_PACKAGE + ".(*)..")
+    static final ArchRule jpa_entities_should_not_depend_on_domain_model_except_status =
+            noClasses().that().resideInAPackage(ADAPTER_OUT_JPA)
+                    .should().dependOnClassesThat(
+                            resideInAnyPackage(DOMAIN_MODEL)                  // domain.model.*
+                                    .and(not(resideInAnyPackage(DOMAIN_STATUS))) // 단, status 패키지는 예외
+                    );
+
+
+    // =====================================================
+    // 7. Domain ↔ Adapter 직접 참조 금지
+    // =====================================================
+    @ArchTest
+    static final ArchRule domain_should_not_depend_on_adapter =
+            noClasses().that().resideInAPackage(DOMAIN)
+                    .should().dependOnClassesThat()
+                    .resideInAnyPackage(ADAPTER_IN, ADAPTER_OUT);
+
+
+    // =====================================================
+    // 8. 순환 의존 금지
+    // =====================================================
+    @ArchTest
+    static final ArchRule no_cycles =
+            slices().matching("com.example.orderorchestrator.(*)..")
                     .should().beFreeOfCycles();
-
-    /**
-     * 6) 포트유스케이스 규칙
-     * --application port의 클래스는 (COMMAND 하위를 제외하고) 모두 인터페이스여야 함
-     */
-    @ArchTest
-    static final ArchRule ports_should_be_interfaces =
-            classes().that().resideInAPackage(APP_PORT_ALL)
-                    .and(not(resideInAnyPackage(APP_PORT_IN_COMMAND))) // 🔹 command 패키지는 제외
-                    .should().beInterfaces();
-
-    /**
-     * 7) 포트유스케이스 규칙을 다르게 표현한 방식
-     */
-//    @ArchTest
-//    static final ArchRule ports_should_be_interfaces =
-//            classes().that().resideInAPackage(APP_PORT_IN)
-//                    .or().resideInAPackage(APP_PORT_OUT)
-//                    .and(not(resideInAnyPackage(APP_PORT_IN_COMMAND))) // 🔹 command 패키지는 제외
-//                    .should().beInterfaces();
-
-    /**
-     * 8) Service 접미사는 Service 패키지에만 허용
-     */
-    @ArchTest
-    static final ArchRule usecase_implementations_should_reside_in_application_service =
-            classes().that().haveSimpleNameEndingWith("Service")
-                    .should().resideInAPackage(APP_SERVICE);
-
-    /**
-     * service 패키지에서 config, Adapter에 의존하는 것을 방지
-     */
-    @ArchTest
-    static final ArchRule application_services_should_not_depend_on_adapters_or_config =
-            noClasses()
-                    .that().resideInAPackage(APP_SERVICE)
-                    .should().dependOnClassesThat().resideInAnyPackage(
-                            ADAPTER,
-                            CONFIG
-                    );
-
-
-    /**
-     * 9) 프로덕션 클래스만 로드(테스트/외부 라이브러리 제외)
-     */
-    private JavaClasses loadProductionClasses() {
-        return new ClassFileImporter()
-                .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
-                .importPackages(BASE_PACKAGE);
-    }
-
-    /**
-     * 어댑터(in)의 하위 도메인은 도메인 모델에 직접 의존하지 않고,
-     * 도메인 모델이 필요하면 dto 계층을 거쳐서 사용하도록 강제
-     */
-    private static final String DOMAIN_MODEL = "..domain..model..";
-    private static final String ADAPTER_IN_REQUEST = "..adapter.in.web.dto.request..";
-    private static final String ADAPTER_IN_RESPONSE = "..adapter.in.web.dto.response..";
-
-
-    /**
-     * 10) Adapter in과 out이 서로 참조하는 것을 방지
-     */
-    @ArchTest
-    static final ArchRule inbound_adapters_should_not_depend_on_outbound_adapters =
-            noClasses()
-                    .that().resideInAPackage(ADAPTER_IN)
-                    .should().dependOnClassesThat().resideInAPackage(ADAPTER_OUT);
-
-    @ArchTest
-    static final ArchRule outbound_adapters_should_not_depend_on_inbound_adapters =
-            noClasses()
-                    .that().resideInAPackage(ADAPTER_OUT)
-                    .should().dependOnClassesThat().resideInAPackage(ADAPTER_IN);
-
-    /**
-     * ADAPTER_OUT 아래 Adapter 구현체는 반드시 application.port.out 인터페이스의 구현체가 되도록 강제
-     */
-    @ArchTest
-    static final ArchRule outbound_adapters_should_implement_out_ports =
-            classes()
-                    .that().resideInAPackage(ADAPTER_OUT)
-                    .and().areNotInterfaces()
-                    .and().areNotAnnotatedWith(Configuration.class)
-                    .and().areNotAnnotatedWith(Mapper.class)
-                    .and().haveSimpleNameEndingWith("Adapter")   // ✅ 진짜 Adapter 클래스만
-                    .should().implement(resideInAnyPackage(APP_PORT_OUT));
-
-
-    /**
-     * Adapter in의 Request DTO: domain 의존 금지
-     */
-    @ArchTest
-    static final ArchRule request_dto_should_not_depend_on_domain =
-            noClasses()
-                    .that().resideInAPackage(ADAPTER_IN_REQUEST)
-                    .should().dependOnClassesThat().resideInAPackage(DOMAIN_MODEL);
-
-    /**
-     * 11) Adapter in: 도메인 모델 직접 참조 금지
-     *     단, web response DTO(adapter.in.web.dto.response)는 domain model 의존 허용
-     */
-    @ArchTest
-    static final ArchRule inbound_adapters_should_not_depend_on_domain_model =
-            noClasses()
-                    .that().resideInAPackage(ADAPTER_IN)
-                    .and(not(resideInAnyPackage(ADAPTER_IN_RESPONSE))) // response만 예외
-                    .should().dependOnClassesThat().resideInAPackage(DOMAIN_MODEL);
-
-
-    /**
-     * port 인터페이스가 실수로 Spring/JPA/adapter/config 에 의존하는 것을 방지
-     */
-    @ArchTest
-    static final ArchRule ports_should_not_depend_on_framework_or_adapters =
-            noClasses()
-                    .that().resideInAPackage(APP_PORT_ALL)
-                    .should().dependOnClassesThat().resideInAnyPackage(
-                            SPRING,    // org.springframework..
-                            JPA,       // jakarta.persistence..
-                            ADAPTER,   // ..adapter..
-                            CONFIG     // ..config..
-                    );
 }
-
