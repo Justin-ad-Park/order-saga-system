@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static com.example.orderorchestrator.application.service.uuid.UUIDGenerator.createUuid;
+
 @Service
 @Transactional
 public class CreateOrderService implements CreateOrderUseCase {
@@ -34,8 +36,8 @@ public class CreateOrderService implements CreateOrderUseCase {
     @Override
     public CreateOrderResult createOrder(CreateOrderCommand command) {
         // 1) 주문ID / SagaID 생성 (임시: UUID 기반)
-        String orderId = "ORD-" + UUID.randomUUID();
-        String sagaId = "SAGA-" + UUID.randomUUID();
+        String orderId = "ORD-" + createUuid();
+        String sagaId = "SAGA-" + createUuid();
 
         // 2) Command → 도메인 OrderItem 리스트 변환
         List<OrderItem> items = command.orderItems().stream()
@@ -72,4 +74,6 @@ public class CreateOrderService implements CreateOrderUseCase {
                 savedSaga.status().name()  // OrderSagaStatus → String
         );
     }
+
+
 }
