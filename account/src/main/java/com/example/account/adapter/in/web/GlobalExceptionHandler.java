@@ -1,12 +1,10 @@
-package com.example.orderorchestrator.adapter.in.web;
+package com.example.account.adapter.in.web;
 
-import com.example.orderorchestrator.adapter.in.web.dto.ApiError;
-import com.example.orderorchestrator.adapter.in.web.dto.response.ApiResponse;
-import com.example.orderorchestrator.domain.exception.NotFoundException;
+import com.example.account.adapter.in.web.dto.ApiError;
+import com.example.account.adapter.in.web.dto.response.ApiResponse;
+import com.example.account.domain.exception.AccountNotFoundException;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
-
-import javax.security.auth.login.AccountNotFoundException;
 
 // 전역 예외 처리기 (ApiResponse 패턴 적용 - 분리된 핸들러)
 @ControllerAdvice
@@ -14,7 +12,7 @@ public class GlobalExceptionHandler {
 
     // 1. AccountNotFoundException (404 Not Found 관련) 처리
     @ExceptionHandler(AccountNotFoundException.class)
-    public ResponseEntity<ApiResponse<Object>> handleNotFound(NotFoundException ex) {
+    public ResponseEntity<ApiResponse<Object>> handleNotFound(AccountNotFoundException ex) {
         return responseEntityWithHttpStatus(HttpStatus.NOT_FOUND, "NOT_FOUND", ex.getMessage());
     }
 

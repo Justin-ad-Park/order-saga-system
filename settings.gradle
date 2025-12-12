@@ -1,3 +1,4 @@
 rootProject.name = 'order-saga-system'
 
 include 'order-orchestrator'
+include 'account'
