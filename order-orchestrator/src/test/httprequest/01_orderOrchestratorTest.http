@@ -4,8 +4,8 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "couponNumber": "CPN-20250101-0001",
-  "paymentNumber": "PAY-20250101-0001",
+  "couponNumber": "CPN-001",
+  "paymentNumber": "PAY-001",
   "paymentAmount": 35000,
   "orderItems": [
     {
