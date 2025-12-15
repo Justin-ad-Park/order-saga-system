@@ -13,10 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static com.example.orderorchestrator.application.service.uuid.UUIDGenerator.createUuid;
+import static com.example.common.api.uuid.UUIDGenerator.createUuid;
 
 @Service
 @Transactional

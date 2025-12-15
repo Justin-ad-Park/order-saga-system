@@ -25,6 +25,8 @@ public class ArchitectureTest {
     private static final String ADAPTER_IN = "..adapter..in..";
     private static final String ADAPTER_OUT = "..adapter..out..";
     private static final String ADAPTER_OUT_JPA = "..adapter..out.persistence.jpa..";
+    // common 모듈은 모든 계층에서 의존 가능 (독립 계층)
+    private static final String COMMON = "..common..";
 
     // =====================================================
     // 1. 도메인 패키지에 있는 어떤 클래스도
@@ -50,6 +52,7 @@ public class ArchitectureTest {
                     .should().onlyDependOnClassesThat().resideInAnyPackage(
                             APPLICATION,          // application.* (port, service 등 자기 계층)
                             DOMAIN,               // domain.*
+                            COMMON,
                             "java..",
                             "jakarta..",
                             "javax..",
@@ -69,6 +72,7 @@ public class ArchitectureTest {
                             PORT_IN,                 // Port-in
                             SERVICE,                 // optional: controller → service 직접 접근 가능 여부
                             DOMAIN,
+                            COMMON,
                             "java..",
                             "jakarta..",
                             "javax..",               // ✅ javax.* 허용 (예: AccountNotFoundException)

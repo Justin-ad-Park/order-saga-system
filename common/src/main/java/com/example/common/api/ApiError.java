@@ -1,4 +1,4 @@
-package com.example.orderorchestrator.adapter.in.web.dto;
+package com.example.common.api;
 
 // 공통 에러 DTO (web 계층)
 public class ApiError {

@@ -1,7 +1,7 @@
 package com.example.orderorchestrator.adapter.in.web;
 
-import com.example.orderorchestrator.adapter.in.web.dto.ApiError;
-import com.example.orderorchestrator.adapter.in.web.dto.response.ApiResponse;
+import com.example.common.api.ApiError;
+import com.example.common.api.ApiResponse;
 import com.example.orderorchestrator.domain.exception.NotFoundException;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;

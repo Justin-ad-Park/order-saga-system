@@ -1,6 +1,4 @@
-package com.example.orderorchestrator.adapter.in.web.dto.response;
-
-import com.example.orderorchestrator.adapter.in.web.dto.ApiError;
+package com.example.common.api;
 
 // 서버 측에서 사용할 공통 응답 DTO
 public class ApiResponse<T> {

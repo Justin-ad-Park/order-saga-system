@@ -1,4 +1,4 @@
-package com.example.orderorchestrator.application.service.uuid;
+package com.example.common.api.uuid;
 
 import java.util.UUID;
 public class UUIDGenerator {
