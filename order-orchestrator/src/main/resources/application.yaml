@@ -7,19 +7,6 @@ spring:
 spring:
   config:
     activate:
-      on-profile: file
-persistence:
-  type: file   # file | h2
-
-# 파일 어댑터 기본 경로 (상대경로면 실행 위치 기준)
-account:
-  storage:
-    path: "data"
-
----
-spring:
-  config:
-    activate:
       on-profile: h2
   datasource:
     url: jdbc:h2:mem:orderorchestrator;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL
@@ -37,6 +24,10 @@ spring:
     console:
       enabled: true  # http://localhost:8080/h2-console
       path: /h2-console
+
+server:
+  port: 8080
+
 persistence:
   type: h2
 #mybatis:

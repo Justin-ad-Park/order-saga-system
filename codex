@@ -1,0 +1,1563 @@
+    1  exit
+    2  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    3  brew
+    4  brew help
+    5  echo >> /Users/justinpark/.zprofile
+    6  echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> /Users/justinpark/.zprofile
+    7  eval "$(/opt/homebrew/bin/brew shellenv)"
+    8  brew help
+    9  exit
+   10  exir
+   11  exit
+   12  exit
+   13  git status
+   14  git remote -v
+   15  git branch
+   16  exit
+   17  cd ~
+   18  ls
+   19  mkdir idea
+   20  cd idea
+   21  ls
+   22  mkdir java
+   23  cd java
+   24  pwd
+   25  git clone https://github.com/Justin-ad-Park/refactoring-2nd-edition.git
+   26  ls -l
+   27  exi
+   28  exit
+   29  softwareupdate --install-rosetta
+   30  exit
+   31  ls
+   32  cd Downloads
+   33  ls
+   34  chmod -R 755 ./Symantec\ Endpoint\ Protection/
+   35  xattr -rc ./Symantec\ Endpoint\ Protection/
+   36  xattr -rc ./Symantec\ Endpoint\ Protection/
+   37  cd ..
+   38  ls
+   39  cd Desktop
+   40  ls
+   41  chmod -R 755 ./Symantec\ Endpoint\ Protection/
+   42  xattr -rc ./Symantec\ Endpoint\ Protection/
+   43  ls
+   44  chmod -R 755 ./Symantec\ Endpoint\ Protection
+   45  sudo chmod -R 755 ./Symantec\ Endpoint\ Protection
+   46  sudo
+   47  sudo chmod -R 755 ./Symantec\ Endpoint\ Protection
+   48  sudo chown -R $(whoami) .
+   49  sudo chmod -R 755 ./Symantec\ Endpoint\ Protection
+   50  exit
+   51  cd Desktop
+   52  sudo chmod -R 755 ./Symantec\ Endpoint\ Protection
+   53  xattr -rc ./Symantec\ Endpoint\ Protection/
+   54  exit
+   55  pwd
+   56  sudo vim ~/.zshrc
+   57  pwd
+   58  ls
+   59  cd Downloads
+   60  ls -al
+   61  vim ~/.oh-my-zsh/themes/agnoster.zsh-theme
+   62  exit
+   63  sudo apt-get install zsh
+   64  apt-get
+   65  sudo yum install zsh
+   66  brew install zsh
+   67  chsh -s /usr/bin/zsh
+   68  chsh -s /usr/bin/zsh
+   69  sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"\n
+   70  exit
+   71  pwd
+   72  vim ~/.oh-my-zsh/themes/agnoster.zsh-theme
+   73  exit
+   74  pwd
+   75  exit
+   76  git status
+   77  sudo apt-get install zsh
+   78  sudo apt-get install zsh
+   79  curl
+   80  exit
+   81  pwd
+   82  git status
+   83  ls -l
+   84  exit
+   85  git status
+   86  git branch practice
+   87  git checkout practice
+   88  git pull
+   89  exit
+   90  git status
+   91  git add .
+   92  git commit -m "OOP 2. OCP 개방-폐쇄 원칙"
+   93  git push
+   94  cupsctl WebInterface=yes
+   95  cupsctl WebInterface=no
+   96  cupsctl WebInterface=yes
+   97  cupsctl WebInterface=no
+   98  exit
+   99  echo "# imageCombine" >> README.md
+  100  git init
+  101  git status
+  102  git add .
+  103  git commit -m "first commit"
+  104  git branch -M main
+  105  git remote add origin https://github.com/Justin-ad-Park/imageCombine.git
+  106  git push -u origin main
+  107  git status
+  108  git add .
+  109  git commit -m "Upload Sample Images"
+  110  git push
+  111  git status
+  112  git add .
+  113  git commit -m "Refactoring with OOP Solid"
+  114  git push
+  115  git status
+  116  git add .
+  117  git commit -m "Change default value of the frameColor parameter"
+  118  git push
+  119  ./gradlew --refresh-dependencies
+  120  dig txt pulmuone.com
+  121  dig txt _dmarc.pulmuone.com
+  122  exit
+  123  kill -9 78883
+  124  kill -9 1067
+  125  exit
+  126  cd idea
+  127  cd pulmuone
+  128  ls
+  129  git clone git@bitbucket.org:pulmuone/pulmuone-module-2025.git
+  130  git clone https://justin_park@bitbucket.org/pulmuone/pulmuone-module-2025.git
+  131  git clone git@bitbucket.org:pulmuone/pulmuone-module-2025.git
+  132  ls
+  133  cd ~
+  134  cd .ssh
+  135  ls
+  136  touch config
+  137  chmod config
+  138  chmod 600 config
+  139  ls -l
+  140  vi config
+  141  cd idea
+  142  cd pulmuone
+  143  ls
+  144  git clone git@bitbucket.org:pulmuone/pulmuone-module-2025.git
+  145  ls -l
+  146  cat justin.park.pub
+  147  cat justin.park.pem
+  148  lks
+  149  ls -al
+  150  git clone https://justin_park@bitbucket.org/pulmuone/pulmuone-module-2025.git
+  151  git clone git@bitbucket.org:pulmuone/pulmuone-module-2025.git
+  152  ls -l
+  153  chmod 600 justin.park.pem
+  154  git clone git@bitbucket.org:pulmuone/pulmuone-module-2025.git
+  155  exit
+  156  git checkout qa_develop
+  157  git pull
+  158  git remote -v
+  159  git checkout hotfix/SPMO-5643-클레임-배송비-처리-방식-개선_v2
+  160  git pull
+  161  git status
+  162  git log --oneline
+  163  java -version
+  164  exit
+  165  vi /Users/justinpark/.oh-my-zsh/themes/agnoster.zsh-theme
+  166  exit
+  167  git log --oneline --graphic
+  168  git log --oneline --graphics
+  169  git log --oneline --help
+  170  git log --oneline --decorate
+  171  git status
+  172  git add .
+  173  git commit -m "."
+  174  git push
+  175  git branch main
+  176  git checkout main
+  177  git pull
+  178  git checkout master
+  179  git pull
+  180  git checkout master_phase2_greenguice
+  181  git pull
+  182  git status
+  183  git pull
+  184  git checkout feature/SPMO-6118_녹즙_추천상품_조회로직수정
+  185  git pull
+  186  git status
+  187  git log --oneline
+  188  git status
+  189  git pull
+  190  git add .
+  191  git status
+  192  git commit -m "녹즙 패턴생성 테스트 케이스 추가"
+  193  git push
+  194  git status
+  195  git add .
+  196  git status
+  197  git commit -m "."
+  198  git push
+  199  git log --oneline -10
+  200  git reset --hard c98236a143
+  201  git log --oneline -10
+  202  git push
+  203  git push --force
+  204  git log --oneline -10
+  205  git pull
+  206  pip install -U openai-whisper
+  207  brew
+  208  brew update
+  209  brew install pip
+  210  brew
+  211  bew install pip
+  212  brew install openai-whisper
+  213  pwd
+  214  whisper
+  215  whisper --help
+  216  pwd
+  217  ls
+  218  cd Downloads
+  219  ls
+  220  whisper jeju.mp4 --language Korean --model medium
+  221  fmpeg
+  222  brew install fmpeg
+  223  gmpeg -i jeju.mp4 -ss 00:47:00 04:10:00 -c copy jeju2.mp4
+  224  fmpeg -i jeju.mp4 -ss 00:47:00 04:10:00 -c copy jeju2.mp4
+  225  fmeg
+  226  fmpeg
+  227  brew install ffmpeg
+  228  ffmpeg -i jeju.mp4 -ss 00:47:00 04:10:00 -c copy jeju2.mp4
+  229  ffmpeg -i jeju.mp4 -ss 00:47:00 4:10:00 -c copy jeju2.mp4
+  230  ffmpeg -i jeju.mp4 -ss 00:47:00 4:00:00 -c copy jeju2.mp4
+  231  ffmpeg -i jeju.mp4 -ss 00:47:00 -t 4:10:00 -c copy jeju2.mp4
+  232  whisper jeju2.mp4 --language Korean --model medium
+  233  ffmpeg --version
+  234  ffmpeg -i jeju.mp4 --ss 1:19:00 -t 3:30:00 -c copy jeju3.mp4
+  235  ffmpeg -i jeju.mp4 -ss 01:19:00 -t 3:30:00 -c copy jeju3.mp4
+  236  ffmpeg -i jeju.mp4 --ss 3:30:00 -t 4:42:30 -c copy jeju4.mp4
+  237  ffmpeg -i jeju.mp4 --ss 03:30:00 -t 04:42:30 -c copy jeju4.mp4
+  238  ffmpeg -i jeju.mp4 --ss 3:30:00 -t 4:42:30 -c copy jeju4.mp4
+  239  ffmpeg -i jeju.mp4 -ss 03:30:00 -t 1:12:30 -c copy jeju4.mp4
+  240  ls -l
+  241  whisper jeju4.mp4 --language Korean --model medium
+  242  sysctl -n hw.logicalcpu
+  243  exit
+  244  cd Downloads
+  245  ls
+  246  ffmpeg -i jeju.mp4 --s 01:31:50 -t 2:00:00 -c copy jeju_01_31_50.mp4  
+  247  ffmpeg -i jeju.mp4 --s 1:31:50 -t 2:00:00 -c copy jeju_01_31_50.mp4  
+  248  ffmpeg -i jeju.mp4 --ss 01:31:50 -t 2:00:00 -c copy jeju_01_31_50.mp4  
+  249  ffmpeg -i jeju.mp4 --s 01:31:50 -t 2:00:00 -c copy jeju_01_31_50.mp4  
+  250  ffmpeg -i jeju.mp4 --ss 01:31:50 -t 02:00:00 -c copy jeju_01_31_50.mp4  
+  251  ffmpeg -i jeju.mp4 -ss 01:31:50 -t 1:12:30 -c copy jeju_01_31_50.mp4
+  252  ls -l
+  253  whisper jeju_02_30_00.mp4 --language Korean --model medium
+  254  clear
+  255  whisper jeju_02_30_00.mp4 --language Korean --model medium
+  256  whisper jeju_02_30_00.mp4 --language Korean --model small
+  257  exit
+  258  ffmpeg -i jeju.mp4 -ss 00:00:00 -t 4:41:20 -c copy jeju_00.mp4
+  259  ffmpeg -i jeju.mp4 -ss 00:00:00 -t 4:41:20 -c copy jeju0.mp4
+  260  ffmpeg -i jeju.mp4 -ss 00:00:00 -t 4:41:20 -c copy jeju_00.mp4
+  261  cd Downloads
+  262  ls
+  263  cd jeju
+  264  ls
+  265  ffmpeg -i jeju.mp4 -ss 00:00:00 -t 4:41:20 -c copy jeju_00.mp4
+  266  clear
+  267  whisper jeju_00.mp4 --language Korean --model small
+  268  whisper jeju_00.mp4 --language Korean --model medium
+  269  ls -l
+  270  cd bin
+  271  pwd
+  272  cd ~
+  273  pwd
+  274  cd ..
+  275  ls
+  276  cd ..
+  277  ls
+  278  cd sbin
+  279  ls
+  280  cat pfctl
+  281  cd /etc
+  282  cat pf.conf
+  283  sufo pfctl -sr
+  284  sudo pfctl -sr
+  285  sudo pfctl -ss
+  286  cd pf.anchors/com.apple
+  287  cd pf.anchors
+  288  ls
+  289  cat com.apple
+  290  cat /Users/Shared/.dap/dap.redirect.pf.rules
+  291  ls -l
+  292  sudo launchctl list | grep -i inca
+  293  sudo launchctl list
+  294  sudo launchctl list | grep INCA
+  295  sudo launchctl list | grep inca
+  296  cd /Library/LaunchDaemons
+  297  ls
+  298  cd ..
+  299  cd LaunchAgents
+  300  ls
+  301  ls -l
+  302  cat com.symantec.uiagent.application.MES.plist
+  303  pfctl -sr
+  304  sudo pfctl -sr
+  305  launchctl list
+  306  sudo kextstat | grep -i somansa
+  307  systemextensionsctl list
+  308  sudo systemextensionsctl uninstall R2PBZJ465V com.nprotect.nosfw
+  309  sudo rm /Library/LaunchDaemons/com.nprotect.nosfw.plist 2>/dev/null
+  310  exit
+  311  git status
+  312  git add .
+  313  git commit -m "OCP, Wumpusgame"
+  314  git status
+  315  git add .
+  316  git commit -m "Update Mark down" 
+  317  git status
+  318  git push
+  319  git pull
+  320  cd idea
+  321  ls
+  322  cd java
+  323  ls
+  324  ls -l
+  325  git checkout https://github.com/Justin-ad-Park/clean-architecture.git
+  326  git checkout https://github.com/Justin-ad-Park/clean-architecture
+  327  git clone https://github.com/Justin-ad-Park/clean-architecture.git
+  328  ls
+  329  cd clean-architecture
+  330  ls
+  331  ./gradlew --version
+  332  gradlew --version
+  333  gradle
+  334  gradle --version
+  335  ./gradlew clean build --refresh-dependencies
+  336  gradlew
+  337  ./gradlew
+  338  git status
+  339  git reset --hard
+  340  ㄷexit
+  341  -+
+  342  exit
+  343  tccutil reset SystemPolicyAllFiles com.symantec.endpoint.extension
+  344  sudo tccutil reset SystemPolicyAllFiles com.symantec.endpoint.extension
+  345  systemextensionsctl list
+  346  cd /Library/Application\ Support/com.apple.TCC/TCC.db
+  347  cd /Library/Application\ Support/com.apple.TCC/
+  348  ;ls
+  349  ls
+  350  sudo ls
+  351  ls
+  352  sudo 
+  353  sudo ls -l
+  354  pwd
+  355  tccutil reset SystemPolicyAllFiles com.symantec.endpoint.extension
+  356  sudo tccutil reset SystemPolicyAllFiles com.symantec.endpoint.extension
+  357  mdls -name kMDItemCFBundleIdentifier /Applications/Symantec\ Endpoint\ Protection.app
+  358  sudo tccutil reset SystemPolicyAllFiles com.broadcom.mes
+  359  exit
+  360  cd /var
+  361  cd folders
+  362  cd rz
+  363  ls
+  364  cd frpk60t125d9htg1d83qq2qm0000gn
+  365  ls
+  366  cd T
+  367  ls
+  368  cd accounts5791369195198684318
+  369  ls
+  370  ls -l
+  371  ls
+  372  cat 123.txt
+  373  cd ~
+  374  ls
+  375  echo "# account-hexagonal-demo" >> README.md
+  376  git init
+  377  git add .
+  378  git commit -m "First commit"
+  379  git brach git branch -M main
+  380  git branch -M main
+  381  git remote add origin https://github.com/Justin-ad-Park/account-hexagonal-demo.git
+  382  git push -u origin main
+  383  git status
+  384  git init
+  385  git status
+  386  ls -l
+  387  git status
+  388  git init
+  389  git status
+  390  git add .
+  391  git commit -m "first commit"
+  392  git branch -M main
+  393  git remote add origin https://github.com/Justin-ad-Park/account-hexagonal-demo.git
+  394  git push -u orgin main
+  395  git push -u origin main
+  396  git status
+  397  git branch ver01
+  398  cd checkout ver01
+  399  git branch ver01
+  400  git checkout ver01
+  401  git status
+  402  git reset --hard
+  403  git status
+  404  git reset --hard
+  405  git status
+  406  git reset --hard
+  407  git status
+  408  git reset --hard
+  409  git status
+  410  git hard --reset 
+  411  git reset -hard
+  412  git reset
+  413  git reset --hard
+  414  git status
+  415  git reset --hard
+  416  git status
+  417  git checkout ver00
+  418  git status
+  419  git add .
+  420  git commit -m "Ver01"
+  421  git push
+  422  git branch ver02_accesscontrol
+  423  git checkout ver02_accesscontrol
+  424  git pull
+  425  git status
+  426  cd Downloads/test/accounts
+  427  ㅊㅇ ..
+  428  cd ..
+  429  cd ~
+  430  ls
+  431  cd idea
+  432  ls
+  433  cd Architecture
+  434  ls
+  435  mkdir account-hexagonal-ver01
+  436  git clone https://github.com/Justin-ad-Park/account-hexagonal-demo.git
+  437  cd account-hexagonal-ver01
+  438  git clone https://github.com/Justin-ad-Park/account-hexagonal-demo.git
+  439  git status
+  440  git add .
+  441  git commit -m "Ver02 access control"
+  442  git push
+  443  git status
+  444  git add .
+  445  git commit -m "AccountApplicatoin 불필요한 메서드 제외"
+  446  git push
+  447  owd
+  448  pwd
+  449  git status
+  450  git add .
+  451  git commit -m "Rename IT -> RealTest"
+  452  git push
+  453  git status
+  454  git add .
+  455  git commit -m "Ver02 설명 보강"
+  456  git push
+  457  git status
+  458  git add .
+  459  git commit -m "*.md 설명 추가" 
+  460  git push
+  461  git status
+  462  git branch --help
+  463  git branch create ver03_DBMS
+  464  git checkout ver03_DBMS
+  465  git branch ver03_DBMS
+  466  git branch create ver03_dbms
+  467  git branch ver03_dbms
+  468  git checkout ver03_dbms
+  469  git status
+  470  git add .
+  471  git commit -m "미사용 폴더 삭제"
+  472  git push
+  473  git push --set-upstream origin ver03_dbms\n
+  474  git push --set-upstream origin ver03_dbms
+  475  git status
+  476  git push
+  477  git push --set-upstream origin ver03_dbms\n
+  478  git status
+  479  git branch
+  480  git branch delete ver03_DBMS
+  481  git branch
+  482  git branch --help
+  483  git-branch
+  484  git branch
+  485  git branch create -delete
+  486  git branch create --delete
+  487  git branch
+  488  git branch delete --delete
+  489  git status
+  490  git branch
+  491  git branch ver03_DBMS --delete
+  492  git branch
+  493  git status
+  494  git add .
+  495  git commit -m "new branch"
+  496  git push
+  497  git statsus
+  498  git status
+  499  git checkout master
+  500  git checkout main
+  501  git merge ver03_dbms
+  502  git pull origin main
+  503  git merge ver03_dbms
+  504  git checkout main
+  505  git pull
+  506  git merge -s ours ver03_dbms
+  507  git merge ver03_dbms --allow-unrelated-histories 
+  508  git status
+  509  git statsus
+  510  git status
+  511  git add .
+  512  git commit -m "Merge main"
+  513  git push
+  514  git status
+  515  git checkout ver03_dbms 
+  516  git pull
+  517  git status
+  518  git add .
+  519  git commit -m "delete data/"
+  520  git push
+  521  git checkout main
+  522  git pull
+  523  git status
+  524  git branch ver03_dbms --delete
+  525  git branch
+  526  git branch ver03_dbms
+  527  git checkout ver03_dbms
+  528  git pull
+  529  ping https://files.oaiusercontent.com
+  530  ping files.oaiusercontent.com
+  531  nslookup files.oaiusercontent.com
+  532  openssl s_client -connect files.oaiusercontent.com:443 -servername files.oaiusercontent.com -brief\n
+  533  curl -I --http2 https://files.oaiusercontent.com
+  534  git status
+  535  java -cp ~/.m2/repository/com/h2database/h2/2.1.214/h2-2.1.214.jar org.h2.tools.Shell
+  536  jdbc:h2:mem:accounts;DB_CLOSE_DELAY=-1
+  537  ls
+  538  pwd
+  539  ls
+  540  cd test
+  541  ls
+  542  http://localhost:8080/h2-console
+  543  git status
+  544  git add .
+  545  git status
+  546  git commit -m "DBMS 추가 및 http 테스트 추가"
+  547  git push
+  548  git push --set-upstream origin ver03_dbms\n
+  549  git pull
+  550  git push
+  551  git push --set-upstream origin ver03_dbms\n
+  552  git pull
+  553  git pull branch  --set-upstream-to=origin/ver03_dbms ver03_dbms
+  554  git push
+  555  git push --set-upstream origin ver03_dbms\n
+  556  git status
+  557  git pull
+  558  git branch --set-upstream-to=origin ver03_dbms
+  559  git fetch
+  560  git push -u
+  561  git push --set-upstream origin ver03_dbms\n
+  562  git status
+  563  git push
+  564  git push --fast-forward
+  565  git push --force
+  566  git push --set-upstream origin ver03_dbms\n
+  567  git push --set-upstream origin ver03_dbms --fast-forwards\n
+  568  git push --set-upstream origin ver03_dbms --force\n
+  569  git status
+  570  git pull
+  571  exit
+  572  git status
+  573  git add .
+  574  git commit -m "Spring profile 분리 : file/h2"
+  575  git push
+  576  git status
+  577  git add .
+  578  git commit -m "yaml 통합"
+  579  git push
+  580  git branch ver04_mybatis
+  581  git checkout ver04_mybatis
+  582  git pull
+  583  git branch --set-upstream-to=origin/ver04_mybatis ver04_mybatis
+  584  git branch --set-upstream-to=origin ver04_mybatis
+  585  git branch --set-upstream-to=origin/ver04_mybatis ver04_mybatis
+  586  git push
+  587  git push --set-upstream origin ver04_mybatis\n
+  588  git pull
+  589  git status
+  590  git add .
+  591  git commit -m "MyBatis"
+  592  git push
+  593  git status
+  594  git add .
+  595  git commit -m "application.yaml 설명하는 application.md 추가"
+  596  git push
+  597  git log
+  598  git log --decorate
+  599  git log --help
+  600  git log --oneline --graph --decorate
+  601  git log --oneline --graph  --all --decorate
+  602  git checkout main
+  603  git status
+  604  git add .
+  605  git commit -m ".gitignore"
+  606  git push
+  607  git merge ver04_mybatis
+  608  git status
+  609  git add .
+  610  git status
+  611  git commit -m "Merger mybatis"
+  612  git push
+  613  git log --oneline --graph  --all --decorate
+  614  echo @path
+  615  echo $path
+  616  cd /usr/local/bin
+  617  ls
+  618  cd /Users
+  619  cd /usr
+  620  cd local
+  621  ls
+  622  cd bin
+  623  ls
+  624  cd bin
+  625  ls
+  626  pwd
+  627  cd bin
+  628  cd /usr
+  629  cd bin
+  630  ls
+  631  cd /usr/local/bin
+  632  cd /usr/local
+  633  ls
+  634  ls -;
+  635  mkdir bin
+  636  cd /usr
+  637  cd bin
+  638  ls
+  639  ls -al
+  640  ls -l
+  641  ls 
+  642  cd ~
+  643  ls
+  644  mkdir bin
+  645  cd bin
+  646  ls
+  647  git log --oneline --graph  --all --decorate >> gitlog.sh
+  648  git log --oneline --graph  --all --decoratels
+  649  ls
+  650  rm gitlog.sh
+  651  vi gitlog.sh
+  652  ls -
+  653  ls -l
+  654  chmod 777 gitlog.sh
+  655  ls -al
+  656  gitlog.sh
+  657  ./gitlog.sh
+  658  ls -l
+  659  cat gitlog.sh
+  660  ./gitlog.sh
+  661  cd ~
+  662  ;s
+  663  ls
+  664  ls -al
+  665  cat .zshrc
+  666  vi .zshrc
+  667  echo $SHELL
+  668  nano ~/.zshrc
+  669  cd ~
+  670  ls
+  671  cd bin
+  672  pwd
+  673  cat .zshrc
+  674  source .zshrc
+  675  nano .zshrc
+  676  source .zshrc
+  677  echo $PATH
+  678  source ~/.zshrc
+  679  gitlog
+  680  gitlog.sh
+  681  echo $PATH
+  682  ~/bin/gitlog.sh
+  683  gitlog.sh
+  684  ~/bin/gitlog.sh
+  685  ./gitlog.sh
+  686  nano ~/.zshrc
+  687  source ~/.zshrc
+  688  nano ~/.zshrc
+  689  source ~/.zshrc
+  690  gitlog.sh
+  691  nano ~/.zshrc
+  692  source ~/.zshrc
+  693  gitlog
+  694  gitlog -n5
+  695  gitlog -n10
+  696  gitlog 
+  697  git status
+  698  git add .
+  699  git commit -m "AccountService Bean생성.md 설명 보강"
+  700  git push
+  701  git status
+  702  git reset --hard
+  703  git status
+  704  git add .
+  705  git commit -m "Unit Test 문제 수정" 
+  706  git push
+  707  git status
+  708  git add .
+  709  git commit -m "역직렬화 간소화"
+  710  git push
+  711  git status
+  712  cd idea
+  713  cd TestAutomation
+  714  ls
+  715  cd marq
+  716  ls
+  717  vi build.gradle
+  718  cat build.gradle
+  719  ./gradlew pwInstall
+  720  exit
+  721  ./gradlew pwInstall
+  722  ls
+  723  ls -l
+  724  chmod +x setup_marqvision_env.sh
+  725  ./setup_marqvision_env.sh
+  726  cd ~/.marqvision/
+  727  ls
+  728  ls -l
+  729  ls -al
+  730  cat ~/.zshrc
+  731  git status
+  732  git init
+  733  git status
+  734  echo $MARQVISION_EMAIL
+  735  echo $MARQVISION_PASSWORD
+  736  shell
+  737  git commit -m "first commit"
+  738  git status
+  739  pwd
+  740  ls -l
+  741  ls =al
+  742  ls -al
+  743  rm .git
+  744  rm -rf .git
+  745  ls =al
+  746  ls -al
+  747  exit
+  748  git status
+  749  git init
+  750  git status
+  751  git add .
+  752  git commit -m "first commit"
+  753  git branch -M main
+  754  git remote add origin https://github.com/Justin-ad-Park/SeleniumRPA.git
+  755  git push -u origin main
+  756  source /Users/justinpark/.marqvision/.env
+  757  export MARQVISION_EMAIL="your_email@example.com"\nexport MARQVISION_PASSWORD="your_password"\n./gradlew run
+  758  git status
+  759  git add .
+  760  git commit -m "config.ini 기능 추가"
+  761  git push
+  762  git status
+  763  git add .
+  764  git commit -m "Refactoring DriverFactory"
+  765  git push
+  766  security add-generic-password -a marqvision -s marqvision.login \ -w '{"email":"justin.park@pulmuone.com","password":"1q2w3e4r!"}' -U
+  767  security add-generic-password -a marqvision -s marqvision.login -w '{"email":"justin.park@pulmuone.com","password":"1q2w3e4r!"}' -U
+  768  security find-generic-password -a marqvision -s marqvision.login -w
+  769  pwd
+  770  cd makeEnv
+  771  ls
+  772  chmod +x setup_marqvision_keychain.sh
+  773  ./setup_marqvision_keychain.sh
+  774  security find-generic-password -a marqvision -s marqvision.login -w\n
+  775  security find-generic-password -a $ACCOUNT -s $SERVICE -w
+  776  security find-generic-password -a marqvision -s marqvision.login -w\n
+  777  git status
+  778  git add .
+  779  git commit -m "아이디, 비밀번호를 키체인에 보관"
+  780  git push
+  781  git status
+  782  git add .
+  783  git commit -m "mac, windows 폴더 구분"
+  784  git push
+  785  cat /Users/justinpark/.marqvision/.env
+  786  git
+  787  git status
+  788  git add .
+  789  git commit -m "인증 정보 처리 순서 변경 환경변수 > CLI 파라미터 > OS별 인증서 보관장소"
+  790  git push
+  791  ;11~;9~
+  792  git status
+  793  gitlog
+  794  git status
+  795  git add .
+  796  git commit -m "."
+  797  git status
+  798  git add .
+  799  git commit -m "."
+  800  git push
+  801  git status
+  802  pwd
+  803  cd ..
+  804  pwd
+  805  git status
+  806  git add .
+  807  git commit -m "."
+  808  git push
+  809  git status
+  810  git add .
+  811  git commit -m "usecase에 주석 추가"
+  812  git push
+  813  ㅔㅈㅇ
+  814  pwd
+  815  cd makeEnv
+  816  ls
+  817  cd forMacOS
+  818  ls
+  819  ls -al
+  820  ./setup_marqvision_keychain.sh
+  821  security find-generic-password -a marqvision -s marqvision.login -w\n
+  822  git status
+  823  git add .
+  824  git commit -m "미사용 import 제거"
+  825  git push
+  826  git status
+  827  git add .
+  828  cd ..
+  829  pwd
+  830  git reset --hard
+  831  git status
+  832  ls
+  833  chmod +x kill_chromedriver.sh
+  834  ./kill_chromedriver.sh
+  835  cd ..
+  836  git status
+  837  git add .
+  838  git commit -m "Kill ChromeDriver"
+  839  git status
+  840  git add .
+  841  git amend
+  842  git add .
+  843  git commit -m "TODO: 서버 업로드 로직과 크롬드라이버 분리"
+  844  git push
+  845  echo $(pgrep chromedriver)
+  846  echo $(pgrep)
+  847  echo $(pgrep chrome)
+  848  git status
+  849  git add .
+  850  git status
+  851  git add .
+  852  git status
+  853  git add .
+  854  git commit
+  855  git status
+  856  git delete order/src/main/java/com/example/order/application/port/out/SaveOrderPort.java
+  857  git remove order/src/main/java/com/example/order/application/port/out/SaveOrderPort.java
+  858  git 
+  859  git rm order/src/main/java/com/example/order/application/port/out/SaveOrderPort.java
+  860  git status
+  861  git 
+  862  git rm order/src/main/java/com/example/order/application/port/out/SaveOrderPort.java
+  863  pwd
+  864  git status
+  865  git add .
+  866  git commit -m "Order.zip sample 추가"
+  867  git push
+  868  git status
+  869  git add .
+  870  git commit -m "Query Usecase 추가"
+  871  git push
+  872  git status
+  873  gitlog
+  874  git checkout 5f10083
+  875  git reset --hard
+  876  gitlog
+  877  git checkout main
+  878  gitlog
+  879  git checkout 5f10083
+  880  git status
+  881  git checkout main
+  882  gitlog
+  883  git checkout 5f10083 
+  884  git checkout main
+  885  git remote -v
+  886  gitlog
+  887  git checkout main
+  888  git status
+  889  git add .
+  890  git status
+  891  git commit -m "AdapterTest 기능 추가"
+  892  git status
+  893  git push
+  894  git status
+  895  git add .
+  896  git commit -m "public class -> package private로 변경"
+  897  git push
+  898  git branch archunit
+  899  git checkout archunit
+  900  ./gradlew dependencies | grep guava
+  901  git status
+  902  git add .
+  903  git commit -m "ArchUnit 의존성 방향 검증 테스트 케이스 추가"
+  904  git push
+  905  git push --set-upstream origin archunit\n
+  906  git checkout main
+  907  git merge archunit
+  908  git status
+  909  git pull
+  910  gitlog
+  911  git status
+  912  git push
+  913  git status
+  914  gitlog
+  915  git status
+  916  git reset --hard
+  917  git status
+  918  git add .
+  919  git commit -m "Exception Handle & Api Error 처리" 
+  920  git push
+  921  git status
+  922  git add .
+  923  git commit -m "Domain의 속성값에만 접근하도록 메소드 숨기기, 도메인 메소드는 Commands를 통해 Service에서만 사용하도록 제공" 
+  924  git push
+  925  gitlog
+  926  git status
+  927  git add .
+  928  git commit -m "service에 @service 추가 후 *ServiceConfig.java 제거, byAccount팩토리 메서드를 of로 변경"
+  929  git push
+  930  git status
+  931  git remote -v
+  932  git checkout main
+  933  git checkout master
+  934  git pull
+  935  git status
+  936  gitlog
+  937  git log
+  938  git status
+  939  git log
+  940  git status
+  941  git add .
+  942  git commit -m "ADR(Architecture Decisions Records) 추가"
+  943  git push
+  944  git status
+  945  git add .
+  946  git commit -m "04. Archunit ADR 추가" 
+  947  git push
+  948  gitlog
+  949  git status
+  950  git add .
+  951  git status
+  952  git commit -m "Rich Entity 비즈니스 메서드를 서비스만 사용하도록 제약. Commands 위임, 제약조건 검출(archunit) 기능 추가" 
+  953  git push
+  954  git status
+  955  git add .
+  956  git commit -m "archunit .. 와일드카드 설명 추가"
+  957  git push
+  958  git branch inoutDTO
+  959  git status
+  960  git add .
+  961  git commit -m "주석 추가"
+  962  git push
+  963  git checkout inoutDTO
+  964  git merge main
+  965  git status
+  966  git stash
+  967  git status
+  968  gitlog
+  969  git checkout main
+  970  git pull
+  971  git status
+  972  git reset --hard
+  973  git status
+  974  git reset --hard
+  975  git pull
+  976  git status
+  977  git branch
+  978  git checkout inoutDTO
+  979  git status
+  980  git stash --help
+  981  git stash pop
+  982  git stash --list
+  983  git stash list
+  984  git status
+  985  git reset --hard
+  986  git status
+  987  git reset --hard
+  988  git checkout main
+  989  git pull
+  990  git status
+  991  gitlog
+  992  git status
+  993  git add .
+  994  git status
+  995  git commit -m "AccountControllerMockTest의 컨트롤러 정정(AbuseControllerForArchunit -> AccountController)"
+  996  git push
+  997  git status
+  998  git add .
+  999  git commit -m "@SpringBootTest, @WebMvcTest 설명 문서 추가"
+ 1000  git push
+ 1001  git status
+ 1002  git add .
+ 1003  git commit -m "ard_07 restfulAPI 예외처리 로직 추가 : restfulAPI 응값을 ResponseEntity<T>로 변경 및 @ControllerAdvice를 활용한 예외처리"
+ 1004  git push
+ 1005  git status
+ 1006  git add .
+ 1007  git commit "adr07.전역예외처리 내용 추가"
+ 1008  git push
+ 1009  git status
+ 1010  git add .
+ 1011  git commit -m "오탈자 수정, 불필요한 import 제거"
+ 1012  git push
+ 1013  git remote -v
+ 1014  pwd
+ 1015  pip install tcx2gpx
+ 1016  brew update
+ 1017  brew install tcx2gpx
+ 1018  exit
+ 1019  history
+ 1020  exit
+ 1021  cd .oh-my-zsh
+ 1022  ls
+ 1023  cd themes
+ 1024  ls
+ 1025  cat agnoster.zsh-theme
+ 1026  ls -l
+ 1027  exit
+ 1028  ls -l
+ 1029  pwd
+ 1030  cd idea
+ 1031  ls
+ 1032  cd java
+ 1033  ls
+ 1034  cd clean-architecture
+ 1035  ls
+ 1036  pwd
+ 1037  exit
+ 1038  cd ~/.oh-my-zsh
+ 1039  git status
+ 1040  vim themes/agnoster.zsh-theme
+ 1041  git remote -v
+ 1042  git stash
+ 1043  git status
+ 1044  cd themes/
+ 1045  ls
+ 1046  cp agnoster.zsh-theme ~/Documents/.
+ 1047  git status
+ 1048  git reset --hard
+ 1049  git status
+ 1050  omz update
+ 1051  exit
+ 1052  cd idea
+ 1053  ls
+ 1054  cd java
+ 1055  ls
+ 1056  cd account-hexagonal-demo
+ 1057  ls
+ 1058  pwd
+ 1059  cp ~/Documents/agnoster.zsh-theme ~/.oh-my-zsh/themes/.
+ 1060  exit
+ 1061  cd idea
+ 1062  cd java
+ 1063  ls
+ 1064  cd account-hexagonal-demo
+ 1065  ls -l
+ 1066  pwd
+ 1067  exit
+ 1068  git status
+ 1069  git add .
+ 1070  git commit -m "rename ADR folder"
+ 1071  git push
+ 1072  exit
+ 1073  git status
+ 1074  git remote -v
+ 1075  exit
+ 1076  omz changelog
+ 1077  git status
+ 1078  git add .
+ 1079  git commit -m "ADR 제목에 상태 추가"
+ 1080  git push
+ 1081  exit
+ 1082  git status
+ 1083  ls
+ 1084  cd idea
+ 1085  ls
+ 1086  cd ddd
+ 1087  ls
+ 1088  git clone https://github.com/Justin-ad-Park/microservices-eventsourcing.git
+ 1089  ls -l
+ 1090  cd microservices-eventsourcing
+ 1091  ls
+ 1092  yexit
+ 1093  exit
+ 1094  git status
+ 1095  git reset --hard
+ 1096  git status
+ 1097  git add .
+ 1098  git commit -m "Restful API 응답(성공/실패) 처리 방식 개선"
+ 1099  git push
+ 1100  git status
+ 1101  git add .
+ 1102  git commit -m "[adr_08_restfulAPI_응답처리 방식 개선]Restful API 예외처리를 클라이언트가 쉽게 할 수 있도록 응답 통일"
+ 1103  git push
+ 1104  git status
+ 1105  git add .
+ 1106  git commit -m "@Service Bean 주입 방식 테스트 추가"
+ 1107  git push
+ 1108  ./gradlew -version
+ 1109  git status
+ 1110  clear
+ 1111  git status
+ 1112  git add .
+ 1113  git commit -m "리팩터링 연습 준비"
+ 1114  git push
+ 1115  git branch practice
+ 1116  git checkout practice
+ 1117  git pull
+ 1118  git branch --set-upstream-to=origin/practice practice
+ 1119  git branch --set-upstream-to=origin/practice
+ 1120  git fetch
+ 1121  git push -u
+ 1122  git status
+ 1123  git add .
+ 1124  git commit -m "SRP[Red] - Birthday 값객체 생성 및 생일계산을 Birthday로 변경"
+ 1125  git add .
+ 1126  git commit -m "SRP[Green] - 생일계산 로직 추가"
+ 1127  git status
+ 1128  git add .
+ 1129  git commit -m "SRP[Blue] - 생일계산 로직 리팩터링"
+ 1130  git add .
+ 1131  git commit -m "SRP[Blue] - 생일계산 로직 리팩터링 완료"
+ 1132  git history
+ 1133  git log
+ 1134  git status
+ 1135  git add .
+ 1136  git commit -m "SRP - 전화번호 값 객체 분리 시작"
+ 1137  git status
+ 1138  git add .
+ 1139  git commit -m "SRP - 전화번호 값 객체 분리"
+ 1140  git push
+ 1141  gitlog
+ 1142  alias
+ 1143  alias >> grep gitlog
+ 1144  alias || grep gitlog
+ 1145  alias >> grep log
+ 1146  alias | grep log
+ 1147  glod
+ 1148  glols
+ 1149  git status
+ 1150  git add .
+ 1151  git commit -m "[단일 책임의 원칙 SRP]Customer에서 surveyor 분리"
+ 1152  git push
+ 1153  git add .
+ 1154  git commit -m "[OCP 개방 폐쇄의 원칙]AssignRule 추가"
+ 1155  git statis
+ 1156  git add .
+ 1157  gitlog | grep log
+ 1158  alias | grep log
+ 1159  gloga
+ 1160  git loga
+ 1161  gloga
+ 1162  alias | grep log
+ 1163  glols
+ 1164  glgla
+ 1165  glola
+ 1166  glols
+ 1167  git status
+ 1168  git push
+ 1169  git status
+ 1170  git add .
+ 1171  git commit -m "[LSP,ISP]필터 filter, 정렬(AssignComparator), 배정(Distributable)"
+ 1172  git status
+ 1173  git add .
+ 1174  git commit -m "[LSP,ISP]필터 filter, 정렬(AssignComparator), 배정(Distributable)"
+ 1175  git commit --amend
+ 1176  git status
+ 1177  git push
+ 1178  git status
+ 1179  git add .
+ 1180  git commit -m "[DIP-Dependency Inversion Principle]의존성역전원칙 AssignService" 
+ 1181  git push
+ 1182  git status
+ 1183  git branch ddd
+ 1184  git checkout ddd
+ 1185  git pull
+ 1186  git branch --set-upstream-to=origin ddd
+ 1187  git fetch
+ 1188  git push -u
+ 1189  git push --set-upstream origin ddd
+ 1190  git pull
+ 1191  git log
+ 1192  glgla
+ 1193  gloga
+ 1194  glog
+ 1195  glogl
+ 1196  aliss | grep log
+ 1197  alias | grep log
+ 1198  glol
+ 1199  glols
+ 1200  git status
+ 1201  git stash
+ 1202  git status
+ 1203  git checkout main
+ 1204  git checkout master
+ 1205  git merge practice
+ 1206  git push
+ 1207  git branch 03-eventsourcing
+ 1208  git checkout 03-eventsourcing
+ 1209  git pop
+ 1210  git stash --help
+ 1211  git stash apply
+ 1212  git stash list
+ 1213  git status
+ 1214  git add .
+ 1215  git status
+ 1216  git add .
+ 1217  git status
+ 1218  git remove 03-eventsourcing-cart/gradle/wrapper/gradle-wrapper.*
+ 1219  git delete --help
+ 1220  git --help
+ 1221  git rm 03-eventsourcing-cart/gradle/wrapper/gradle-wrapper.jar 03-eventsourcing-cart/gradle/wrapper/gradle-wrapper.properties
+ 1222  git status
+ 1223  git rm 03-eventsourcing-cart/gradle/wrapper/gradle-wrapper.jar
+ 1224  git rm --help
+ 1225  git --help
+ 1226  git status
+ 1227  git reset --hard
+ 1228  git status
+ 1229  git add 03-cart/
+ 1230  git status
+ 1231  git add .gitignore
+ 1232  git status
+ 1233  git add .
+ 1234  git status
+ 1235  git add .
+ 1236  git status
+ 1237  git restore --staged 03-cart/gradle/wrapper/gradle-wrapper.jar\ngit restore --staged 03-cart/gradle/wrapper/gradle-wrapper.properties\ngit restore --staged 03-cart/gradlew\ngit restore --staged 03-cart/gradlew.bat
+ 1238  git status
+ 1239  git restore --staged 03-cart/gradlew\n
+ 1240  git restore --staged 03-cart/gradlew.bat\n
+ 1241  git status
+ 1242  git add .
+ 1243  git status
+ 1244  git add .
+ 1245  git commit -m "CART 초기 모델"
+ 1246  git push
+ 1247  git push --set-upstream origin 03-eventsourcing
+ 1248  git status
+ 1249  git add .
+ 1250  git commit -m "event 추가"
+ 1251  git push
+ 1252  git status
+ 1253  git add .
+ 1254  git commit -m "이벤트 기능 Cart에 추가"
+ 1255  git push
+ 1256  ㅎ
+ 1257  git status
+ 1258  git add .
+ 1259  git commit -m "UUID 시간순 생성 로직"
+ 1260  git push
+ 1261  git remote -v
+ 1262  git status
+ 1263  git add .
+ 1264  git commit -m "단순 오타 수정"
+ 1265  git push
+ 1266  git status
+ 1267  git add .
+ 1268  git commit -m "API Error을 4xx, 5xx로 HTTP Status를 명확하게 변경" 
+ 1269  git push
+ 1270  git checkout main
+ 1271  git merge ddd
+ 1272  git status
+ 1273  git add .
+ 1274  git push
+ 1275  git status
+ 1276  git checkout ddd
+ 1277  git status
+ 1278  git checkout main
+ 1279  git branch removeCommand
+ 1280  git checkout removeCommand
+ 1281  git status
+ 1282  git add .
+ 1283  git status
+ 1284  git add .
+ 1285  git status
+ 1286  git commit -m "adr-09 DomainCommand 모델 제거"
+ 1287  git push
+ 1288  git checkout main
+ 1289  git merge removeCommand
+ 1290  git status
+ 1291  git add .
+ 1292  git commit
+ 1293  git amend
+ 1294  git commit --amend
+ 1295  git status
+ 1296  git push
+ 1297  glola
+ 1298  gloll
+ 1299  glolb
+ 1300  alias | grep git
+ 1301  alias | grep log
+ 1302  glogs
+ 1303  glods
+ 1304  gloda
+ 1305  gloga
+ 1306  glola
+ 1307  glols
+ 1308  q
+ 1309  gs
+ 1310  alias
+ 1311  alias gs=glols
+ 1312  gs
+ 1313  vi .sharc
+ 1314  vi ~/.zshrc
+ 1315  glols
+ 1316  gs
+ 1317  source ~/.zshrc
+ 1318  hs
+ 1319  gs
+ 1320  ls
+ 1321  gs
+ 1322  git branch applicationCommand
+ 1323  git checkout applicationCommand
+ 1324  git status
+ 1325  git add .
+ 1326  git commit -m "ArchunitTestO 리팩토링"
+ 1327  git push
+ 1328  git push --setup-stream origin 
+ 1329  git push --setup-stream origin applicationCommand
+ 1330  git push
+ 1331  git push --set-upstream origin applicationCommand
+ 1332  git push
+ 1333  git checkout main
+ 1334  git merge applicationCommand
+ 1335  git status
+ 1336  gs
+ 1337  git status
+ 1338  git add .
+ 1339  git commit -m "Rename Backup file name"
+ 1340  git push
+ 1341  git status
+ 1342  git add .
+ 1343  git commit -m "Archunit 설정 추가"
+ 1344  git push
+ 1345  cd idea
+ 1346  ls
+ 1347  cd Architecture
+ 1348  ls
+ 1349  git checkout https://github.com/Justin-ad-Park/order-saga-system.git
+ 1350  git clone https://github.com/Justin-ad-Park/order-saga-system.git
+ 1351  ls
+ 1352  cd order-saga-system
+ 1353  ls -l
+ 1354  ls -al
+ 1355  cp /Users/justinpark/idea/Architecture/account-hexagonal-demo/.gitignore .
+ 1356  ls -l
+ 1357  ls -al
+ 1358  ls -l
+ 1359  exit
+ 1360  ./gradle --version
+ 1361  git status
+ 1362  git add .
+ 1363  git status
+ 1364  pwd
+ 1365  ./gradlew :order-orchestrator:test
+ 1366  ./gradlew :order-orchestrator:bootRun
+ 1367  git status
+ 1368  git add .
+ 1369  git commit -m "0all_flow_test.http 오류 수정 - json body 추가"
+ 1370  git push
+ 1371  ㅜnpm install -g @openai/codex
+ 1372  npm install -g @openai/codex
+ 1373  npm
+ 1374  node -v
+ 1375  git
+ 1376  git --version
+ 1377  brew install npm
+ 1378  nvm --version
+ 1379  echo '[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && . "/opt/homebrew/opt/nvm/nvm.sh"' >> ~/.zshrc
+ 1380  source ~/.zshrc
+ 1381  nvm --version
+ 1382  echo '[ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && . "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"' >> ~/.zshrc
+ 1383  source ~/.zshrc
+ 1384  nvm --version
+ 1385  cat /opt/homebrew/opt/nvm/nvm.sh
+ 1386  nvm
+ 1387  cat /.zshrc
+ 1388  cat ~/.zshrc
+ 1389  vi ~/.zshrc
+ 1390  nvm
+ 1391  brew uninstall npm
+ 1392  brew install nvm
+ 1393  nvm --version
+ 1394  source ~/.zshrc
+ 1395  nvm
+ 1396  nvm --version
+ 1397  nvm install --lts
+ 1398  node -v
+ 1399  cd idea
+ 1400  ls -l
+ 1401  cd Apps
+ 1402  ls
+ 1403  git clone https://github.com/openai/codex.git
+ 1404  cd codex
+ 1405  ls -l
+ 1406  npm install
+ 1407  npx codex
+ 1408  node --version
+ 1409  npm --version
+ 1410  npx codex
+ 1411  which npx
+ 1412  npm install -g npx
+ 1413  npm
+ 1414  source ~/.zshrc
+ 1415  npx
+ 1416  npx codex
+ 1417  npm install -g @openai/codex
+ 1418  codex --version
+ 1419  codex
+ 1420  git status
+ 1421* gs
+ 1422* exit
+ 1423* git init
+ 1424* git remote -v
+ 1425* git status
+ 1426* git add .
+ 1427* git commit -m '
+ 1428* git commit -m "Factory Sample"
+ 1429* git push
+ 1430* git remote add step-01 https://github.com/Justin-ad-Park/
+ 1431* git push
+ 1432* git push --set-upstream step-01 main
+ 1433* git remote add step-01 https://github.com/Justin-ad-Park/step-01
+ 1434* git push
+ 1435* git push --set-upstream step-01 origin
+ 1436* git push --set-upstream step-01 
+ 1437* git push --set-upstream step-01 main
+ 1438* git remote add origin https://github.com/Justin-ad-Park/step-01.git
+ 1439* git push
+ 1440* git push --set-upstream step-01 main
+ 1441* git branch -M main
+ 1442* git push -u origin main
+ 1443* git remote remove origin
+ 1444* git remote add origin https://github.com/Justin-ad-Park/step-01.git
+ 1445* git push -u origin main
+ 1446* git remote remove origin
+ 1447* git remote add origin https://github.com/Justin-ad-Park/step-01.git
+ 1448* git branch -M main
+ 1449* git push -u origin main
+ 1450* git remote -v
+ 1451* git remote remove step-01
+ 1452* git remote -v
+ 1453* git push -u origin main
+ 1454* git remote remove step-01 
+ 1455* git branch    
+ 1456* git push -u origin main
+ 1457* git remote -v
+ 1458* git push -u origin main
+ 1459* git status
+ 1460* git add .
+ 1461* git commit -m "Refactoring All"
+ 1462* git push
+ 1463* git add .
+ 1464* git commit -m "Refactoring All"
+ 1465* git push
+ 1466* git add .
+ 1467* git commit -m "Refactoring move to Enum"
+ 1468* git push
+ 1469* git status
+ 1470* git add .
+ 1471* git commit -m "[R]명시적인 어노테이션 Qualifier로 변경"
+ 1472* git push
+ 1473* git status
+ 1474* gs
+ 1475* git status
+ 1476* git add .
+ 1477* git commit -m "Last Commit"
+ 1478* git push
+ 1479* git status
+ 1480* git add .
+ 1481* git commit -m "주석 등 일부 정리"
+ 1482* git push
+ 1483  git status
+ 1484  git add .
+ 1485  git branch order
+ 1486  git checkout order
+ 1487  git status
+ 1488  git add .
+ 1489  git commit -m "order start"
+ 1490  git push
+ 1491  cd branch order
+ 1492  git branch order
+ 1493  git checkout order
+ 1494  git pull
+ 1495  git branch --set-upstream-to=origin order
+ 1496  git fetch
+ 1497  git remote -v
+ 1498  git status
+ 1499  git add .
+ 1500  git commit -m "주문 오케스트레이터의 기본 골격만 완성. Persistent 개발 안됨"
+ 1501  git push
+ 1502  git push --set-upstream origin order
+ 1503  git add .
+ 1504  git status
+ 1505  git comit -m "UUID Generator 분리"
+ 1506  git commit -m "UUID Generator 분리"
+ 1507  git branch 02_order_repository
+ 1508  git checkout 02_order_repository
+ 1509  git status
+ 1510  git commit -m "add JPA Library and application.yaml setting"
+ 1511  git add .
+ 1512  git commit -m "add JPA Library and application.yaml setting"
+ 1513  git status
+ 1514  ./gradlew :order-orchestrator:bootRun
+ 1515  GET http://localhost:8080/actuator/health
+ 1516  git status
+ 1517  git add .
+ 1518  git commit -m "JPA 기본 구조 완성"
+ 1519  git push
+ 1520  git push --set-upstream origin 02_order_repository
+ 1521  ./gradlew :order-orchestrator:test --tests "*OrderOrchestrationIntegrationTest"
+ 1522  ./gradlew :order-orchestrator:test --tests "OrderOrchestrationIntegrationTest"
+ 1523  git status
+ 1524  git add .
+ 1525  git commit -m "SpringBoot 전체를 띄운 상태에서 HTTP 호출 + H2 검사를 하는 중간 통합 테스트"
+ 1526  git push
+ 1527  gs
+ 1528  git status
+ 1529  git add .
+ 1530  git commit -m "Archunit 검증 테스트 추가"
+ 1531  git push
+ 1532  gs
+ 1533  git status
+ 1534  gs
+ 1535  git status
+ 1536  git add . 
+ 1537  git status
+ 1538  git checkout main
+ 1539  git stash --help
+ 1540  git status
+ 1541  git stash save common
+ 1542  git status
+ 1543  git checkout main
+ 1544  git merge 02_order_repository
+ 1545  git checkout 02_order_repository
+ 1546  git stash apply
+ 1547  git status
+ 1548  git add .
+ 1549  git commit -m "### Common 모듈 추가 ######################"
+ 1550  hs
+ 1551  gs
+ 1552  git push
+ 1553  gs
+ 1554  git checkout main
+ 1555  git merge 02_order_repository
+ 1556  git status
+ 1557  git checkout 02_order_repository
+ 1558  ls -l
+ 1559  git status
+ 1560* history
+ 1561* history > codex
+ 1562* exit
+ 1563  history

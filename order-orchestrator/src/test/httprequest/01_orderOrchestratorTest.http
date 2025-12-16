@@ -31,7 +31,7 @@ Accept: application/json
 GET http://localhost:8080/h2-console
 
 
-# H2 DB 데이터 확인
+// # H2 DB 데이터 확인
 SELECT * FROM ORDER_ITEM ;
 SELECT * FROM ORDER_SAGA ;
 SELECT * FROM OUTBOX_MESSAGE ;
