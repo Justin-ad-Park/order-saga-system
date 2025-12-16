@@ -1,4 +1,4 @@
-package archunit;
+package com.example.couponservice.archunit;
 
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;

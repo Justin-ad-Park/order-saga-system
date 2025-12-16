@@ -1,5 +1,7 @@
-package com.example.couponservice.adapter.out.persistence.jpa;
+package com.example.couponservice.adapter.out.persistence;
 
+import com.example.couponservice.adapter.out.persistence.jpa.CouponJpaEntity;
+import com.example.couponservice.adapter.out.persistence.jpa.CouponJpaRepository;
 import com.example.couponservice.application.port.out.LoadCouponPort;
 import com.example.couponservice.application.port.out.SaveCouponPort;
 import com.example.couponservice.domain.model.Coupon;
