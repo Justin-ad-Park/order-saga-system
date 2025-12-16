@@ -23,6 +23,7 @@ dependencies {
 
     // Spring Boot 테스트 (TDD)
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation testFixtures(project(':common'))
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
