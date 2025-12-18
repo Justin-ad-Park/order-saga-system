@@ -17,15 +17,20 @@ spring:
     username: sa
     password:
 
-  sql:
+  jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
   #    init:
   #      mode: embedded  #always | never | embedded
   h2:
     console:
-      enabled: true  # http://localhost:8080/h2-console
+      enabled: true  # http://localhost:8081/h2-console
       path: /h2-console
 
 server:
