@@ -53,7 +53,7 @@ class OrderOrchestrationIntegrationTest {
             couponContext = new SpringApplicationBuilder(CouponServiceApplication.class)
                     .properties(
                             "server.port=0",
-                            "spring.profiles.active=dev"
+                            "spring.profiles.active=test"
                     )
                     .run();
             if (couponContext instanceof ServletWebServerApplicationContext servletContext) {
@@ -62,6 +62,11 @@ class OrderOrchestrationIntegrationTest {
                 couponPort = couponContext.getEnvironment().getProperty("local.server.port", Integer.class, 8081);
             }
         }
+
+        System.out.println("\n==========================");
+        System.out.println("COUPON_PORT: " + couponPort);
+        System.out.println("==========================");
+
         registry.add("external.coupon.base-url", () -> "http://localhost:" + couponPort);
     }
 

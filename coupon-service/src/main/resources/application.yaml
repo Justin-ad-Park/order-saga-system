@@ -1,13 +1,13 @@
 # src/main/resources/application.yml
 spring:
   profiles:
-    active: dev
+    active: test
 
 ---
 spring:
   config:
     activate:
-      on-profile: dev
+      on-profile: test
   application:
     name: coupon-service
 
@@ -21,6 +21,7 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+    defer-datasource-initialization: true
 
   sql:
     init:

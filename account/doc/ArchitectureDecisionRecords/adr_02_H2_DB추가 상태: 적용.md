@@ -9,7 +9,7 @@ file로 영속성 구조를 만드는 기본 로직은 실무 수준의 예제�
 DB는 가벼운 H2로 구성했다.
 
 # Decision
-- application.yaml에 embedded DB인 경우 초기 스크립트(schema.sql)를 실행하도록 처리 
+- application.yaml에 embedded DB인 경우 초기 스크립트(schema_success.sql)를 실행하도록 처리 
 ```yaml
 spring:
   sql:
@@ -18,7 +18,7 @@ spring:
 ```
 
 - 테이블 생성 스크립트 추가 
-  - resources/schema.sql
+  - resources/schema_success.sql
 ```sql
 CREATE TABLE IF NOT EXISTS account (
     account_number VARCHAR(64) PRIMARY KEY,
