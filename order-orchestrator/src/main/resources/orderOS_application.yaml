@@ -1,0 +1,44 @@
+# src/main/resources/application.yml
+spring:
+  profiles:
+    active: test  # file | h2
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+  datasource:
+    url: jdbc:h2:mem:orderos;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL
+    #url: "jdbc:h2:file:${user.home}/test/orderos-test;MODE=LEGACY"
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    defer-datasource-initialization: true
+
+  sql:
+    init:
+      mode: always
+#      schema-locations: classpath:orderOS_schema.sql
+  #    init:
+  #      mode: embedded  #always | never | embedded
+  h2:
+    console:
+      enabled: true  # http://localhost:8081/h2-console
+      path: /h2-console
+
+server:
+  port: 8080
+
+persistence:
+  type: h2
+
+external:
+  coupon:
+    base-url: http://localhost:8081
+

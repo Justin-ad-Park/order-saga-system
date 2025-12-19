@@ -4,7 +4,6 @@ import com.example.couponservice.adapter.out.persistence.jpa.CouponJpaEntity;
 import com.example.couponservice.adapter.out.persistence.jpa.CouponJpaRepository;
 import com.example.couponservice.adapter.in.web.dto.request.ReserveCouponRequest;
 import com.example.couponservice.domain.model.status.CouponStatus;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,8 +17,10 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test") // application-dev.yml / dev 프로파일 H2 설정 사용
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "spring.config.name=coupon_application"
+)
+@ActiveProfiles("test")
 class CouponControllerIntegrationTest {
 
     @LocalServerPort

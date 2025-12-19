@@ -17,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
 import org.springframework.http.*;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -33,7 +34,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  *  CLI Test 방법
  *  ./gradlew :order-orchestrator:test --tests "OrderOrchestrationIntegrationTest"
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "spring.config.name=orderOS_application")
+@ActiveProfiles("test")
 @Transactional
 class OrderOrchestrationIntegrationTest {
 
@@ -53,7 +56,8 @@ class OrderOrchestrationIntegrationTest {
             couponContext = new SpringApplicationBuilder(CouponServiceApplication.class)
                     .properties(
                             "server.port=0",
-                            "spring.profiles.active=test"
+                            "spring.profiles.active=test",
+                            "spring.config.name=coupon_application"
                     )
                     .run();
             if (couponContext instanceof ServletWebServerApplicationContext servletContext) {
@@ -65,6 +69,17 @@ class OrderOrchestrationIntegrationTest {
 
         System.out.println("\n==========================");
         System.out.println("COUPON_PORT: " + couponPort);
+        System.out.println("coupon spring.datasource.url = " +
+                couponContext.getEnvironment().getProperty("spring.datasource.url"));
+
+        System.out.println("coupon spring.sql.init.mode = " +
+                couponContext.getEnvironment().getProperty("spring.sql.init.mode"));
+
+        System.out.println("coupon spring.sql.init.schema-locations = " +
+                couponContext.getEnvironment().getProperty("spring.sql.init.schema-locations"));
+
+        var r = couponContext.getResource("classpath:/coupon_schema.sql");
+        System.out.println("coupon_schema.sql exists? " + r.exists() + ", url=" + r);
         System.out.println("==========================");
 
         registry.add("external.coupon.base-url", () -> "http://localhost:" + couponPort);
