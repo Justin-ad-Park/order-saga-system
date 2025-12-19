@@ -1,7 +1,7 @@
 # src/main/resources/application.yml
-spring:
-  profiles:
-    active: test
+#spring:
+#  profiles:
+#    active: test
 
 ---
 spring:
@@ -27,6 +27,45 @@ spring:
     init:
       mode: always
       schema-locations: classpath:schema.sql
+  #    init:
+  #      mode: embedded  #always | never | embedded
+  h2:
+    console:
+      enabled: true  # http://localhost:8081/h2-console
+      path: /h2-console
+
+server:
+  port: 8081
+
+persistence:
+  type: h2
+
+---
+
+---
+spring:
+  config:
+    activate:
+      on-profile: fail
+  application:
+    name: coupon-service
+
+  datasource:
+    url: jdbc:h2:mem:coupondb;MODE=MYSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    defer-datasource-initialization: true
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema_fail.sql
   #    init:
   #      mode: embedded  #always | never | embedded
   h2:

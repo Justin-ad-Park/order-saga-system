@@ -6,13 +6,8 @@ CREATE TABLE IF NOT EXISTS coupon (
 );
 
 MERGE INTO coupon (coupon_number, status, issued_at, expired_at)
-    KEY(coupon_number)
-    VALUES ('C-001', 'AVAILABLE', CURRENT_TIMESTAMP, DATEADD('DAY', 30, CURRENT_TIMESTAMP));
-
-
-MERGE INTO coupon (coupon_number, status, issued_at, expired_at)
 KEY(coupon_number)
-VALUES ('CPN-001', 'AVAILABLE', CURRENT_TIMESTAMP, DATEADD('DAY', 30, CURRENT_TIMESTAMP));
+VALUES ('CPN-001', 'RESERVED', CURRENT_TIMESTAMP, DATEADD('DAY', 30, CURRENT_TIMESTAMP));
 
 -- MERGE INTO coupon (coupon_number, status, issued_at, expired_at)
 --     KEY(coupon_number)
