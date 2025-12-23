@@ -1,0 +1,1 @@
+kubectl delete -f k8s/mysql.yaml

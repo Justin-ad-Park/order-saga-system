@@ -1,13 +1,62 @@
-› 모든 프로젝트는 맥북에서 개발을 진행할 예정이며, 멀티모듈 프로젝트로 개발하려고 해. 로컬에 도커+쿠버네티스를 설치해서 MSA, Kafka 클러스터를 쿠버네티스로 구성할 예정이야. 우선 MSA는 1. 주문 오케스트레이션 MSA 1-1. orderID
-발행 1-2. 쿠폰MSA의 쿠폰 예약, 주문MSA의 주문 생성 API를 리액티브로 동시 호출 1-3. 1-2 모두 성공을 응답받으면 결제MSA의 결제요청 API 호출 1-3. 성공 시 주문 생성됨 outbox transaction 커밋과 Kafka이벤트발행(orderCompleted)
-1-3. 까지 성공해서 orderCompleted 이벤트가 발행되면, 각 MSA별 카프카 컨슈머가 확정 처리를 하는데, 이는 추후에 구현) 2. 쿠폰 MSA (쿠폰예약, 쿠폰 확정, 쿠폰보상트랜잭션) 3. 주문 MSA(주문생성, 주문확정, 주문보상) 4. 결제
-MSA(결제요청) 1, 2, 3, 4 각각 MSA+독립 Database로 구성 대강의 구성을 설명했고, 이해했으면, 현재 개발 단계를 다시 설명할께.
+# 쿠버네티스 설정 및 mysql 설치
+```
+kubectl create namespace msa
+kubectl get ns
 
+mkdir ~/test/mysql
+```
 
-› 1단계 : Spring boot WEB API 구성 - 주문 오케스트레이터 MSA 구성 - Hexagonal 아키텍처 적용(스켈레톤 프로젝트를 활용) - H2 DB를 각 서비스별로 독립적으로 구성하거나, 적어도 논리적으로 분리되도록 Database 분리 - TDD 구성 2단
-계 : 쿠폰 MSA 및 이후 각 MSA 구성 3단계 : 주문 오케스트레이션(MSA)와 각 MSA(쿠폰, 주문, 결제)를 쿠버네티스에 배포하는 CI/CD 구성 - 각 MSA 테스트 과정에서 데이터 변화 확인이 가능하도록 DB는 Local Storage에 마운트 4단계 :
-카프카 클러스터를 K8s에 구성 5단계 : 주문 완료 메시지 발행까지 통합 테스트 개발 6단계 : 주문 완료 메시지를 확정하는 API를 각 MSA에 개발 7단계 : 각 MSA의 컨슈머 개발 - 컨슈머는 각 MSA의 확정 API 호출 8단계 : 각 MSA의 확정
-완료 메시지를 수신하는 컨슈머 개발 - 모든 MSA가 확정 완료되면 주문 오케스트레이션의 outbox transaction 데이터의 상태 업데이트 9단계 : MSA에 실패 케이스 추가 10단계 : 주문 오케스트레이터에서 각 MSA의 실패 응답 또는 timeout
-발생 시 주문생성실패(OrderCreationFailed) 메시지 발행 11단계 : 각 MSA용 주문 생성 실패 컨슈머 개발 12단계 : 11단계의 컨슈머에서 각 MSA의 보상 API 호출 13단계 : 각 보상 API에서 보상 완료 메시지 발행 14단계 : 보상 완료 메시
-지를 수신하는 컨슈머에서 모든 보상이 완료되면 Outbox Transacton 데이터를 보상 완료 처리(주문 오케이스레이션 MSA) 15단계 : 보상 시나리오 테스트 대략적인 진행 계획이고, 세부적인 내용은 각 단계별로 다시 설명할께. 현재 2단계
-중에서 coupon-service의 예약, 확정 서비스 및 예약 API까지 개발된 상태야.
+## Step 2. K8s에 MySQL 배포 (Local Path PV + PVC + Deployment + Service)
+
+목표: ~/test/mysql을 PV로 연결 → PVC로 바인딩 → MySQL에 마운트
+
+### 2-1) PV/PVC/Service/Deployment 매니페스트 작성
+
+아래를 k8s/mysql.yaml로 저장(예시).
+
+⚠️ 주의: 로컬 K8s 종류에 따라 hostPath로 ~/test/mysql를 바로 쓰는 게 안 되는 경우가 있어.
+그럴 때는 “Docker Desktop의 HostPath” 지원 범위 또는 “local-path-provisioner” 방식으로 바꿔야 해.
+
+### 2-2) k8s mysql.yaml 실행
+```
+kubectl apply -f k8s/mysql.yaml
+kubectl get pods -w
+kubectl get svc -n msa
+kubectl get pvc,pv -n msa
+
+```
+Pod가 Running이 되면 OK
+PVC가 Bound인지 확인
+
+### 2-3) 삭제 방법
+```
+-- 한방에 삭제 
+kubectl delete -f k8s/mysql.yaml 
+
+또는 
+
+kubectl delete deployment mysql -n default
+kubectl delete service mysql -n default
+kubectl delete pvc mysql-pvc -n default
+```
+
+## 3. 
+```
+kubectl port-forward -n msa svc/mysql 3307:3306
+```
+
+### 3-1) 스키마(데이터베이스)와 계정 생성은 어디서?
+
+```mysql
+-- Order Orchestrator
+CREATE DATABASE IF NOT EXISTS order_orchestrator_db;
+CREATE USER IF NOT EXISTS 'order_orchestrator_user'@'%' IDENTIFIED BY 'order_orchestrator_pw';
+GRANT ALL PRIVILEGES ON order_orchestrator_db.* TO 'order_orchestrator_user'@'%';
+
+-- Coupon Service
+CREATE DATABASE IF NOT EXISTS coupon_db;
+CREATE USER IF NOT EXISTS 'coupon_user'@'%' IDENTIFIED BY 'coupon_pw';
+GRANT ALL PRIVILEGES ON coupon_db.* TO 'coupon_user'@'%';
+
+FLUSH PRIVILEGES;
+```

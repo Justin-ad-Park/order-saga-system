@@ -5,15 +5,29 @@ CREATE TABLE IF NOT EXISTS coupon (
     expired_at TIMESTAMP NOT NULL
 );
 
-MERGE INTO coupon (coupon_number, status, issued_at, expired_at)
-    KEY(coupon_number)
-    VALUES ('C-001', 'AVAILABLE', CURRENT_TIMESTAMP, DATEADD('DAY', 30, CURRENT_TIMESTAMP));
+-- truncate table coupon;
+
+INSERT INTO coupon (coupon_number, status, issued_at, expired_at)
+VALUES (
+           'C-001',
+           'AVAILABLE',
+           CURRENT_TIMESTAMP,
+           DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
+       )
+    ON DUPLICATE KEY UPDATE
+                         status = VALUES(status),
+                         issued_at = VALUES(issued_at),
+                         expired_at = VALUES(expired_at);
 
 
-MERGE INTO coupon (coupon_number, status, issued_at, expired_at)
-KEY(coupon_number)
-VALUES ('CPN-001', 'AVAILABLE', CURRENT_TIMESTAMP, DATEADD('DAY', 30, CURRENT_TIMESTAMP));
-
--- MERGE INTO coupon (coupon_number, status, issued_at, expired_at)
---     KEY(coupon_number)
---     VALUES ('CPN-001', 'AVAILABLE', CURRENT_TIMESTAMP, DATEADD('DAY', 30, CURRENT_TIMESTAMP));
+INSERT INTO coupon (coupon_number, status, issued_at, expired_at)
+VALUES (
+           'CPN-001',
+           'AVAILABLE',
+           CURRENT_TIMESTAMP,
+           DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
+       )
+    ON DUPLICATE KEY UPDATE
+                         status = VALUES(status),
+                         issued_at = VALUES(issued_at),
+                         expired_at = VALUES(expired_at);
