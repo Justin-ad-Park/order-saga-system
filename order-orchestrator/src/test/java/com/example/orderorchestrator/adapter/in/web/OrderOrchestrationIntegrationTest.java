@@ -52,7 +52,7 @@ class OrderOrchestrationIntegrationTest {
     private static int pointPort;
 
     @AfterAll
-    static void stopCouponService() {
+    static void stopMSAService() {
         if (couponContext != null) {
             couponContext.close();
         }
@@ -64,66 +64,30 @@ class OrderOrchestrationIntegrationTest {
     @DynamicPropertySource
     static void overrideProperties(DynamicPropertyRegistry registry) {
         if (couponContext == null) {
-            couponContext = new SpringApplicationBuilder(CouponServiceApplication.class)
-                    .properties(
-                            "server.port=0",
-                            "spring.profiles.active=test",
-                            "spring.config.name=coupon_application"
-                    )
-                    .run();
-            if (couponContext instanceof ServletWebServerApplicationContext servletContext) {
-                couponPort = servletContext.getWebServer().getPort();
-            } else {
-                couponPort = couponContext.getEnvironment().getProperty("local.server.port", Integer.class, 8081);
-            }
+            ServiceContext context = startService(
+                    CouponServiceApplication.class,
+                    "coupon_application",
+                    "coupon_schema.sql",
+                    8081,
+                    "coupon"
+            );
+            couponContext = context.context();
+            couponPort = context.port();
         }
-
-        System.out.println("\n==========================");
-        System.out.println("COUPON_PORT: " + couponPort);
-        System.out.println("coupon spring.datasource.url = " +
-                couponContext.getEnvironment().getProperty("spring.datasource.url"));
-
-        System.out.println("coupon spring.sql.init.mode = " +
-                couponContext.getEnvironment().getProperty("spring.sql.init.mode"));
-
-        System.out.println("coupon spring.sql.init.schema-locations = " +
-                couponContext.getEnvironment().getProperty("spring.sql.init.schema-locations"));
-
-        var r = couponContext.getResource("classpath:/coupon_schema.sql");
-        System.out.println("coupon_schema.sql exists? " + r.exists() + ", url=" + r);
-        System.out.println("==========================");
 
         registry.add("external.coupon.base-url", () -> "http://localhost:" + couponPort);
 
         if (pointContext == null) {
-            pointContext = new SpringApplicationBuilder(PointServiceApplication.class)
-                    .properties(
-                            "server.port=0",
-                            "spring.profiles.active=test",
-                            "spring.config.name=point_application"
-                    )
-                    .run();
-            if (pointContext instanceof ServletWebServerApplicationContext servletContext) {
-                pointPort = servletContext.getWebServer().getPort();
-            } else {
-                pointPort = pointContext.getEnvironment().getProperty("local.server.port", Integer.class, 8082);
-            }
+            ServiceContext context = startService(
+                    PointServiceApplication.class,
+                    "point_application",
+                    "point_schema.sql",
+                    8082,
+                    "point"
+            );
+            pointContext = context.context();
+            pointPort = context.port();
         }
-
-        System.out.println("\n==========================");
-        System.out.println("POINT_PORT: " + pointPort);
-        System.out.println("point spring.datasource.url = " +
-                pointContext.getEnvironment().getProperty("spring.datasource.url"));
-
-        System.out.println("point spring.sql.init.mode = " +
-                pointContext.getEnvironment().getProperty("spring.sql.init.mode"));
-
-        System.out.println("point spring.sql.init.schema-locations = " +
-                pointContext.getEnvironment().getProperty("spring.sql.init.schema-locations"));
-
-        var pointResource = pointContext.getResource("classpath:/point_schema.sql");
-        System.out.println("point_schema.sql exists? " + pointResource.exists() + ", url=" + pointResource);
-        System.out.println("==========================");
 
         registry.add("external.point.base-url", () -> "http://localhost:" + pointPort);
     }
@@ -207,5 +171,63 @@ class OrderOrchestrationIntegrationTest {
         assertThat(outboxEntity.getPaymentStatus()).isEqualTo(MSAStatus.InProgress);
         assertThat(outboxEntity.getSagaStatus()).isEqualTo(OrderSagaStatus.InProgress);
         assertThat(outboxEntity.getPayload()).isEqualTo("{}");
+    }
+
+    private static ServiceContext startService(
+            Class<?> applicationClass,
+            String configName,
+            String schemaFileName,
+            int fallbackPort,
+            String serviceName
+    ) {
+        ConfigurableApplicationContext context = new SpringApplicationBuilder(applicationClass)
+                .properties(
+                        "server.port=0",
+                        "spring.profiles.active=test",
+                        "spring.config.name=" + configName
+                )
+                .run();
+
+        int port;
+        if (context instanceof ServletWebServerApplicationContext servletContext) {
+            port = servletContext.getWebServer().getPort();
+        } else {
+            port = context.getEnvironment().getProperty("local.server.port", Integer.class, fallbackPort);
+        }
+
+        System.out.println("\n==========================");
+        System.out.println(serviceName.toUpperCase() + "_PORT: " + port);
+        System.out.println(serviceName + " spring.datasource.url = " +
+                context.getEnvironment().getProperty("spring.datasource.url"));
+
+        System.out.println(serviceName + " spring.sql.init.mode = " +
+                context.getEnvironment().getProperty("spring.sql.init.mode"));
+
+        System.out.println(serviceName + " spring.sql.init.schema-locations = " +
+                context.getEnvironment().getProperty("spring.sql.init.schema-locations"));
+
+        var schemaResource = context.getResource("classpath:/" + schemaFileName);
+        System.out.println(schemaFileName + " exists? " + schemaResource.exists() + ", url=" + schemaResource);
+        System.out.println("==========================");
+
+        return new ServiceContext(context, port);
+    }
+
+    private static final class ServiceContext {
+        private final ConfigurableApplicationContext context;
+        private final int port;
+
+        private ServiceContext(ConfigurableApplicationContext context, int port) {
+            this.context = context;
+            this.port = port;
+        }
+
+        private ConfigurableApplicationContext context() {
+            return context;
+        }
+
+        private int port() {
+            return port;
+        }
     }
 }
