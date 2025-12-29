@@ -1,3 +1,7 @@
--- CALL truncate_if_exists('order_item');
--- CALL truncate_if_exists('order_saga');
--- CALL truncate_if_exists('outbox_message');
+SET FOREIGN_KEY_CHECKS = 0;
+
+DELETE FROM order_item;
+DELETE FROM outbox_message;
+DELETE FROM order_saga;
+
+SET FOREIGN_KEY_CHECKS = 1;

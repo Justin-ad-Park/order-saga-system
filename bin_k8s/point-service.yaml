@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: point-service
+  namespace: msa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: point-service
+  template:
+    metadata:
+      labels:
+        app: point-service
+    spec:
+      containers:
+        - name: point-service
+          image: point-service:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8082
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: dev
+            - name: POINT_DB_PASSWORD
+              value: point_pw
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: point-service
+  namespace: msa
+spec:
+  selector:
+    app: point-service
+  ports:
+    - name: http
+      port: 8082
+      targetPort: 8082

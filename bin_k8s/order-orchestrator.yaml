@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-orchestrator
+  namespace: msa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-orchestrator
+  template:
+    metadata:
+      labels:
+        app: order-orchestrator
+    spec:
+      containers:
+        - name: order-orchestrator
+          image: order-orchestrator:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8099
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: dev
+            - name: ORDER_ORCH_DB_PASSWORD
+              value: order_orchestrator_pw
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-orchestrator
+  namespace: msa
+spec:
+  selector:
+    app: order-orchestrator
+  ports:
+    - name: http
+      port: 8099
+      targetPort: 8099

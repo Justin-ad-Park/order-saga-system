@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coupon-service
+  namespace: msa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coupon-service
+  template:
+    metadata:
+      labels:
+        app: coupon-service
+    spec:
+      containers:
+        - name: coupon-service
+          image: coupon-service:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: dev
+            - name: COUPON_DB_PASSWORD
+              value: coupon_pw
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: coupon-service
+  namespace: msa
+spec:
+  selector:
+    app: coupon-service
+  ports:
+    - name: http
+      port: 8081
+      targetPort: 8081

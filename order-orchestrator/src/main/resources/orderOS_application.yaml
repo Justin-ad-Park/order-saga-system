@@ -52,16 +52,16 @@ spring:
 
   sql:
     init:
-      mode: never
+      mode: always
       schema-locations: classpath:orderOS_schema.sql
   #    init:
   #      mode: embedded  #always | never | embedded
 
 server:
-  port: 8080
+  port: 8099
 
 external:
   coupon:
-    base-url: http://localhost:8081
+    base-url: http://coupon-service.msa.svc.cluster.local:8081
   point:
-    base-url: http://localhost:8082
+    base-url: http://point-service.msa.svc.cluster.local:8082

@@ -1,0 +1,27 @@
+### 주문 생성 요청 (K8s Happy Path 예시)
+POST http://localhost:8099/api/v1/orders
+Content-Type: application/json
+Accept: application/json
+
+{
+  "couponNumber": "CPN-001",
+  "pointNumber": "PNT-001",
+  "paymentNumber": "PAY-001",
+  "paymentAmount": 35000,
+  "orderItems": [
+    {
+      "itemNumber": "ITEM-001",
+      "quantity": 2
+    },
+    {
+      "itemNumber": "ITEM-002",
+      "quantity": 1
+    }
+  ]
+}
+
+###
+
+# (선택) 서버 헬스 체크
+GET http://localhost:8099/actuator/health
+Accept: application/json
