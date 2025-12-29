@@ -60,6 +60,12 @@ CREATE DATABASE IF NOT EXISTS coupon_db;
 CREATE USER IF NOT EXISTS 'coupon_user'@'%' IDENTIFIED BY 'coupon_pw';
 GRANT ALL PRIVILEGES ON coupon_db.* TO 'coupon_user'@'%';
 
+-- Point Service
+CREATE DATABASE IF NOT EXISTS point_db;
+CREATE USER IF NOT EXISTS 'point_user'@'%' IDENTIFIED BY 'point_pw';
+GRANT ALL PRIVILEGES ON point_db.* TO 'point_user'@'%';
+
+
 FLUSH PRIVILEGES;
 ```
 

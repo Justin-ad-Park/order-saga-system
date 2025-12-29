@@ -1,0 +1,15 @@
+### 쿠폰 예약 요청 (Happy Path 예시)
+POST http://localhost:8081/api/v1/coupons/reserve
+Content-Type: application/json
+Accept: application/json
+
+{
+  "couponNumber": "CPN-001",
+  "orderId": "ORD-12345"
+}
+
+###
+
+# (선택) 서버 헬스 체크
+GET http://localhost:8081/actuator/health
+Accept: application/json

@@ -10,11 +10,14 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record CreateOrderRequest(
-        @NotBlank
-        String couponNumber,
+    @NotBlank
+    String couponNumber,
 
-        @NotBlank
-        String paymentNumber,
+    @NotBlank
+    String pointNumber,
+
+    @NotBlank
+    String paymentNumber,
 
         @NotNull
         @Min(1)

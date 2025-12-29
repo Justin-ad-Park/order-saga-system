@@ -30,6 +30,8 @@ server:
 external:
   coupon:
     base-url: http://localhost:8081
+  point:
+    base-url: http://localhost:8082
 
 
 ---
@@ -61,3 +63,5 @@ server:
 external:
   coupon:
     base-url: http://localhost:8081
+  point:
+    base-url: http://localhost:8082

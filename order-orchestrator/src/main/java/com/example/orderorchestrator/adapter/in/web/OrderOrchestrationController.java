@@ -3,6 +3,7 @@ package com.example.orderorchestrator.adapter.in.web;
 import com.example.orderorchestrator.adapter.in.web.dto.request.CreateOrderRequest;
 import com.example.orderorchestrator.adapter.in.web.dto.response.CreateOrderResponse;
 import com.example.orderorchestrator.adapter.out.webclient.CouponServiceClient;
+import com.example.orderorchestrator.adapter.out.webclient.PointServiceClient;
 import com.example.orderorchestrator.application.port.in.command.CreateOrderCommand;
 import com.example.orderorchestrator.application.port.in.result.CreateOrderResult;
 import com.example.orderorchestrator.application.port.in.CreateOrderUseCase;
@@ -21,6 +22,7 @@ public class OrderOrchestrationController {
 
     private final CreateOrderUseCase createOrderUseCase;
     private final CouponServiceClient couponServiceClient;
+    private final PointServiceClient pointServiceClient;
 
     @PostMapping
     public Mono<ResponseEntity<CreateOrderResponse>> createOrder(
@@ -36,7 +38,10 @@ public class OrderOrchestrationController {
                 result.status()
         );
 
-        return couponServiceClient.reserveCoupon(request.couponNumber(), result.orderId())
+        return Mono.when(
+                        couponServiceClient.reserveCoupon(request.couponNumber(), result.orderId()),
+                        pointServiceClient.reservePoint(request.pointNumber(), result.orderId())
+                )
                 .thenReturn(ResponseEntity.ok(response));
     }
 

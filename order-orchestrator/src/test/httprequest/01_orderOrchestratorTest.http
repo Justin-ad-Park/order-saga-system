@@ -5,6 +5,7 @@ Accept: application/json
 
 {
   "couponNumber": "CPN-001",
+  "pointNumber": "PNT-001",
   "paymentNumber": "PAY-001",
   "paymentAmount": 35000,
   "orderItems": [

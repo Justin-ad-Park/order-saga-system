@@ -3,6 +3,7 @@ package com.example.orderorchestrator.adapter.in.web;
 
 import com.example.orderorchestrator.adapter.in.web.dto.response.CreateOrderResponse;
 import com.example.couponservice.CouponServiceApplication;
+import com.example.pointservice.PointServiceApplication;
 import com.example.orderorchestrator.adapter.out.persistence.jpa.OrderSagaJpaRepository;
 import com.example.orderorchestrator.adapter.out.persistence.jpa.OutboxMessageJpaRepository;
 import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OrderSagaJpaEntity;
@@ -47,11 +48,16 @@ class OrderOrchestrationIntegrationTest {
 
     private static ConfigurableApplicationContext couponContext;
     private static int couponPort;
+    private static ConfigurableApplicationContext pointContext;
+    private static int pointPort;
 
     @AfterAll
     static void stopCouponService() {
         if (couponContext != null) {
             couponContext.close();
+        }
+        if (pointContext != null) {
+            pointContext.close();
         }
     }
 
@@ -88,6 +94,38 @@ class OrderOrchestrationIntegrationTest {
         System.out.println("==========================");
 
         registry.add("external.coupon.base-url", () -> "http://localhost:" + couponPort);
+
+        if (pointContext == null) {
+            pointContext = new SpringApplicationBuilder(PointServiceApplication.class)
+                    .properties(
+                            "server.port=0",
+                            "spring.profiles.active=test",
+                            "spring.config.name=point_application"
+                    )
+                    .run();
+            if (pointContext instanceof ServletWebServerApplicationContext servletContext) {
+                pointPort = servletContext.getWebServer().getPort();
+            } else {
+                pointPort = pointContext.getEnvironment().getProperty("local.server.port", Integer.class, 8082);
+            }
+        }
+
+        System.out.println("\n==========================");
+        System.out.println("POINT_PORT: " + pointPort);
+        System.out.println("point spring.datasource.url = " +
+                pointContext.getEnvironment().getProperty("spring.datasource.url"));
+
+        System.out.println("point spring.sql.init.mode = " +
+                pointContext.getEnvironment().getProperty("spring.sql.init.mode"));
+
+        System.out.println("point spring.sql.init.schema-locations = " +
+                pointContext.getEnvironment().getProperty("spring.sql.init.schema-locations"));
+
+        var pointResource = pointContext.getResource("classpath:/point_schema.sql");
+        System.out.println("point_schema.sql exists? " + pointResource.exists() + ", url=" + pointResource);
+        System.out.println("==========================");
+
+        registry.add("external.point.base-url", () -> "http://localhost:" + pointPort);
     }
 
     @Autowired
@@ -110,6 +148,7 @@ class OrderOrchestrationIntegrationTest {
         // given: 주문 생성 요청 바디
         Map<String, Object> requestBody = Map.of(
                 "couponNumber", "CPN-001",
+                "pointNumber", "PNT-001",
                 "paymentNumber", "PAY-001",
                 "paymentAmount", 35000L,
                 "orderItems", List.of(
