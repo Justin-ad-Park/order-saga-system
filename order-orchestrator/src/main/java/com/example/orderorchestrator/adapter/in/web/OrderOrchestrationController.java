@@ -28,21 +28,11 @@ public class OrderOrchestrationController {
     public Mono<ResponseEntity<CreateOrderResponse>> createOrder(
             @Valid @RequestBody CreateOrderRequest request
     ) {
-
         CreateOrderCommand command = mapToCommand(request);
         CreateOrderResult result = createOrderUseCase.createOrder(command);
 
-        CreateOrderResponse response = CreateOrderResponse.of(
-                result.orderId(),
-                result.sagaId(),
-                result.status()
-        );
-
-        return Mono.when(
-                        couponServiceClient.reserveCoupon(request.couponNumber(), result.orderId()),
-                        pointServiceClient.reservePoint(request.pointNumber(), result.orderId())
-                )
-                .thenReturn(ResponseEntity.ok(response));
+        return reserveExternalResources(request, result)
+                .thenReturn(ResponseEntity.ok(mapToResponse(result)));
     }
 
     private CreateOrderCommand mapToCommand(CreateOrderRequest request) {
@@ -59,5 +49,20 @@ public class OrderOrchestrationController {
                 request.paymentAmount(),
                 orderItems
         );
+    }
+
+    private CreateOrderResponse mapToResponse(CreateOrderResult result) {
+        return CreateOrderResponse.of(
+                result.orderId(),
+                result.sagaId(),
+                result.status()
+        );
+    }
+
+    private Mono<Void> reserveExternalResources(CreateOrderRequest request, CreateOrderResult result) {
+        return Mono.when(
+                couponServiceClient.reserveCoupon(request.couponNumber(), result.orderId()),
+                pointServiceClient.reservePoint(request.pointNumber(), result.orderId())
+        ).then();
     }
 }
