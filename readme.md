@@ -19,44 +19,9 @@ mkdir ~/test/mysql
 
 ### 2-2) k8s mysql.yaml 실행
 ```
-kubectl apply -f k8s/mysql.yaml
-kubectl get pods -w
-kubectl get svc -n msa
-kubectl get pvc,pv -n msa
-
+./01_run_mysql_portforward.sh
 ```
 Pod가 Running이 되면 OK
 PVC가 Bound인지 확인
 
-### 2-3) 삭제 방법
-```
--- 한방에 삭제 
-kubectl delete -f k8s/mysql.yaml 
 
-또는 
-
-kubectl delete deployment mysql -n default
-kubectl delete service mysql -n default
-kubectl delete pvc mysql-pvc -n default
-```
-
-## 3. 
-```
-kubectl port-forward -n msa svc/mysql 3307:3306
-```
-
-### 3-1) 스키마(데이터베이스)와 계정 생성은 어디서?
-
-```mysql
--- Order Orchestrator
-CREATE DATABASE IF NOT EXISTS order_orchestrator_db;
-CREATE USER IF NOT EXISTS 'order_orchestrator_user'@'%' IDENTIFIED BY 'order_orchestrator_pw';
-GRANT ALL PRIVILEGES ON order_orchestrator_db.* TO 'order_orchestrator_user'@'%';
-
--- Coupon Service
-CREATE DATABASE IF NOT EXISTS coupon_db;
-CREATE USER IF NOT EXISTS 'coupon_user'@'%' IDENTIFIED BY 'coupon_pw';
-GRANT ALL PRIVILEGES ON coupon_db.* TO 'coupon_user'@'%';
-
-FLUSH PRIVILEGES;
-```

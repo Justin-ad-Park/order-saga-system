@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS coupon (
     expired_at TIMESTAMP NOT NULL
 );
 
--- truncate table coupon;
+truncate table coupon;
 
 INSERT INTO coupon (coupon_number, status, issued_at, expired_at)
 VALUES (

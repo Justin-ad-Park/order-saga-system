@@ -1,6 +1,3 @@
--- src/main/resources/coupon_schema.sql
--- CREATE TABLE IF NOT EXISTS account (
---     account_number VARCHAR(64) PRIMARY KEY,
---     name           VARCHAR(255) NOT NULL,
---     balance        BIGINT       NOT NULL
--- );
+-- CALL truncate_if_exists('order_item');
+-- CALL truncate_if_exists('order_saga');
+-- CALL truncate_if_exists('outbox_message');

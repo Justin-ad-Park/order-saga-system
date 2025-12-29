@@ -22,6 +22,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -38,6 +39,10 @@ import static org.assertj.core.api.Assertions.assertThat;
         properties = "spring.config.name=orderOS_application")
 @ActiveProfiles("test")
 @Transactional
+@Sql(
+        scripts = "/orderOS_cleanup.sql",
+        executionPhase = Sql.ExecutionPhase.BEFORE_TEST_CLASS
+)
 class OrderOrchestrationIntegrationTest {
 
     private static ConfigurableApplicationContext couponContext;
