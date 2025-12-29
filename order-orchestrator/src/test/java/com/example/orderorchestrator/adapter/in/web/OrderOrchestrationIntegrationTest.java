@@ -2,6 +2,7 @@
 package com.example.orderorchestrator.adapter.in.web;
 
 import com.example.orderorchestrator.adapter.in.web.dto.response.CreateOrderResponse;
+import com.example.couponservice.CouponServiceApplication;
 import com.example.orderorchestrator.adapter.out.persistence.jpa.OrderSagaJpaRepository;
 import com.example.orderorchestrator.adapter.out.persistence.jpa.OutboxMessageJpaRepository;
 import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OrderSagaJpaEntity;
@@ -9,11 +10,19 @@ import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OutboxMe
 import com.example.orderorchestrator.domain.model.status.MSAStatus;
 import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
 import org.springframework.http.*;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -26,9 +35,60 @@ import static org.assertj.core.api.Assertions.assertThat;
  *  CLI Test 방법
  *  ./gradlew :order-orchestrator:test --tests "OrderOrchestrationIntegrationTest"
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "spring.config.name=orderOS_application")
+@ActiveProfiles("test")
 @Transactional
+@Sql(
+        scripts = "/orderOS_cleanup.sql",
+        executionPhase = Sql.ExecutionPhase.BEFORE_TEST_CLASS
+)
 class OrderOrchestrationIntegrationTest {
+
+    private static ConfigurableApplicationContext couponContext;
+    private static int couponPort;
+
+    @AfterAll
+    static void stopCouponService() {
+        if (couponContext != null) {
+            couponContext.close();
+        }
+    }
+
+    @DynamicPropertySource
+    static void overrideProperties(DynamicPropertyRegistry registry) {
+        if (couponContext == null) {
+            couponContext = new SpringApplicationBuilder(CouponServiceApplication.class)
+                    .properties(
+                            "server.port=0",
+                            "spring.profiles.active=test",
+                            "spring.config.name=coupon_application"
+                    )
+                    .run();
+            if (couponContext instanceof ServletWebServerApplicationContext servletContext) {
+                couponPort = servletContext.getWebServer().getPort();
+            } else {
+                couponPort = couponContext.getEnvironment().getProperty("local.server.port", Integer.class, 8081);
+            }
+        }
+
+        System.out.println("\n==========================");
+        System.out.println("COUPON_PORT: " + couponPort);
+        System.out.println("coupon spring.datasource.url = " +
+                couponContext.getEnvironment().getProperty("spring.datasource.url"));
+
+        System.out.println("coupon spring.sql.init.mode = " +
+                couponContext.getEnvironment().getProperty("spring.sql.init.mode"));
+
+        System.out.println("coupon spring.sql.init.schema-locations = " +
+                couponContext.getEnvironment().getProperty("spring.sql.init.schema-locations"));
+
+        var r = couponContext.getResource("classpath:/coupon_schema.sql");
+        System.out.println("coupon_schema.sql exists? " + r.exists() + ", url=" + r);
+        System.out.println("==========================");
+
+        registry.add("external.coupon.base-url", () -> "http://localhost:" + couponPort);
+    }
 
     @Autowired
     private TestRestTemplate restTemplate;

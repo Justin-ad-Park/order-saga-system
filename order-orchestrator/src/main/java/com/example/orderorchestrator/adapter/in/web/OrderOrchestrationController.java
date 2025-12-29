@@ -2,14 +2,15 @@ package com.example.orderorchestrator.adapter.in.web;
 
 import com.example.orderorchestrator.adapter.in.web.dto.request.CreateOrderRequest;
 import com.example.orderorchestrator.adapter.in.web.dto.response.CreateOrderResponse;
+import com.example.orderorchestrator.adapter.out.webclient.CouponServiceClient;
 import com.example.orderorchestrator.application.port.in.command.CreateOrderCommand;
 import com.example.orderorchestrator.application.port.in.result.CreateOrderResult;
 import com.example.orderorchestrator.application.port.in.CreateOrderUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.apache.ibatis.annotations.ConstructorArgs;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 import java.util.stream.Collectors;
 
@@ -19,9 +20,10 @@ import java.util.stream.Collectors;
 public class OrderOrchestrationController {
 
     private final CreateOrderUseCase createOrderUseCase;
+    private final CouponServiceClient couponServiceClient;
 
     @PostMapping
-    public ResponseEntity<CreateOrderResponse> createOrder(
+    public Mono<ResponseEntity<CreateOrderResponse>> createOrder(
             @Valid @RequestBody CreateOrderRequest request
     ) {
 
@@ -34,7 +36,8 @@ public class OrderOrchestrationController {
                 result.status()
         );
 
-        return ResponseEntity.ok(response);
+        return couponServiceClient.reserveCoupon(request.couponNumber(), result.orderId())
+                .thenReturn(ResponseEntity.ok(response));
     }
 
     private CreateOrderCommand mapToCommand(CreateOrderRequest request) {

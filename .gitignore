@@ -51,3 +51,6 @@ bin/
 
 ### This Project ###
 port-forward.pid
+
+### Test ###
+**/data/

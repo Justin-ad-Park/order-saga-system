@@ -1,0 +1,1 @@
+kubectl scale sts/mysql -n msa --replicas=1

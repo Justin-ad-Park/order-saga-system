@@ -1,0 +1,3 @@
+-- CALL truncate_if_exists('order_item');
+-- CALL truncate_if_exists('order_saga');
+-- CALL truncate_if_exists('outbox_message');

@@ -1,6 +1,9 @@
 package com.example.common.api;
 
 // 서버 측에서 사용할 공통 응답 DTO
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class ApiResponse<T> {
     private final boolean success; // 성공 여부
     private final T data;          // 성공 시 반환할 데이터
@@ -16,7 +19,12 @@ public class ApiResponse<T> {
         return new ApiResponse<>(false, null, error);
     }
 
-    private ApiResponse(boolean success, T data, ApiError error) {
+    @JsonCreator
+    public ApiResponse(
+            @JsonProperty("success") boolean success,
+            @JsonProperty("data") T data,
+            @JsonProperty("error") ApiError error
+    ) {
         this.success = success;
         this.data = data;
         this.error = error;
