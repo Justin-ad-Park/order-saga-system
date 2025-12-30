@@ -77,7 +77,7 @@ public class OrderOrchestrationController {
         if (calls.isEmpty()) {
             return Mono.empty();
         }
-        return Mono.when(calls).then();
+        return Mono.whenDelayError(calls).then();
     }
 
     private Mono<Void> reserveCoupon(String couponNumber, String orderId) {

@@ -1,3 +1,9 @@
+### 루트에서 MSA 서비스 실행 ###
+# bin/run_local_msa.sh
+#
+# 프로세스 종료는
+# bin/stop_local_msa.sh
+
 ### 주문 생성 요청 (Happy Path 예시)
 POST http://localhost:8080/api/v1/orders
 Content-Type: application/json
@@ -6,6 +12,30 @@ Accept: application/json
 {
   "couponNumber": "CPN-BOTH-001",
   "pointNumber": "PNT-BOTH-001",
+  "paymentNumber": "PAY-001",
+  "paymentAmount": 35000,
+  "orderItems": [
+    {
+      "itemNumber": "ITEM-001",
+      "quantity": 2
+    },
+    {
+      "itemNumber": "ITEM-002",
+      "quantity": 1
+    }
+  ]
+}
+
+###
+
+# 주문 생성 요청 (쿠폰 예약 불가 + 포인트 예약 가능)
+POST http://localhost:8080/api/v1/orders
+Content-Type: application/json
+Accept: application/json
+
+{
+  "couponNumber": "CPN-BOTH-RESERVED-001",
+  "pointNumber": "PNT-BOTH-AVAILABLE-001",
   "paymentNumber": "PAY-001",
   "paymentAmount": 35000,
   "orderItems": [

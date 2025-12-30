@@ -22,6 +22,30 @@ Accept: application/json
 
 ###
 
+# 주문 생성 요청 (쿠폰 예약 불가 + 포인트 예약 가능)
+POST http://localhost:8099/api/v1/orders
+Content-Type: application/json
+Accept: application/json
+
+{
+  "couponNumber": "CPN-BOTH-RESERVED-001",
+  "pointNumber": "PNT-BOTH-AVAILABLE-001",
+  "paymentNumber": "PAY-001",
+  "paymentAmount": 35000,
+  "orderItems": [
+    {
+      "itemNumber": "ITEM-001",
+      "quantity": 2
+    },
+    {
+      "itemNumber": "ITEM-002",
+      "quantity": 1
+    }
+  ]
+}
+
+###
+
 # 주문 생성 요청 (쿠폰만)
 POST http://localhost:8099/api/v1/orders
 Content-Type: application/json
