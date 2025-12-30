@@ -4,7 +4,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "pointNumber": "PNT-001",
+  "pointNumber": "PNT-INT-AVAILABLE-001",
   "orderId": "ORD-12345"
 }
 

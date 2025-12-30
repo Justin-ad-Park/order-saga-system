@@ -40,7 +40,7 @@ class CouponControllerIntegrationTest {
     @Test
     void reserveCoupon_shouldChangeStatusToReserved_andReturn200() {
         // given
-        String couponNumber = "C-001";
+        String couponNumber = "CPN-INT-AVAILABLE-001";
 
         //makeTestCoupon(couponNumber);
 
@@ -61,6 +61,33 @@ class CouponControllerIntegrationTest {
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        CouponJpaEntity updated =
+                couponJpaRepository.findById(couponNumber).orElseThrow();
+        assertThat(updated.getStatus()).isEqualTo(CouponStatus.RESERVED);
+    }
+
+    @Test
+    void reserveCoupon_shouldFailWhenAlreadyReserved() {
+        // given
+        String couponNumber = "CPN-INT-RESERVED-001";
+        String url = "http://localhost:" + port + "/api/v1/coupons/reserve";
+
+        ReserveCouponRequest requestBody =
+                new ReserveCouponRequest(couponNumber, "ORD-12345");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<ReserveCouponRequest> httpEntity =
+                new HttpEntity<>(requestBody, headers);
+
+        // when
+        ResponseEntity<String> response =
+                restTemplate.postForEntity(url, httpEntity, String.class);
+
+        // then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
 
         CouponJpaEntity updated =
                 couponJpaRepository.findById(couponNumber).orElseThrow();

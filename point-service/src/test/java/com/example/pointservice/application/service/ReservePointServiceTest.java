@@ -30,7 +30,7 @@ class ReservePointServiceTest {
     @Test
     void reserve_shouldChangeStatusToReserved_andSave() {
         // given
-        String pointNumber = "PNT-001";
+        String pointNumber = "PNT-UNIT-AVAILABLE-001";
         LocalDateTime now = LocalDateTime.now();
         Point availablePoint = new Point(pointNumber, PointStatus.AVAILABLE, now.minusDays(1), now.plusDays(1));
 
@@ -49,7 +49,7 @@ class ReservePointServiceTest {
 
     @Test
     void reserve_shouldThrow_ifPointNotFound() {
-        String pointNumber = "UNKNOWN";
+        String pointNumber = "PNT-UNIT-NOTFOUND-001";
         when(loadPointPort.loadPoint(pointNumber)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> reservePointService.reserve(pointNumber, "ORD-001"))
@@ -61,12 +61,26 @@ class ReservePointServiceTest {
 
     @Test
     void reserve_shouldThrow_ifPointNotAvailable() {
-        String pointNumber = "PNT-002";
+        String pointNumber = "PNT-UNIT-RESERVED-001";
         LocalDateTime now = LocalDateTime.now();
         Point reserved = new Point(pointNumber, PointStatus.RESERVED, now.minusDays(1), now.plusDays(1));
         when(loadPointPort.loadPoint(pointNumber)).thenReturn(Optional.of(reserved));
 
         assertThatThrownBy(() -> reservePointService.reserve(pointNumber, "ORD-002"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("예약 불가능한 포인트");
+
+        verify(savePointPort, never()).save(any());
+    }
+
+    @Test
+    void reserve_shouldThrow_ifPointAlreadyUsed() {
+        String pointNumber = "PNT-UNIT-USED-001";
+        LocalDateTime now = LocalDateTime.now();
+        Point used = new Point(pointNumber, PointStatus.USED, now.minusDays(1), now.plusDays(1));
+        when(loadPointPort.loadPoint(pointNumber)).thenReturn(Optional.of(used));
+
+        assertThatThrownBy(() -> reservePointService.reserve(pointNumber, "ORD-003"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("예약 불가능한 포인트");
 

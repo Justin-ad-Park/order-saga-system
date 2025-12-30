@@ -40,7 +40,7 @@ class PointControllerIntegrationTest {
     @Test
     void reservePoint_shouldChangeStatusToReserved_andReturn200() {
         // given
-        String pointNumber = "P-001";
+        String pointNumber = "PNT-INT-AVAILABLE-001";
 
         //makeTestPoint(pointNumber);
 
@@ -61,6 +61,33 @@ class PointControllerIntegrationTest {
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        PointJpaEntity updated =
+                pointJpaRepository.findById(pointNumber).orElseThrow();
+        assertThat(updated.getStatus()).isEqualTo(PointStatus.RESERVED);
+    }
+
+    @Test
+    void reservePoint_shouldFailWhenAlreadyReserved() {
+        // given
+        String pointNumber = "PNT-INT-RESERVED-001";
+        String url = "http://localhost:" + port + "/api/v1/points/reserve";
+
+        ReservePointRequest requestBody =
+                new ReservePointRequest(pointNumber, "ORD-12345");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<ReservePointRequest> httpEntity =
+                new HttpEntity<>(requestBody, headers);
+
+        // when
+        ResponseEntity<String> response =
+                restTemplate.postForEntity(url, httpEntity, String.class);
+
+        // then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
 
         PointJpaEntity updated =
                 pointJpaRepository.findById(pointNumber).orElseThrow();

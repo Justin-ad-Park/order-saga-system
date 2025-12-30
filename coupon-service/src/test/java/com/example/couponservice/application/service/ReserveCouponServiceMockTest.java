@@ -30,7 +30,7 @@ class ReserveCouponServiceMockTest {
     @Test
     void reserve_shouldChangeStatusToReserved_andSave() {
         // given
-        String couponNumber = "CPN-001";
+        String couponNumber = "CPN-UNIT-AVAILABLE-001";
         LocalDateTime now = LocalDateTime.now();
         Coupon availableCoupon = new Coupon(couponNumber, CouponStatus.AVAILABLE, now.minusDays(1), now.plusDays(1));
 
@@ -49,7 +49,7 @@ class ReserveCouponServiceMockTest {
 
     @Test
     void reserve_shouldThrow_ifCouponNotFound() {
-        String couponNumber = "UNKNOWN";
+        String couponNumber = "CPN-UNIT-NOTFOUND-001";
         when(loadCouponPort.loadCoupon(couponNumber)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> reserveCouponService.reserve(couponNumber, "ORD-001"))
@@ -61,12 +61,26 @@ class ReserveCouponServiceMockTest {
 
     @Test
     void reserve_shouldThrow_ifCouponNotAvailable() {
-        String couponNumber = "CPN-002";
+        String couponNumber = "CPN-UNIT-RESERVED-001";
         LocalDateTime now = LocalDateTime.now();
         Coupon reserved = new Coupon(couponNumber, CouponStatus.RESERVED, now.minusDays(1), now.plusDays(1));
         when(loadCouponPort.loadCoupon(couponNumber)).thenReturn(Optional.of(reserved));
 
         assertThatThrownBy(() -> reserveCouponService.reserve(couponNumber, "ORD-002"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("예약 불가능한 쿠폰");
+
+        verify(saveCouponPort, never()).save(any());
+    }
+
+    @Test
+    void reserve_shouldThrow_ifCouponAlreadyUsed() {
+        String couponNumber = "CPN-UNIT-USED-001";
+        LocalDateTime now = LocalDateTime.now();
+        Coupon used = new Coupon(couponNumber, CouponStatus.USED, now.minusDays(1), now.plusDays(1));
+        when(loadCouponPort.loadCoupon(couponNumber)).thenReturn(Optional.of(used));
+
+        assertThatThrownBy(() -> reserveCouponService.reserve(couponNumber, "ORD-003"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("예약 불가능한 쿠폰");
 

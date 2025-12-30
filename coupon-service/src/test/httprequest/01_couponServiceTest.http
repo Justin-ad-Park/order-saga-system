@@ -4,7 +4,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "couponNumber": "CPN-001",
+  "couponNumber": "CPN-INT-AVAILABLE-001",
   "orderId": "ORD-12345"
 }
 
