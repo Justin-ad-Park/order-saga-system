@@ -80,6 +80,7 @@ class CreateOrderServiceTest {
                 .save(argThat(outbox ->
                         outbox.orderId().equals("ORD-20250101-000001")
                                 && outbox.couponStatus() == MSAStatus.InProgress
+                                && outbox.pointStatus() == MSAStatus.InProgress
                                 && outbox.orderStatus() == MSAStatus.InProgress
                                 && outbox.paymentStatus() == MSAStatus.InProgress
                                 && outbox.sagaStatus() == OrderSagaStatus.InProgress

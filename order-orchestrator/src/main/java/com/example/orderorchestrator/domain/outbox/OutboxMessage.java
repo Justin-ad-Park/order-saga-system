@@ -13,6 +13,7 @@ public class OutboxMessage {
     private final String payload;               // 메시지 payload(JSON)
 
     private MSAStatus couponStatus;
+    private MSAStatus pointStatus;
     private MSAStatus orderStatus;
     private MSAStatus paymentStatus;
 
@@ -25,6 +26,7 @@ public class OutboxMessage {
             String orderId,
             String payload,
             MSAStatus couponStatus,
+            MSAStatus pointStatus,
             MSAStatus orderStatus,
             MSAStatus paymentStatus,
             OrderSagaStatus sagaStatus,
@@ -34,6 +36,7 @@ public class OutboxMessage {
         this.orderId = orderId;
         this.payload = payload;
         this.couponStatus = couponStatus;
+        this.pointStatus = pointStatus;
         this.orderStatus = orderStatus;
         this.paymentStatus = paymentStatus;
         this.sagaStatus = sagaStatus;
@@ -47,6 +50,7 @@ public class OutboxMessage {
                 orderId,
                 payload,
                 MSAStatus.InProgress,  // 쿠폰 MSA 요청 시작
+                MSAStatus.InProgress,  // 포인트 MSA 요청 시작
                 MSAStatus.InProgress,  // 주문 MSA 요청 시작
                 MSAStatus.InProgress,  // 결제 MSA 요청 시작
                 OrderSagaStatus.InProgress,
@@ -60,6 +64,7 @@ public class OutboxMessage {
     public String payload() { return payload; }
 
     public MSAStatus couponStatus() { return couponStatus; }
+    public MSAStatus pointStatus() { return pointStatus; }
     public MSAStatus orderStatus() { return orderStatus; }
     public MSAStatus paymentStatus() { return paymentStatus; }
 
@@ -76,6 +81,11 @@ public class OutboxMessage {
 
     public void markCouponStatus(MSAStatus status) {
         this.couponStatus = status;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void markPointStatus(MSAStatus status) {
+        this.pointStatus = status;
         this.updatedAt = LocalDateTime.now();
     }
 

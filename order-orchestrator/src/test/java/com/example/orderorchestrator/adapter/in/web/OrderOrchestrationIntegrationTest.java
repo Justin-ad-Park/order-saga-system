@@ -167,6 +167,7 @@ class OrderOrchestrationIntegrationTest {
         OutboxMessageJpaEntity outboxEntity = outboxOpt.get();
         assertThat(outboxEntity.getOrderId()).isEqualTo(orderId);
         assertThat(outboxEntity.getCouponStatus()).isEqualTo(MSAStatus.InProgress);
+        assertThat(outboxEntity.getPointStatus()).isEqualTo(MSAStatus.InProgress);
         assertThat(outboxEntity.getOrderStatus()).isEqualTo(MSAStatus.InProgress);
         assertThat(outboxEntity.getPaymentStatus()).isEqualTo(MSAStatus.InProgress);
         assertThat(outboxEntity.getSagaStatus()).isEqualTo(OrderSagaStatus.InProgress);

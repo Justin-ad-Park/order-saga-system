@@ -27,6 +27,10 @@ public class OutboxMessageJpaEntity {
     private MSAStatus couponStatus;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "point_status", nullable = false)
+    private MSAStatus pointStatus;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "order_status", nullable = false)
     private MSAStatus orderStatus;
 
@@ -51,6 +55,7 @@ public class OutboxMessageJpaEntity {
             String orderId,
             String payload,
             MSAStatus couponStatus,
+            MSAStatus pointStatus,
             MSAStatus orderStatus,
             MSAStatus paymentStatus,
             OrderSagaStatus sagaStatus,
@@ -60,6 +65,7 @@ public class OutboxMessageJpaEntity {
         this.orderId = orderId;
         this.payload = payload;
         this.couponStatus = couponStatus;
+        this.pointStatus = pointStatus;
         this.orderStatus = orderStatus;
         this.paymentStatus = paymentStatus;
         this.sagaStatus = sagaStatus;
@@ -71,6 +77,7 @@ public class OutboxMessageJpaEntity {
     public String getOrderId() { return orderId; }
     public String getPayload() { return payload; }
     public MSAStatus getCouponStatus() { return couponStatus; }
+    public MSAStatus getPointStatus() { return pointStatus; }
     public MSAStatus getOrderStatus() { return orderStatus; }
     public MSAStatus getPaymentStatus() { return paymentStatus; }
     public OrderSagaStatus getSagaStatus() { return sagaStatus; }
