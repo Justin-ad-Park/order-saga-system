@@ -18,12 +18,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
 import org.springframework.http.*;
+import org.springframework.test.annotation.Commit;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -39,11 +41,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = "spring.config.name=orderOS_application")
 @ActiveProfiles("test")
-@Transactional
 @Sql(
         scripts = "/orderOS_cleanup.sql",
         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_CLASS
 )
+@Transactional
 class OrderOrchestrationIntegrationTest {
 
     private static ConfigurableApplicationContext couponContext;
@@ -102,7 +104,7 @@ class OrderOrchestrationIntegrationTest {
     @Autowired
     private OutboxMessageJpaRepository outboxMessageJpaRepository;
 
-    @AfterEach
+    //@AfterEach
     void tearDown() {
         outboxMessageJpaRepository.deleteAll();
         orderSagaJpaRepository.deleteAll();
