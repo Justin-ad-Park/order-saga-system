@@ -40,6 +40,7 @@ class CreateOrderServiceTest {
         // given
         CreateOrderCommand command = new CreateOrderCommand(
                 "CPN-001",
+                "PNT-001",
                 "PAY-001",
                 35000L,
                 List.of(

@@ -45,12 +45,17 @@ public class OutboxMessage {
     }
 
     // Outbox 최초 생성 시 사용하는 팩토리
-    public static OutboxMessage initial(String orderId, String payload) {
+    public static OutboxMessage initial(
+            String orderId,
+            String payload,
+            MSAStatus couponStatus,
+            MSAStatus pointStatus
+    ) {
         return new OutboxMessage(
                 orderId,
                 payload,
-                MSAStatus.InProgress,  // 쿠폰 MSA 요청 시작
-                MSAStatus.InProgress,  // 포인트 MSA 요청 시작
+                couponStatus,
+                pointStatus,
                 MSAStatus.InProgress,  // 주문 MSA 요청 시작
                 MSAStatus.InProgress,  // 결제 MSA 요청 시작
                 OrderSagaStatus.InProgress,

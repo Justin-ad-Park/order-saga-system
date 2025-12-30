@@ -4,9 +4,11 @@ import com.example.orderorchestrator.adapter.in.web.dto.request.CreateOrderReque
 import com.example.orderorchestrator.adapter.in.web.dto.response.CreateOrderResponse;
 import com.example.orderorchestrator.adapter.out.webclient.CouponServiceClient;
 import com.example.orderorchestrator.adapter.out.webclient.PointServiceClient;
+import com.example.orderorchestrator.application.port.in.CreateOrderUseCase;
+import com.example.orderorchestrator.application.port.in.UpdateOutboxMessageUseCase;
 import com.example.orderorchestrator.application.port.in.command.CreateOrderCommand;
 import com.example.orderorchestrator.application.port.in.result.CreateOrderResult;
-import com.example.orderorchestrator.application.port.in.CreateOrderUseCase;
+import com.example.orderorchestrator.domain.model.status.MSAStatus;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +28,7 @@ public class OrderOrchestrationController {
     private final CreateOrderUseCase createOrderUseCase;
     private final CouponServiceClient couponServiceClient;
     private final PointServiceClient pointServiceClient;
+    private final UpdateOutboxMessageUseCase updateOutboxMessageUseCase;
 
     @PostMapping
     public Mono<ResponseEntity<CreateOrderResponse>> createOrder(
@@ -48,6 +51,7 @@ public class OrderOrchestrationController {
 
         return new CreateOrderCommand(
                 request.couponNumber(),
+                request.pointNumber(),
                 request.paymentNumber(),
                 request.paymentAmount(),
                 orderItems
@@ -65,14 +69,34 @@ public class OrderOrchestrationController {
     private Mono<Void> reserveExternalResources(CreateOrderRequest request, CreateOrderResult result) {
         List<Mono<?>> calls = new ArrayList<>();
         if (StringUtils.hasText(request.couponNumber())) {
-            calls.add(couponServiceClient.reserveCoupon(request.couponNumber(), result.orderId()));
+            calls.add(reserveCoupon(request.couponNumber(), result.orderId()));
         }
         if (StringUtils.hasText(request.pointNumber())) {
-            calls.add(pointServiceClient.reservePoint(request.pointNumber(), result.orderId()));
+            calls.add(reservePoint(request.pointNumber(), result.orderId()));
         }
         if (calls.isEmpty()) {
             return Mono.empty();
         }
         return Mono.when(calls).then();
+    }
+
+    private Mono<Void> reserveCoupon(String couponNumber, String orderId) {
+        return couponServiceClient.reserveCoupon(couponNumber, orderId)
+                .doOnSuccess(response -> updateOutboxMessageUseCase.updateCouponStatus(orderId, MSAStatus.Reserved))
+                .onErrorResume(ex -> {
+                    updateOutboxMessageUseCase.updateCouponStatus(orderId, MSAStatus.Failed);
+                    return Mono.error(ex);
+                })
+                .then();
+    }
+
+    private Mono<Void> reservePoint(String pointNumber, String orderId) {
+        return pointServiceClient.reservePoint(pointNumber, orderId)
+                .doOnSuccess(response -> updateOutboxMessageUseCase.updatePointStatus(orderId, MSAStatus.Reserved))
+                .onErrorResume(ex -> {
+                    updateOutboxMessageUseCase.updatePointStatus(orderId, MSAStatus.Failed);
+                    return Mono.error(ex);
+                })
+                .then();
     }
 }

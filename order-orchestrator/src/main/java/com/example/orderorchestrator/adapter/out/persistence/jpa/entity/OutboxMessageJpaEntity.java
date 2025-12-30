@@ -83,4 +83,8 @@ public class OutboxMessageJpaEntity {
     public OrderSagaStatus getSagaStatus() { return sagaStatus; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
+
+    public void setCouponStatus(MSAStatus couponStatus) { this.couponStatus = couponStatus; }
+    public void setPointStatus(MSAStatus pointStatus) { this.pointStatus = pointStatus; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

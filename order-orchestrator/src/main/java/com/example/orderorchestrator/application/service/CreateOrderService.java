@@ -7,6 +7,7 @@ import com.example.orderorchestrator.application.port.out.SaveOrderSagaPort;
 import com.example.orderorchestrator.application.port.out.SaveOutboxMessagePort;
 import com.example.orderorchestrator.domain.model.OrderItem;
 import com.example.orderorchestrator.domain.model.OrderSaga;
+import com.example.orderorchestrator.domain.model.status.MSAStatus;
 import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
 import com.example.orderorchestrator.domain.outbox.OutboxMessage;
 import org.springframework.stereotype.Service;
@@ -58,9 +59,14 @@ public class CreateOrderService implements CreateOrderUseCase {
         OrderSaga savedSaga = saveOrderSagaPort.save(saga);
 
         // 5) Outbox 메시지 생성 (payload는 우선 빈 JSON으로 두고, 나중에 스키마 설계)
+        MSAStatus couponStatus = resolveUsageStatus(command.couponNumber());
+        MSAStatus pointStatus = resolveUsageStatus(command.pointNumber());
+
         OutboxMessage message = OutboxMessage.initial(
-                savedSaga.orderId(),   // ✅ 새 구조: orderId만 전달
-                "{}"                   // payload (TODO: 실제 JSON으로 교체)
+                savedSaga.orderId(),
+                "{}",
+                couponStatus,
+                pointStatus
         );
 
         // 6) Outbox 저장
@@ -74,5 +80,11 @@ public class CreateOrderService implements CreateOrderUseCase {
         );
     }
 
+    private MSAStatus resolveUsageStatus(String number) {
+        if (number == null || number.isBlank()) {
+            return MSAStatus.NotUsed;
+        }
+        return MSAStatus.InProgress;
+    }
 
 }

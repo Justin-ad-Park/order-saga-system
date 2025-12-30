@@ -122,7 +122,7 @@ class OrderOrchestrationIntegrationTest {
                 )
         );
 
-        assertOrderCreated(requestBody);
+        assertOrderCreated(requestBody, MSAStatus.Reserved, MSAStatus.Reserved);
     }
 
     @Test
@@ -137,7 +137,7 @@ class OrderOrchestrationIntegrationTest {
                 )
         );
 
-        assertOrderCreated(requestBody);
+        assertOrderCreated(requestBody, MSAStatus.Reserved, MSAStatus.NotUsed);
     }
 
     @Test
@@ -152,7 +152,7 @@ class OrderOrchestrationIntegrationTest {
                 )
         );
 
-        assertOrderCreated(requestBody);
+        assertOrderCreated(requestBody, MSAStatus.NotUsed, MSAStatus.Reserved);
     }
 
     @Test
@@ -166,10 +166,10 @@ class OrderOrchestrationIntegrationTest {
                 )
         );
 
-        assertOrderCreated(requestBody);
+        assertOrderCreated(requestBody, MSAStatus.NotUsed, MSAStatus.NotUsed);
     }
 
-    private void assertOrderCreated(Map<String, Object> requestBody) {
+    private void assertOrderCreated(Map<String, Object> requestBody, MSAStatus expectedCouponStatus, MSAStatus expectedPointStatus) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
@@ -215,8 +215,8 @@ class OrderOrchestrationIntegrationTest {
 
         OutboxMessageJpaEntity outboxEntity = outboxOpt.get();
         assertThat(outboxEntity.getOrderId()).isEqualTo(orderId);
-        assertThat(outboxEntity.getCouponStatus()).isEqualTo(MSAStatus.InProgress);
-        assertThat(outboxEntity.getPointStatus()).isEqualTo(MSAStatus.InProgress);
+        assertThat(outboxEntity.getCouponStatus()).isEqualTo(expectedCouponStatus);
+        assertThat(outboxEntity.getPointStatus()).isEqualTo(expectedPointStatus);
         assertThat(outboxEntity.getOrderStatus()).isEqualTo(MSAStatus.InProgress);
         assertThat(outboxEntity.getPaymentStatus()).isEqualTo(MSAStatus.InProgress);
         assertThat(outboxEntity.getSagaStatus()).isEqualTo(OrderSagaStatus.InProgress);
