@@ -10,20 +10,18 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record CreateOrderRequest(
-    @NotBlank
     String couponNumber,
 
-    @NotBlank
     String pointNumber,
 
     @NotBlank
     String paymentNumber,
 
-        @NotNull
-        @Min(1)
-        Long paymentAmount,
+    @NotNull
+    @Min(1)
+    Long paymentAmount,
 
-        @NotEmpty
-        List<OrderItemRequest> orderItems
+    @NotEmpty
+    List<OrderItemRequest> orderItems
 ) {
 }

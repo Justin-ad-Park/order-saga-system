@@ -51,6 +51,7 @@ class OrderOrchestrationIntegrationTest {
     private static ConfigurableApplicationContext pointContext;
     private static int pointPort;
 
+
     @AfterAll
     static void stopMSAService() {
         if (couponContext != null) {
@@ -108,11 +109,11 @@ class OrderOrchestrationIntegrationTest {
     }
 
     @Test
-    void createOrder_shouldPersistOrderSaga_and_OutboxMessage() {
+    void createOrder_withCouponAndPoint_shouldPersistOrderSaga_and_OutboxMessage() {
         // given: 주문 생성 요청 바디
         Map<String, Object> requestBody = Map.of(
-                "couponNumber", "CPN-001",
-                "pointNumber", "PNT-001",
+                "couponNumber", "CPN-BOTH-001",
+                "pointNumber", "PNT-BOTH-001",
                 "paymentNumber", "PAY-001",
                 "paymentAmount", 35000L,
                 "orderItems", List.of(
@@ -121,6 +122,54 @@ class OrderOrchestrationIntegrationTest {
                 )
         );
 
+        assertOrderCreated(requestBody);
+    }
+
+    @Test
+    void createOrder_withCouponOnly_shouldPersistOrderSaga_and_OutboxMessage() {
+        Map<String, Object> requestBody = Map.of(
+                "couponNumber", "CPN-ONLY-001",
+                "paymentNumber", "PAY-001",
+                "paymentAmount", 35000L,
+                "orderItems", List.of(
+                        Map.of("itemNumber", "ITEM-001", "quantity", 2),
+                        Map.of("itemNumber", "ITEM-002", "quantity", 1)
+                )
+        );
+
+        assertOrderCreated(requestBody);
+    }
+
+    @Test
+    void createOrder_withPointOnly_shouldPersistOrderSaga_and_OutboxMessage() {
+        Map<String, Object> requestBody = Map.of(
+                "pointNumber", "PNT-ONLY-001",
+                "paymentNumber", "PAY-001",
+                "paymentAmount", 35000L,
+                "orderItems", List.of(
+                        Map.of("itemNumber", "ITEM-001", "quantity", 2),
+                        Map.of("itemNumber", "ITEM-002", "quantity", 1)
+                )
+        );
+
+        assertOrderCreated(requestBody);
+    }
+
+    @Test
+    void createOrder_withoutCouponAndPoint_shouldPersistOrderSaga_and_OutboxMessage() {
+        Map<String, Object> requestBody = Map.of(
+                "paymentNumber", "PAY-001",
+                "paymentAmount", 35000L,
+                "orderItems", List.of(
+                        Map.of("itemNumber", "ITEM-001", "quantity", 2),
+                        Map.of("itemNumber", "ITEM-002", "quantity", 1)
+                )
+        );
+
+        assertOrderCreated(requestBody);
+    }
+
+    private void assertOrderCreated(Map<String, Object> requestBody) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));

@@ -4,8 +4,76 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "couponNumber": "CPN-001",
-  "pointNumber": "PNT-001",
+  "couponNumber": "CPN-BOTH-001",
+  "pointNumber": "PNT-BOTH-001",
+  "paymentNumber": "PAY-001",
+  "paymentAmount": 35000,
+  "orderItems": [
+    {
+      "itemNumber": "ITEM-001",
+      "quantity": 2
+    },
+    {
+      "itemNumber": "ITEM-002",
+      "quantity": 1
+    }
+  ]
+}
+
+###
+
+# 주문 생성 요청 (쿠폰만)
+POST http://localhost:8080/api/v1/orders
+Content-Type: application/json
+Accept: application/json
+
+{
+  "couponNumber": "CPN-ONLY-001",
+  "paymentNumber": "PAY-001",
+  "paymentAmount": 35000,
+  "orderItems": [
+    {
+      "itemNumber": "ITEM-001",
+      "quantity": 2
+    },
+    {
+      "itemNumber": "ITEM-002",
+      "quantity": 1
+    }
+  ]
+}
+
+###
+
+# 주문 생성 요청 (포인트만)
+POST http://localhost:8080/api/v1/orders
+Content-Type: application/json
+Accept: application/json
+
+{
+  "pointNumber": "PNT-ONLY-001",
+  "paymentNumber": "PAY-001",
+  "paymentAmount": 35000,
+  "orderItems": [
+    {
+      "itemNumber": "ITEM-001",
+      "quantity": 2
+    },
+    {
+      "itemNumber": "ITEM-002",
+      "quantity": 1
+    }
+  ]
+}
+
+###
+
+# 주문 생성 요청 (쿠폰/포인트 없음)
+POST http://localhost:8080/api/v1/orders
+Content-Type: application/json
+Accept: application/json
+
+{
   "paymentNumber": "PAY-001",
   "paymentAmount": 35000,
   "orderItems": [

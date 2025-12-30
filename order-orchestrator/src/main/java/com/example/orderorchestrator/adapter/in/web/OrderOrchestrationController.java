@@ -11,9 +11,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
 import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -60,9 +63,16 @@ public class OrderOrchestrationController {
     }
 
     private Mono<Void> reserveExternalResources(CreateOrderRequest request, CreateOrderResult result) {
-        return Mono.when(
-                couponServiceClient.reserveCoupon(request.couponNumber(), result.orderId()),
-                pointServiceClient.reservePoint(request.pointNumber(), result.orderId())
-        ).then();
+        List<Mono<?>> calls = new ArrayList<>();
+        if (StringUtils.hasText(request.couponNumber())) {
+            calls.add(couponServiceClient.reserveCoupon(request.couponNumber(), result.orderId()));
+        }
+        if (StringUtils.hasText(request.pointNumber())) {
+            calls.add(pointServiceClient.reservePoint(request.pointNumber(), result.orderId()));
+        }
+        if (calls.isEmpty()) {
+            return Mono.empty();
+        }
+        return Mono.when(calls).then();
     }
 }

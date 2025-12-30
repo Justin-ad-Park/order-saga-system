@@ -49,6 +49,18 @@ kubectl port-forward -n msa svc/mysql 3307:3306
 
 ### 3-1) 스키마(데이터베이스)와 계정 생성은 어디서?
 
+```java
+-- 컬럼 순서 강제 조정
+ALTER TABLE outbox_message
+MODIFY COLUMN coupon_status VARCHAR(255) NOT NULL AFTER order_status;
+
+ALTER TABLE outbox_message
+MODIFY COLUMN point_status VARCHAR(255) NOT NULL AFTER coupon_status;
+
+ALTER TABLE outbox_message
+MODIFY COLUMN order_status VARCHAR(255) NOT NULL AFTER payment_status ;
+```
+
 ```mysql
 -- Order Orchestrator
 CREATE DATABASE IF NOT EXISTS order_orchestrator_db;
