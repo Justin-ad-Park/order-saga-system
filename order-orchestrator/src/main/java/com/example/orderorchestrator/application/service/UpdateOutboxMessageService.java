@@ -3,6 +3,7 @@ package com.example.orderorchestrator.application.service;
 import com.example.orderorchestrator.application.port.in.UpdateOutboxMessageUseCase;
 import com.example.orderorchestrator.application.port.out.UpdateOutboxMessagePort;
 import com.example.orderorchestrator.domain.model.status.MSAStatus;
+import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,5 +23,10 @@ public class UpdateOutboxMessageService implements UpdateOutboxMessageUseCase {
     @Override
     public void updatePointStatus(String orderId, MSAStatus status) {
         updateOutboxMessagePort.updatePointStatus(orderId, status);
+    }
+
+    @Override
+    public void updateSagaStatus(String orderId, OrderSagaStatus status) {
+        updateOutboxMessagePort.updateSagaStatus(orderId, status);
     }
 }

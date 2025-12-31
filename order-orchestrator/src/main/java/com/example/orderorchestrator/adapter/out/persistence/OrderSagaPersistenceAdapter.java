@@ -4,6 +4,8 @@ package com.example.orderorchestrator.adapter.out.persistence;
 import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OrderItemJpaEntity;
 import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OrderSagaJpaEntity;
 import com.example.orderorchestrator.application.port.out.SaveOrderSagaPort;
+import com.example.orderorchestrator.application.port.out.UpdateOrderSagaStatusPort;
+import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
 import com.example.orderorchestrator.adapter.out.persistence.jpa.OrderSagaJpaRepository;
 import com.example.orderorchestrator.domain.model.OrderItem;
 import com.example.orderorchestrator.domain.model.OrderSaga;
@@ -12,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @Transactional
-public class OrderSagaPersistenceAdapter implements SaveOrderSagaPort {
+public class OrderSagaPersistenceAdapter implements SaveOrderSagaPort, UpdateOrderSagaStatusPort {
 
     private final OrderSagaJpaRepository orderSagaJpaRepository;
 
@@ -51,5 +53,13 @@ public class OrderSagaPersistenceAdapter implements SaveOrderSagaPort {
                 saga.orderItems(),
                 saved.getStatus()         // OrderSagaStatus 그대로 사용
         );
+    }
+
+    @Override
+    public void updateStatus(String orderId, OrderSagaStatus status) {
+        OrderSagaJpaEntity entity = orderSagaJpaRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order saga not found: " + orderId));
+        entity.setStatus(status);
+        orderSagaJpaRepository.save(entity);
     }
 }

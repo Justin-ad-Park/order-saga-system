@@ -79,5 +79,6 @@ public class OutboxMessageJpaEntity {
 
     public void setCouponStatus(MSAStatus couponStatus) { this.couponStatus = couponStatus; }
     public void setPointStatus(MSAStatus pointStatus) { this.pointStatus = pointStatus; }
+    public void setSagaStatus(OrderSagaStatus sagaStatus) { this.sagaStatus = sagaStatus; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

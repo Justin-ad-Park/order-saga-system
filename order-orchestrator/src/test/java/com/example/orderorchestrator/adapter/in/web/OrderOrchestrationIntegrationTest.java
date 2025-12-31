@@ -23,6 +23,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
@@ -43,7 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         scripts = "/orderOS_cleanup.sql",
         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_CLASS
 )
-@Transactional
+@Transactional(isolation = Isolation.READ_COMMITTED)
 class OrderOrchestrationIntegrationTest {
 
     private static ConfigurableApplicationContext couponContext;
@@ -123,7 +124,7 @@ class OrderOrchestrationIntegrationTest {
                 )
         );
 
-        assertOrderCreated(requestBody, MSAStatus.Reserved, MSAStatus.Reserved);
+        assertOrderCreated(requestBody, MSAStatus.Reserved, MSAStatus.Reserved, OrderSagaStatus.Reserved);
     }
 
     // 쿠폰만 사용하는 경우
@@ -139,7 +140,7 @@ class OrderOrchestrationIntegrationTest {
                 )
         );
 
-        assertOrderCreated(requestBody, MSAStatus.Reserved, MSAStatus.NotUsed);
+        assertOrderCreated(requestBody, MSAStatus.Reserved, MSAStatus.NotUsed, OrderSagaStatus.Reserved);
     }
 
     // 포인트만 사용하는 경우
@@ -155,7 +156,7 @@ class OrderOrchestrationIntegrationTest {
                 )
         );
 
-        assertOrderCreated(requestBody, MSAStatus.NotUsed, MSAStatus.Reserved);
+        assertOrderCreated(requestBody, MSAStatus.NotUsed, MSAStatus.Reserved, OrderSagaStatus.Reserved);
     }
 
     // 쿠폰/포인트 없이 주문하는 경우
@@ -170,7 +171,7 @@ class OrderOrchestrationIntegrationTest {
                 )
         );
 
-        assertOrderCreated(requestBody, MSAStatus.NotUsed, MSAStatus.NotUsed);
+        assertOrderCreated(requestBody, MSAStatus.NotUsed, MSAStatus.NotUsed, OrderSagaStatus.Reserved);
     }
 
     // 쿠폰은 이미 예약되어 실패하고, 포인트는 예약 가능한 경우
@@ -187,10 +188,15 @@ class OrderOrchestrationIntegrationTest {
                 )
         );
 
-        assertOrderCreatedWithExternalFailure(requestBody, MSAStatus.Failed, MSAStatus.Reserved);
+        assertOrderCreatedWithExternalFailure(requestBody, MSAStatus.Failed, MSAStatus.Reserved, OrderSagaStatus.Compensating);
     }
 
-    private void assertOrderCreated(Map<String, Object> requestBody, MSAStatus expectedCouponStatus, MSAStatus expectedPointStatus) {
+    private void assertOrderCreated(
+            Map<String, Object> requestBody,
+            MSAStatus expectedCouponStatus,
+            MSAStatus expectedPointStatus,
+            OrderSagaStatus expectedSagaStatus
+    ) {
         HttpEntity<Map<String, Object>> httpEntity = buildHttpEntity(requestBody);
 
         // when: /api/v1/orders 호출
@@ -221,11 +227,16 @@ class OrderOrchestrationIntegrationTest {
         assertThat(sagaOpt).isPresent();
 
         OrderSagaJpaEntity sagaEntity = sagaOpt.get();
-        assertOrderSaga(sagaEntity, orderId, sagaId);
-        assertOutbox(orderId, expectedCouponStatus, expectedPointStatus, true);
+        assertOrderSaga(sagaEntity, orderId, sagaId, expectedSagaStatus);
+        assertOutbox(orderId, expectedCouponStatus, expectedPointStatus, expectedSagaStatus, true);
     }
 
-    private void assertOrderCreatedWithExternalFailure(Map<String, Object> requestBody, MSAStatus expectedCouponStatus, MSAStatus expectedPointStatus) {
+    private void assertOrderCreatedWithExternalFailure(
+            Map<String, Object> requestBody,
+            MSAStatus expectedCouponStatus,
+            MSAStatus expectedPointStatus,
+            OrderSagaStatus expectedSagaStatus
+    ) {
         HttpEntity<Map<String, Object>> httpEntity = buildHttpEntity(requestBody);
 
         ResponseEntity<String> response = restTemplate.exchange(
@@ -240,8 +251,8 @@ class OrderOrchestrationIntegrationTest {
         OrderSagaJpaEntity sagaEntity = findLatestSaga();
         String orderId = sagaEntity.getOrderId();
 
-        assertOrderSaga(sagaEntity, orderId, sagaEntity.getSagaId());
-        assertOutbox(orderId, expectedCouponStatus, expectedPointStatus, false);
+        assertOrderSaga(sagaEntity, orderId, sagaEntity.getSagaId(), expectedSagaStatus);
+        assertOutbox(orderId, expectedCouponStatus, expectedPointStatus, expectedSagaStatus, false);
     }
 
     private HttpEntity<Map<String, Object>> buildHttpEntity(Map<String, Object> requestBody) {
@@ -259,12 +270,17 @@ class OrderOrchestrationIntegrationTest {
                 .orElseThrow();
     }
 
-    private void assertOrderSaga(OrderSagaJpaEntity sagaEntity, String orderId, String sagaId) {
+    private void assertOrderSaga(
+            OrderSagaJpaEntity sagaEntity,
+            String orderId,
+            String sagaId,
+            OrderSagaStatus expectedSagaStatus
+    ) {
         assertThat(orderId).isNotBlank();
         assertThat(sagaId).isNotBlank();
         assertThat(sagaEntity.getOrderId()).isEqualTo(orderId);
         assertThat(sagaEntity.getSagaId()).isEqualTo(sagaId);
-        assertThat(sagaEntity.getStatus()).isEqualTo(OrderSagaStatus.InProgress);
+        assertThat(sagaEntity.getStatus()).isEqualTo(expectedSagaStatus);
         assertThat(sagaEntity.getItems()).hasSize(2);
     }
 
@@ -272,6 +288,7 @@ class OrderOrchestrationIntegrationTest {
             String orderId,
             MSAStatus expectedCouponStatus,
             MSAStatus expectedPointStatus,
+            OrderSagaStatus expectedSagaStatus,
             boolean expectPayload
     ) {
         Optional<OutboxMessageJpaEntity> outboxOpt = outboxMessageJpaRepository.findByOrderId(orderId);
@@ -282,7 +299,7 @@ class OrderOrchestrationIntegrationTest {
         assertThat(outboxEntity.getCouponStatus()).isEqualTo(expectedCouponStatus);
         assertThat(outboxEntity.getPointStatus()).isEqualTo(expectedPointStatus);
         assertThat(outboxEntity.getOrderStatus()).isEqualTo(MSAStatus.InProgress);
-        assertThat(outboxEntity.getSagaStatus()).isEqualTo(OrderSagaStatus.InProgress);
+        assertThat(outboxEntity.getSagaStatus()).isEqualTo(expectedSagaStatus);
         if (expectPayload) {
             assertThat(outboxEntity.getPayload()).isEqualTo("{}");
         }

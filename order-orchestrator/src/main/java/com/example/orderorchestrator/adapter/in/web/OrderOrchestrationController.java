@@ -5,10 +5,12 @@ import com.example.orderorchestrator.adapter.in.web.dto.response.CreateOrderResp
 import com.example.orderorchestrator.adapter.out.webclient.CouponServiceClient;
 import com.example.orderorchestrator.adapter.out.webclient.PointServiceClient;
 import com.example.orderorchestrator.application.port.in.CreateOrderUseCase;
+import com.example.orderorchestrator.application.port.in.UpdateOrderSagaStatusUseCase;
 import com.example.orderorchestrator.application.port.in.UpdateOutboxMessageUseCase;
 import com.example.orderorchestrator.application.port.in.command.CreateOrderCommand;
 import com.example.orderorchestrator.application.port.in.result.CreateOrderResult;
 import com.example.orderorchestrator.domain.model.status.MSAStatus;
+import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +31,7 @@ public class OrderOrchestrationController {
     private final CouponServiceClient couponServiceClient;
     private final PointServiceClient pointServiceClient;
     private final UpdateOutboxMessageUseCase updateOutboxMessageUseCase;
+    private final UpdateOrderSagaStatusUseCase updateOrderSagaStatusUseCase;
 
     @PostMapping
     public Mono<ResponseEntity<CreateOrderResponse>> createOrder(
@@ -38,6 +41,11 @@ public class OrderOrchestrationController {
         CreateOrderResult result = createOrderUseCase.createOrder(command);
 
         return reserveExternalResources(request, result)
+                .then(Mono.fromRunnable(() -> updateSagaStatus(result.orderId(), OrderSagaStatus.Reserved)))
+                .onErrorResume(ex -> {
+                    updateSagaStatus(result.orderId(), OrderSagaStatus.Compensating);
+                    return Mono.error(ex);
+                })
                 .thenReturn(ResponseEntity.ok(mapToResponse(result)));
     }
 
@@ -78,6 +86,11 @@ public class OrderOrchestrationController {
             return Mono.empty();
         }
         return Mono.whenDelayError(calls).then();
+    }
+
+    private void updateSagaStatus(String orderId, OrderSagaStatus status) {
+        updateOrderSagaStatusUseCase.updateStatus(orderId, status);
+        updateOutboxMessageUseCase.updateSagaStatus(orderId, status);
     }
 
     private Mono<Void> reserveCoupon(String couponNumber, String orderId) {

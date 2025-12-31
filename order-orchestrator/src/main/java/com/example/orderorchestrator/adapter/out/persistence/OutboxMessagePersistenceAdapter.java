@@ -5,6 +5,7 @@ import com.example.orderorchestrator.application.port.out.SaveOutboxMessagePort;
 import com.example.orderorchestrator.application.port.out.UpdateOutboxMessagePort;
 import com.example.orderorchestrator.domain.outbox.OutboxMessage;
 import com.example.orderorchestrator.domain.model.status.MSAStatus;
+import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
 import com.example.orderorchestrator.adapter.out.persistence.jpa.OutboxMessageJpaRepository;
 import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OutboxMessageJpaEntity;
 import org.springframework.stereotype.Repository;
@@ -53,19 +54,25 @@ public class OutboxMessagePersistenceAdapter implements SaveOutboxMessagePort, U
 
     @Override
     public void updateCouponStatus(String orderId, MSAStatus status) {
-        OutboxMessageJpaEntity entity = outboxMessageJpaRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("Outbox message not found: " + orderId));
-        entity.setCouponStatus(status);
-        entity.setUpdatedAt(LocalDateTime.now());
-        outboxMessageJpaRepository.save(entity);
+        int updated = outboxMessageJpaRepository.updateCouponStatus(orderId, status, LocalDateTime.now());
+        if (updated == 0) {
+            throw new IllegalArgumentException("Outbox message not found: " + orderId);
+        }
     }
 
     @Override
     public void updatePointStatus(String orderId, MSAStatus status) {
-        OutboxMessageJpaEntity entity = outboxMessageJpaRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("Outbox message not found: " + orderId));
-        entity.setPointStatus(status);
-        entity.setUpdatedAt(LocalDateTime.now());
-        outboxMessageJpaRepository.save(entity);
+        int updated = outboxMessageJpaRepository.updatePointStatus(orderId, status, LocalDateTime.now());
+        if (updated == 0) {
+            throw new IllegalArgumentException("Outbox message not found: " + orderId);
+        }
+    }
+
+    @Override
+    public void updateSagaStatus(String orderId, OrderSagaStatus status) {
+        int updated = outboxMessageJpaRepository.updateSagaStatus(orderId, status, LocalDateTime.now());
+        if (updated == 0) {
+            throw new IllegalArgumentException("Outbox message not found: " + orderId);
+        }
     }
 }

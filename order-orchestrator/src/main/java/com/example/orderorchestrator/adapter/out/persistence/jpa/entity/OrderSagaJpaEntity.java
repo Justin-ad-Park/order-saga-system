@@ -68,4 +68,6 @@ public class OrderSagaJpaEntity {
     public long getPaymentAmount() { return paymentAmount; }
     public OrderSagaStatus getStatus() { return status; }
     public List<OrderItemJpaEntity> getItems() { return items; }
+
+    public void setStatus(OrderSagaStatus status) { this.status = status; }
 }
