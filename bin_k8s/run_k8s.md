@@ -47,6 +47,16 @@ kubectl delete pvc mysql-pvc -n default
 kubectl port-forward -n msa svc/mysql 3307:3306
 ```
 
+## 4. 카프카 배포 및 로컬 포트포워드
+```
+./bin_k8s/06_deploy_kafka.sh
+```
+
+### 4-1) 카프카 포트포워드 종료 및 리소스 삭제
+```
+./bin_k8s/_06_kill_kafka.sh
+```
+
 ### 3-1) mySql에 접속해서 스키마(데이터베이스)와 계정 생성
 URL: jdbc:mysql://localhost:3307
 user: root 

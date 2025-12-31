@@ -54,3 +54,5 @@ port-forward.pid
 
 ### Test ###
 **/data/
+kafka-port-forward.log
+kafka-port-forward.pid
