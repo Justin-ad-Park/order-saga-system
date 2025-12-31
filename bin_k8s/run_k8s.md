@@ -47,19 +47,11 @@ kubectl delete pvc mysql-pvc -n default
 kubectl port-forward -n msa svc/mysql 3307:3306
 ```
 
-### 3-1) 스키마(데이터베이스)와 계정 생성은 어디서?
+### 3-1) mySql에 접속해서 스키마(데이터베이스)와 계정 생성
+URL: jdbc:mysql://localhost:3307
+user: root 
+pwd: rootpw
 
-```java
--- 컬럼 순서 강제 조정
-ALTER TABLE outbox_message
-MODIFY COLUMN coupon_status VARCHAR(255) NOT NULL AFTER order_status;
-
-ALTER TABLE outbox_message
-MODIFY COLUMN point_status VARCHAR(255) NOT NULL AFTER coupon_status;
-
-ALTER TABLE outbox_message
-MODIFY COLUMN order_status VARCHAR(255) NOT NULL AFTER payment_status ;
-```
 
 ```mysql
 -- Order Orchestrator
@@ -81,3 +73,19 @@ GRANT ALL PRIVILEGES ON point_db.* TO 'point_user'@'%';
 FLUSH PRIVILEGES;
 ```
 
+
+```java
+/* 컬럼 순서 강제 조정 */
+ALTER TABLE outbox_message
+MODIFY COLUMN saga_status VARCHAR(255) NOT NULL AFTER payload;
+
+ALTER TABLE outbox_message
+MODIFY COLUMN order_status VARCHAR(255) NOT NULL AFTER payload;
+
+ALTER TABLE outbox_message
+MODIFY COLUMN point_status VARCHAR(255) NOT NULL AFTER payload;
+
+ALTER TABLE outbox_message
+MODIFY COLUMN coupon_status VARCHAR(255) NOT NULL AFTER payload;
+
+```

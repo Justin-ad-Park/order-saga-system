@@ -282,7 +282,6 @@ class OrderOrchestrationIntegrationTest {
         assertThat(outboxEntity.getCouponStatus()).isEqualTo(expectedCouponStatus);
         assertThat(outboxEntity.getPointStatus()).isEqualTo(expectedPointStatus);
         assertThat(outboxEntity.getOrderStatus()).isEqualTo(MSAStatus.InProgress);
-        assertThat(outboxEntity.getPaymentStatus()).isEqualTo(MSAStatus.InProgress);
         assertThat(outboxEntity.getSagaStatus()).isEqualTo(OrderSagaStatus.InProgress);
         if (expectPayload) {
             assertThat(outboxEntity.getPayload()).isEqualTo("{}");

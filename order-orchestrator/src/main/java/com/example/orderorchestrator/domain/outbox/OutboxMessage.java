@@ -15,7 +15,6 @@ public class OutboxMessage {
     private MSAStatus couponStatus;
     private MSAStatus pointStatus;
     private MSAStatus orderStatus;
-    private MSAStatus paymentStatus;
 
     private OrderSagaStatus sagaStatus;
 
@@ -28,7 +27,6 @@ public class OutboxMessage {
             MSAStatus couponStatus,
             MSAStatus pointStatus,
             MSAStatus orderStatus,
-            MSAStatus paymentStatus,
             OrderSagaStatus sagaStatus,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
@@ -38,7 +36,6 @@ public class OutboxMessage {
         this.couponStatus = couponStatus;
         this.pointStatus = pointStatus;
         this.orderStatus = orderStatus;
-        this.paymentStatus = paymentStatus;
         this.sagaStatus = sagaStatus;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -57,7 +54,6 @@ public class OutboxMessage {
                 couponStatus,
                 pointStatus,
                 MSAStatus.InProgress,  // 주문 MSA 요청 시작
-                MSAStatus.InProgress,  // 결제 MSA 요청 시작
                 OrderSagaStatus.InProgress,
                 LocalDateTime.now(),
                 LocalDateTime.now()
@@ -71,7 +67,6 @@ public class OutboxMessage {
     public MSAStatus couponStatus() { return couponStatus; }
     public MSAStatus pointStatus() { return pointStatus; }
     public MSAStatus orderStatus() { return orderStatus; }
-    public MSAStatus paymentStatus() { return paymentStatus; }
 
     public OrderSagaStatus sagaStatus() { return sagaStatus; }
 
@@ -96,11 +91,6 @@ public class OutboxMessage {
 
     public void markOrderStatus(MSAStatus status) {
         this.orderStatus = status;
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    public void markPaymentStatus(MSAStatus status) {
-        this.paymentStatus = status;
         this.updatedAt = LocalDateTime.now();
     }
 }

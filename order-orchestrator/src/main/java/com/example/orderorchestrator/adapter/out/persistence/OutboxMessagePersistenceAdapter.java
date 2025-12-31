@@ -30,7 +30,6 @@ public class OutboxMessagePersistenceAdapter implements SaveOutboxMessagePort, U
                 message.couponStatus(),
                 message.pointStatus(),
                 message.orderStatus(),
-                message.paymentStatus(),
                 message.sagaStatus(),
                 message.createdAt(),
                 message.updatedAt()
@@ -46,7 +45,6 @@ public class OutboxMessagePersistenceAdapter implements SaveOutboxMessagePort, U
                 saved.getCouponStatus(),
                 saved.getPointStatus(),
                 saved.getOrderStatus(),
-                saved.getPaymentStatus(),
                 saved.getSagaStatus(),
                 saved.getCreatedAt(),
                 saved.getUpdatedAt()

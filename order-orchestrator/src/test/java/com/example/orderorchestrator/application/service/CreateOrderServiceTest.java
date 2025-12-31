@@ -83,7 +83,6 @@ class CreateOrderServiceTest {
                                 && outbox.couponStatus() == MSAStatus.InProgress
                                 && outbox.pointStatus() == MSAStatus.InProgress
                                 && outbox.orderStatus() == MSAStatus.InProgress
-                                && outbox.paymentStatus() == MSAStatus.InProgress
                                 && outbox.sagaStatus() == OrderSagaStatus.InProgress
                 ));
     }

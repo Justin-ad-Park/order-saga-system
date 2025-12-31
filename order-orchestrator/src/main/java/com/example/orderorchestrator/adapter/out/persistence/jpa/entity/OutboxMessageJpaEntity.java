@@ -35,10 +35,6 @@ public class OutboxMessageJpaEntity {
     private MSAStatus orderStatus;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_status", nullable = false)
-    private MSAStatus paymentStatus;
-
-    @Enumerated(EnumType.STRING)
     @Column(name = "saga_status", nullable = false)
     private OrderSagaStatus sagaStatus;
 
@@ -57,7 +53,6 @@ public class OutboxMessageJpaEntity {
             MSAStatus couponStatus,
             MSAStatus pointStatus,
             MSAStatus orderStatus,
-            MSAStatus paymentStatus,
             OrderSagaStatus sagaStatus,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
@@ -67,7 +62,6 @@ public class OutboxMessageJpaEntity {
         this.couponStatus = couponStatus;
         this.pointStatus = pointStatus;
         this.orderStatus = orderStatus;
-        this.paymentStatus = paymentStatus;
         this.sagaStatus = sagaStatus;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -79,7 +73,6 @@ public class OutboxMessageJpaEntity {
     public MSAStatus getCouponStatus() { return couponStatus; }
     public MSAStatus getPointStatus() { return pointStatus; }
     public MSAStatus getOrderStatus() { return orderStatus; }
-    public MSAStatus getPaymentStatus() { return paymentStatus; }
     public OrderSagaStatus getSagaStatus() { return sagaStatus; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
