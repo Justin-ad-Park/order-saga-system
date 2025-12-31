@@ -4,7 +4,7 @@
 # bin_k8s/05_restart_msa.sh
 #
 # 프로세스 종료는
-# bin_k8s/
+# bin_k8s/_04_stop_msa.sh
 
 
 ### 주문 생성 요청 (K8s Happy Path 예시)
