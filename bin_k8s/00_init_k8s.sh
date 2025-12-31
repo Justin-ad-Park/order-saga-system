@@ -6,16 +6,9 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PID_FILE="${ROOT_DIR}/kafka-port-forward.pid"
 
-kubectl -n msa apply -f "${ROOT_DIR}/kafka.yaml"
-kubectl -n msa rollout status deployment/kafka
+kubectl get ns msa >/dev/null 2>&1 || kubectl create namespace msa
 
-if [[ -f "${PID_FILE}" ]]; then
-  kill "$(cat "${PID_FILE}")" || true
-  rm -f "${PID_FILE}"
-fi
-
-kubectl -n msa port-forward svc/kafka 9094:9094 > "${ROOT_DIR}/kafka-port-forward.log" 2>&1 &
-echo $! > "${PID_FILE}"
-echo "Kafka port-forward started: localhost:9094 -> svc/kafka:9094"
+bash "${ROOT_DIR}/01_apply_mysql.sh"
+bash "${ROOT_DIR}/02_portforward.sh"
+bash "${ROOT_DIR}/06_deploy_kafka.sh"

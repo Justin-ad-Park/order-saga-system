@@ -56,3 +56,5 @@ port-forward.pid
 **/data/
 kafka-port-forward.log
 kafka-port-forward.pid
+mysql-port-forward.log
+mysql-port-forward.pid
