@@ -9,7 +9,7 @@ TRUNCATE TABLE point;
 
 INSERT INTO point (point_number, status, issued_at, expired_at)
 VALUES (
-           'PNT-BOTH-001',
+           'PNT-INT-BOTH-001',
            'AVAILABLE',
            CURRENT_TIMESTAMP,
            DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
@@ -21,7 +21,7 @@ VALUES (
 
 INSERT INTO point (point_number, status, issued_at, expired_at)
 VALUES (
-           'PNT-BOTH-AVAILABLE-001',
+           'PNT-INT-BOTH-AVAILABLE-001',
            'AVAILABLE',
            CURRENT_TIMESTAMP,
            DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
@@ -33,7 +33,7 @@ VALUES (
 
 INSERT INTO point (point_number, status, issued_at, expired_at)
 VALUES (
-           'PNT-ONLY-001',
+           'PNT-INT-ONLY-001',
            'AVAILABLE',
            CURRENT_TIMESTAMP,
            DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
@@ -45,19 +45,7 @@ VALUES (
 
 INSERT INTO point (point_number, status, issued_at, expired_at)
 VALUES (
-           'P-001',
-           'AVAILABLE',
-           CURRENT_TIMESTAMP,
-           DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
-       )
-    ON DUPLICATE KEY UPDATE
-                         status = VALUES(status),
-                         issued_at = VALUES(issued_at),
-                         expired_at = VALUES(expired_at);
-
-INSERT INTO point (point_number, status, issued_at, expired_at)
-VALUES (
-           'PNT-001',
+           'PNT-SVC-001',
            'AVAILABLE',
            CURRENT_TIMESTAMP,
            DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)

@@ -1,4 +1,4 @@
-### 루트에서 MSA 서비스 실행 ###
+### 로컬에서 MSA 서비스 실행 ###
 # bin/run_local_msa.sh
 #
 # 프로세스 종료는
@@ -10,8 +10,8 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "couponNumber": "CPN-BOTH-001",
-  "pointNumber": "PNT-BOTH-001",
+  "couponNumber": "CPN-INT-BOTH-001",
+  "pointNumber": "PNT-INT-BOTH-001",
   "paymentNumber": "PAY-001",
   "paymentAmount": 35000,
   "orderItems": [
@@ -34,8 +34,8 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "couponNumber": "CPN-BOTH-RESERVED-001",
-  "pointNumber": "PNT-BOTH-AVAILABLE-001",
+  "couponNumber": "CPN-INT-BOTH-RESERVED-001",
+  "pointNumber": "PNT-INT-BOTH-AVAILABLE-001",
   "paymentNumber": "PAY-001",
   "paymentAmount": 35000,
   "orderItems": [
@@ -58,7 +58,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "couponNumber": "CPN-ONLY-001",
+  "couponNumber": "CPN-INT-ONLY-001",
   "paymentNumber": "PAY-001",
   "paymentAmount": 35000,
   "orderItems": [
@@ -81,7 +81,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "pointNumber": "PNT-ONLY-001",
+  "pointNumber": "PNT-INT-ONLY-001",
   "paymentNumber": "PAY-001",
   "paymentAmount": 35000,
   "orderItems": [

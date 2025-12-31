@@ -114,8 +114,8 @@ class OrderOrchestrationIntegrationTest {
     void createOrder_withCouponAndPoint_shouldPersistOrderSaga_and_OutboxMessage() {
         // given: 주문 생성 요청 바디
         Map<String, Object> requestBody = Map.of(
-                "couponNumber", "CPN-BOTH-001",
-                "pointNumber", "PNT-BOTH-001",
+                "couponNumber", "CPN-INT-BOTH-001",
+                "pointNumber", "PNT-INT-BOTH-001",
                 "paymentNumber", "PAY-001",
                 "paymentAmount", 35000L,
                 "orderItems", List.of(
@@ -131,7 +131,7 @@ class OrderOrchestrationIntegrationTest {
     @Test
     void createOrder_withCouponOnly_shouldPersistOrderSaga_and_OutboxMessage() {
         Map<String, Object> requestBody = Map.of(
-                "couponNumber", "CPN-ONLY-001",
+                "couponNumber", "CPN-INT-ONLY-001",
                 "paymentNumber", "PAY-001",
                 "paymentAmount", 35000L,
                 "orderItems", List.of(
@@ -147,7 +147,7 @@ class OrderOrchestrationIntegrationTest {
     @Test
     void createOrder_withPointOnly_shouldPersistOrderSaga_and_OutboxMessage() {
         Map<String, Object> requestBody = Map.of(
-                "pointNumber", "PNT-ONLY-001",
+                "pointNumber", "PNT-INT-ONLY-001",
                 "paymentNumber", "PAY-001",
                 "paymentAmount", 35000L,
                 "orderItems", List.of(
@@ -178,8 +178,8 @@ class OrderOrchestrationIntegrationTest {
     @Test
     void createOrder_withReservedCouponAndAvailablePoint_shouldMarkCouponFailedAndPointReserved() {
         Map<String, Object> requestBody = Map.of(
-                "couponNumber", "CPN-BOTH-RESERVED-001",
-                "pointNumber", "PNT-BOTH-AVAILABLE-001",
+                "couponNumber", "CPN-INT-BOTH-RESERVED-001",
+                "pointNumber", "PNT-INT-BOTH-AVAILABLE-001",
                 "paymentNumber", "PAY-001",
                 "paymentAmount", 35000L,
                 "orderItems", List.of(

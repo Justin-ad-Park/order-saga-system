@@ -39,8 +39,8 @@ class CreateOrderServiceTest {
     void createOrder_shouldCreateOrderSagaAndOutboxMessage() {
         // given
         CreateOrderCommand command = new CreateOrderCommand(
-                "CPN-001",
-                "PNT-001",
+                "CPN-SVC-001",
+                "PNT-SVC-001",
                 "PAY-001",
                 35000L,
                 List.of(
