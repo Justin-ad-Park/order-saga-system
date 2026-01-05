@@ -9,6 +9,9 @@ import com.example.orderorchestrator.application.port.in.UpdateOrderSagaStatusUs
 import com.example.orderorchestrator.application.port.in.UpdateOutboxMessageUseCase;
 import com.example.orderorchestrator.application.port.in.command.CreateOrderCommand;
 import com.example.orderorchestrator.application.port.in.result.CreateOrderResult;
+import com.example.orderorchestrator.application.port.out.OrderSagaEventPublisher;
+import com.example.orderorchestrator.domain.event.OrderSagaEvent;
+import com.example.orderorchestrator.domain.event.OrderSagaEventType;
 import com.example.orderorchestrator.domain.model.status.MSAStatus;
 import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
 import jakarta.validation.Valid;
@@ -32,6 +35,7 @@ public class OrderOrchestrationController {
     private final PointServiceClient pointServiceClient;
     private final UpdateOutboxMessageUseCase updateOutboxMessageUseCase;
     private final UpdateOrderSagaStatusUseCase updateOrderSagaStatusUseCase;
+    private final OrderSagaEventPublisher orderSagaEventPublisher;
 
     @PostMapping
     public Mono<ResponseEntity<CreateOrderResponse>> createOrder(
@@ -41,9 +45,13 @@ public class OrderOrchestrationController {
         CreateOrderResult result = createOrderUseCase.createOrder(command);
 
         return reserveExternalResources(request, result)
-                .then(Mono.fromRunnable(() -> updateSagaStatus(result.orderId(), OrderSagaStatus.Reserved)))
+                .then(Mono.fromRunnable(() -> {
+                    updateSagaStatus(result.orderId(), OrderSagaStatus.Reserved);
+                    publishSagaEvent(result, OrderSagaStatus.Reserved, OrderSagaEventType.RESERVE_SUCCEEDED);
+                }))
                 .onErrorResume(ex -> {
                     updateSagaStatus(result.orderId(), OrderSagaStatus.Compensating);
+                    publishSagaEvent(result, OrderSagaStatus.Compensating, OrderSagaEventType.RESERVE_FAILED);
                     return Mono.error(ex);
                 })
                 .thenReturn(ResponseEntity.ok(mapToResponse(result)));
@@ -91,6 +99,16 @@ public class OrderOrchestrationController {
     private void updateSagaStatus(String orderId, OrderSagaStatus status) {
         updateOrderSagaStatusUseCase.updateStatus(orderId, status);
         updateOutboxMessageUseCase.updateSagaStatus(orderId, status);
+    }
+
+    private void publishSagaEvent(CreateOrderResult result, OrderSagaStatus status, OrderSagaEventType type) {
+        OrderSagaEvent event = new OrderSagaEvent(
+                result.orderId(),
+                result.sagaId(),
+                type,
+                status
+        );
+        orderSagaEventPublisher.publish(event);
     }
 
     private Mono<Void> reserveCoupon(String couponNumber, String orderId) {

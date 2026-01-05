@@ -23,6 +23,11 @@ spring:
     init:
       mode: always
       schema-locations: classpath:orderOS_schema.sql
+  kafka:
+    bootstrap-servers: localhost:9094
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
 server:
   port: 8080
@@ -32,6 +37,10 @@ external:
     base-url: http://localhost:8081
   point:
     base-url: http://localhost:8082
+order:
+  saga:
+    events:
+      topic: order-saga-events-test
 
 
 ---
@@ -54,6 +63,11 @@ spring:
     init:
       mode: always
       schema-locations: classpath:orderOS_schema.sql
+  kafka:
+    bootstrap-servers: kafka:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
   #    init:
   #      mode: embedded  #always | never | embedded
 
@@ -65,3 +79,7 @@ external:
     base-url: http://coupon-service.msa.svc.cluster.local:8081
   point:
     base-url: http://point-service.msa.svc.cluster.local:8082
+order:
+  saga:
+    events:
+      topic: order-saga-events

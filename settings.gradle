@@ -5,3 +5,9 @@ include 'account'
 include 'common'
 include 'coupon-service'
 include 'point-service'
+
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
+}
