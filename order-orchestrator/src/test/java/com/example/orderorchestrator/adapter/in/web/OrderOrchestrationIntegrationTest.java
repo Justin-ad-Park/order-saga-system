@@ -10,11 +10,7 @@ import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OrderSag
 import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OutboxMessageJpaEntity;
 import com.example.orderorchestrator.domain.model.status.MSAStatus;
 import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.serialization.StringDeserializer;
+import com.example.orderorchestrator.adapter.out.kafka.KafkaTopicPrinter;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -37,10 +33,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -66,7 +58,7 @@ class OrderOrchestrationIntegrationTest {
 
     @AfterAll
     void stopMSAService() {
-        printKafkaTopics();
+        KafkaTopicPrinter.printKafkaTopics(bootstrapServers, null);
         if (couponContext != null) {
             couponContext.close();
         }
@@ -378,53 +370,4 @@ class OrderOrchestrationIntegrationTest {
         }
     }
 
-    private void printKafkaTopics() {
-        try (AdminClient adminClient = AdminClient.create(
-                Map.of(
-                        AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers,
-                        AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, "2000",
-                        AdminClientConfig.DEFAULT_API_TIMEOUT_MS_CONFIG, "2000"
-                ))) {
-            var topics = adminClient.listTopics().names().get(2, TimeUnit.SECONDS);
-            System.out.println("\n### Kafka topics ### : " + topics);
-            printKafkaPayloads(topics);
-        } catch (Exception ex) {
-            System.out.println("\n### Kafka topics 조회 실패 ### : " + ex.getMessage());
-        }
-    }
-
-    private void printKafkaPayloads(Set<String> topics) {
-        for (String topic : topics) {
-            if (topic.startsWith("__")) {
-                continue;
-            }
-            try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(
-                    Map.of(
-                            ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers,
-                            ConsumerConfig.GROUP_ID_CONFIG, "order-orch-test-" + UUID.randomUUID(),
-                            ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest",
-                            ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false",
-                            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName(),
-                            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName()
-                    ))) {
-                consumer.subscribe(Set.of(topic));
-                consumer.poll(Duration.ofMillis(500));
-                consumer.seekToBeginning(consumer.assignment());
-                var records = consumer.poll(Duration.ofSeconds(2));
-                if (records.isEmpty()) {
-                    System.out.println("### Kafka payloads ### : " + topic + " (no records)");
-                    continue;
-                }
-                records.forEach(record -> System.out.println(
-                        "### Kafka payloads ### : " + record.topic()
-                                + " partition=" + record.partition()
-                                + " offset=" + record.offset()
-                                + " key=" + record.key()
-                                + " value=" + record.value()
-                ));
-            } catch (Exception ex) {
-                System.out.println("### Kafka payloads 조회 실패 ### : " + topic + " message=" + ex.getMessage());
-            }
-        }
-    }
 }

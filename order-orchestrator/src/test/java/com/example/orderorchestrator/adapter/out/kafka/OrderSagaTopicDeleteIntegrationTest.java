@@ -8,14 +8,14 @@ import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest(
-        classes = OrderSagaTopicListIntegrationTest.KafkaTestConfig.class,
+        classes = OrderSagaTopicDeleteIntegrationTest.KafkaTestConfig.class,
         properties = {
                 "spring.config.name=orderOS_application",
                 "spring.profiles.active=test"
         },
         webEnvironment = SpringBootTest.WebEnvironment.NONE
 )
-class OrderSagaTopicListIntegrationTest {
+class OrderSagaTopicDeleteIntegrationTest {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
@@ -23,8 +23,9 @@ class OrderSagaTopicListIntegrationTest {
     private String topic;
 
     @Test
-    void printPublishedTopics() {
-        KafkaTopicPrinter.printKafkaTopics(bootstrapServers, topic);
+    void deleteTopicIfExists() throws Exception {
+        KafkaTopicRetentionReader.deleteTopicIfExists(bootstrapServers, topic);
+        System.out.println("Deleted topic if existed: " + topic);
     }
 
     @SpringBootConfiguration
