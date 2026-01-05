@@ -29,3 +29,17 @@ MSA(결제요청) 1, 2, 3, 4 각각 MSA+독립 Database로 구성 대강의 구�
 yaml 파일의 이름은 OSC_application.yaml로 구성하되 orderOS_application.yaml의 내용을 그대로 복사해서 구성해줘.
 이 컨슈머는 test, dev 프로파일 각각에 맞게 카프카 브로커에 발행된 이벤트를 읽어서 
 우선은 간단히 payload를 system.out.print 하는 로직으로만 구성하고 시작하자.
+
+
+
+
+이제 Consumer 프로젝트의 기능을 확장할껀데 order-orchestrator의 구조와 로직을 참고해서 헥사고날 아키텍처로 아래 로직을 구성해줘. 
+1. 이벤트를 수신하면 이벤트를 순차적으로 처리할거야.
+2. 이벤트 payload에서 orderId와 status 값을 읽어와.
+3. orderId로 order_saga 테이블의 coupon_number와 point_number 값을 읽어와서 보기 좋게 출력해줘.
+
+
+4. 이벤트 payload의 type이 RESERVE_SUCCEEDED 이면, 각 MSA(coupon-service, point-service)의 Confirm API를 호출해야 해야 해. 
+5. Confirm API는 우선 coupon-service 먼저 작업하는데 CouponConfirmController를 추가하고, confirmCoupon API를 만들어줘. confirmCoupon API는  
+5. 
+

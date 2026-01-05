@@ -234,7 +234,13 @@ class OrderOrchestrationIntegrationTest {
         assertThat(sagaOpt).isPresent();
 
         OrderSagaJpaEntity sagaEntity = sagaOpt.get();
-        assertOrderSaga(sagaEntity, orderId, sagaId, expectedSagaStatus);
+        assertOrderSaga(
+                sagaEntity,
+                orderId,
+                sagaId,
+                readString(requestBody, "pointNumber"),
+                expectedSagaStatus
+        );
         assertOutbox(orderId, expectedCouponStatus, expectedPointStatus, expectedSagaStatus, true);
     }
 
@@ -258,7 +264,13 @@ class OrderOrchestrationIntegrationTest {
         OrderSagaJpaEntity sagaEntity = findLatestSaga();
         String orderId = sagaEntity.getOrderId();
 
-        assertOrderSaga(sagaEntity, orderId, sagaEntity.getSagaId(), expectedSagaStatus);
+        assertOrderSaga(
+                sagaEntity,
+                orderId,
+                sagaEntity.getSagaId(),
+                readString(requestBody, "pointNumber"),
+                expectedSagaStatus
+        );
         assertOutbox(orderId, expectedCouponStatus, expectedPointStatus, expectedSagaStatus, false);
     }
 
@@ -281,14 +293,21 @@ class OrderOrchestrationIntegrationTest {
             OrderSagaJpaEntity sagaEntity,
             String orderId,
             String sagaId,
+            String expectedPointNumber,
             OrderSagaStatus expectedSagaStatus
     ) {
         assertThat(orderId).isNotBlank();
         assertThat(sagaId).isNotBlank();
         assertThat(sagaEntity.getOrderId()).isEqualTo(orderId);
         assertThat(sagaEntity.getSagaId()).isEqualTo(sagaId);
+        assertThat(sagaEntity.getPointNumber()).isEqualTo(expectedPointNumber);
         assertThat(sagaEntity.getStatus()).isEqualTo(expectedSagaStatus);
         assertThat(sagaEntity.getItems()).hasSize(2);
+    }
+
+    private String readString(Map<String, Object> requestBody, String key) {
+        Object value = requestBody.get(key);
+        return value == null ? null : value.toString();
     }
 
     private void assertOutbox(

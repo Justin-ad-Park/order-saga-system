@@ -10,6 +10,7 @@ public class OrderSaga {
     private final String sagaId;
 
     private final String couponNumber;      //쿠폰번호
+    private final String pointNumber;       //포인트번호
     private final String paymentNumber;     //결제승인번호(개념만)
     private final long paymentAmount;       //결제금액
 
@@ -21,6 +22,7 @@ public class OrderSaga {
             String orderId,
             String sagaId,
             String couponNumber,
+            String pointNumber,
             String paymentNumber,
             long paymentAmount,
             List<OrderItem> orderItems,
@@ -29,6 +31,7 @@ public class OrderSaga {
         this.orderId = orderId;
         this.sagaId = sagaId;
         this.couponNumber = couponNumber;
+        this.pointNumber = pointNumber;
         this.paymentNumber = paymentNumber;
         this.paymentAmount = paymentAmount;
         this.orderItems = List.copyOf(orderItems);
@@ -39,6 +42,7 @@ public class OrderSaga {
             String orderId,
             String sagaId,
             String couponNumber,
+            String pointNumber,
             String paymentNumber,
             long paymentAmount,
             List<OrderItem> orderItems,
@@ -48,6 +52,7 @@ public class OrderSaga {
                 orderId,
                 sagaId,
                 couponNumber,
+                pointNumber,
                 paymentNumber,
                 paymentAmount,
                 orderItems,
@@ -65,6 +70,10 @@ public class OrderSaga {
 
     public String couponNumber() {
         return couponNumber;
+    }
+
+    public String pointNumber() {
+        return pointNumber;
     }
 
     public String paymentNumber() {

@@ -23,6 +23,9 @@ public class OrderSagaJpaEntity {
     @Column(name = "coupon_number")
     private String couponNumber;
 
+    @Column(name = "point_number")
+    private String pointNumber;
+
     @Column(name = "payment_number")
     private String paymentNumber;
 
@@ -43,6 +46,7 @@ public class OrderSagaJpaEntity {
             String orderId,
             String sagaId,
             String couponNumber,
+            String pointNumber,
             String paymentNumber,
             long paymentAmount,
             OrderSagaStatus status
@@ -50,6 +54,7 @@ public class OrderSagaJpaEntity {
         this.orderId = orderId;
         this.sagaId = sagaId;
         this.couponNumber = couponNumber;
+        this.pointNumber = pointNumber;
         this.paymentNumber = paymentNumber;
         this.paymentAmount = paymentAmount;
         this.status = status;
@@ -64,6 +69,7 @@ public class OrderSagaJpaEntity {
     public String getOrderId() { return orderId; }
     public String getSagaId() { return sagaId; }
     public String getCouponNumber() { return couponNumber; }
+    public String getPointNumber() { return pointNumber; }
     public String getPaymentNumber() { return paymentNumber; }
     public long getPaymentAmount() { return paymentAmount; }
     public OrderSagaStatus getStatus() { return status; }

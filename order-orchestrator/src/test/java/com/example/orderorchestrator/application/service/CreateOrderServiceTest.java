@@ -53,6 +53,7 @@ class CreateOrderServiceTest {
                 "ORD-20250101-000001",
                 "SAGA-20250101-000001",
                 command.couponNumber(),
+                command.pointNumber(),
                 command.paymentNumber(),
                 command.paymentAmount(),
                 List.of(

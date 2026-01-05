@@ -28,6 +28,7 @@ public class OrderSagaPersistenceAdapter implements SaveOrderSagaPort, UpdateOrd
                 saga.orderId(),
                 saga.sagaId(),
                 saga.couponNumber(),
+                saga.pointNumber(),
                 saga.paymentNumber(),
                 saga.paymentAmount(),
                 saga.status()
@@ -48,6 +49,7 @@ public class OrderSagaPersistenceAdapter implements SaveOrderSagaPort, UpdateOrd
                 saved.getOrderId(),
                 saved.getSagaId(),
                 saved.getCouponNumber(),
+                saved.getPointNumber(),
                 saved.getPaymentNumber(),
                 saved.getPaymentAmount(),
                 saga.orderItems(),

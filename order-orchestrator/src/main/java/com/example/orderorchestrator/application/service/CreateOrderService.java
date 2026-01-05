@@ -49,6 +49,7 @@ public class CreateOrderService implements CreateOrderUseCase {
                 orderId,
                 sagaId,
                 command.couponNumber(),
+                command.pointNumber(),
                 command.paymentNumber(),
                 command.paymentAmount(),
                 items,
