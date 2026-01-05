@@ -10,8 +10,14 @@ import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OrderSag
 import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OutboxMessageJpaEntity;
 import com.example.orderorchestrator.domain.model.status.MSAStatus;
 import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -25,11 +31,16 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,6 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = "spring.config.name=orderOS_application")
 @ActiveProfiles("test")
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Sql(
         scripts = "/orderOS_cleanup.sql",
         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_CLASS
@@ -52,9 +64,9 @@ class OrderOrchestrationIntegrationTest {
     private static ConfigurableApplicationContext pointContext;
     private static int pointPort;
 
-
     @AfterAll
-    static void stopMSAService() {
+    void stopMSAService() {
+        printKafkaTopics();
         if (couponContext != null) {
             couponContext.close();
         }
@@ -102,6 +114,9 @@ class OrderOrchestrationIntegrationTest {
 
     @Autowired
     private OutboxMessageJpaRepository outboxMessageJpaRepository;
+
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
 
     //@AfterEach
     void tearDown() {
@@ -360,6 +375,56 @@ class OrderOrchestrationIntegrationTest {
 
         private int port() {
             return port;
+        }
+    }
+
+    private void printKafkaTopics() {
+        try (AdminClient adminClient = AdminClient.create(
+                Map.of(
+                        AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers,
+                        AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, "2000",
+                        AdminClientConfig.DEFAULT_API_TIMEOUT_MS_CONFIG, "2000"
+                ))) {
+            var topics = adminClient.listTopics().names().get(2, TimeUnit.SECONDS);
+            System.out.println("\n### Kafka topics ### : " + topics);
+            printKafkaPayloads(topics);
+        } catch (Exception ex) {
+            System.out.println("\n### Kafka topics 조회 실패 ### : " + ex.getMessage());
+        }
+    }
+
+    private void printKafkaPayloads(Set<String> topics) {
+        for (String topic : topics) {
+            if (topic.startsWith("__")) {
+                continue;
+            }
+            try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(
+                    Map.of(
+                            ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers,
+                            ConsumerConfig.GROUP_ID_CONFIG, "order-orch-test-" + UUID.randomUUID(),
+                            ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest",
+                            ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false",
+                            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName(),
+                            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName()
+                    ))) {
+                consumer.subscribe(Set.of(topic));
+                consumer.poll(Duration.ofMillis(500));
+                consumer.seekToBeginning(consumer.assignment());
+                var records = consumer.poll(Duration.ofSeconds(2));
+                if (records.isEmpty()) {
+                    System.out.println("### Kafka payloads ### : " + topic + " (no records)");
+                    continue;
+                }
+                records.forEach(record -> System.out.println(
+                        "### Kafka payloads ### : " + record.topic()
+                                + " partition=" + record.partition()
+                                + " offset=" + record.offset()
+                                + " key=" + record.key()
+                                + " value=" + record.value()
+                ));
+            } catch (Exception ex) {
+                System.out.println("### Kafka payloads 조회 실패 ### : " + topic + " message=" + ex.getMessage());
+            }
         }
     }
 }
