@@ -11,4 +11,7 @@ kubectl get ns msa >/dev/null 2>&1 || kubectl create namespace msa
 
 bash "${ROOT_DIR}/01_apply_mysql.sh"
 bash "${ROOT_DIR}/02_portforward.sh"
+bash "${ROOT_DIR}/03_deploy_all.sh"
 bash "${ROOT_DIR}/06_deploy_kafka.sh"
+
+kubectl -n msa get pods -o wide

@@ -25,10 +25,10 @@ public final class KafkaTopicPrinter {
                 ))) {
             Set<String> topics = adminClient.listTopics().names().get(2, TimeUnit.SECONDS);
             Set<String> selected = selectTopics(topics, topicFilter);
-            System.out.println("\n\n##### Kafka topics ##### : " + selected);
+            System.out.println("\n##### Kafka topics ##### : " + selected);
             printKafkaPayloads(bootstrapServers, selected);
         } catch (Exception ex) {
-            System.out.println("\n\n### Kafka topics 조회 실패 ### : " + ex.getMessage());
+            System.out.println("\n### Kafka topics 조회 실패 ### : " + ex.getMessage());
         }
     }
 

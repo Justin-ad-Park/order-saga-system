@@ -8,14 +8,15 @@ import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest(
-        classes = OrderSagaTopicListIntegrationTest.KafkaTestConfig.class,
+        classes = PrintTopicListForLocalTest.KafkaTestConfig.class,
         properties = {
                 "spring.config.name=orderOS_application",
-                "spring.profiles.active=test"
+                "spring.profiles.active=test",
+                "logging.level.root=OFF"
         },
         webEnvironment = SpringBootTest.WebEnvironment.NONE
 )
-class OrderSagaTopicListIntegrationTest {
+class PrintTopicListForLocalTest {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 

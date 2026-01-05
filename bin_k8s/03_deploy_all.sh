@@ -11,4 +11,4 @@ echo "Root Dir " $ROOT_DIR
 
 echo "order-orchestrator rollout 체크 중..."
 kubectl -n msa rollout status deployment/order-orchestrator
-kubectl port-forward -n msa svc/order-orchestrator 8099:8099
+kubectl port-forward -n msa svc/order-orchestrator 8099:8099  > "${ROOT_DIR}/order-port-forward.log" 2>&1 &
