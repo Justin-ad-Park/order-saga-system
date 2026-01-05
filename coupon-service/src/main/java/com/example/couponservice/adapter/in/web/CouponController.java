@@ -1,8 +1,11 @@
 package com.example.couponservice.adapter.in.web;
 
 import com.example.common.api.ApiResponse;
+import com.example.couponservice.adapter.in.web.dto.request.ConfirmCouponRequest;
 import com.example.couponservice.adapter.in.web.dto.request.ReserveCouponRequest;
+import com.example.couponservice.adapter.in.web.dto.response.ConfirmCouponResponse;
 import com.example.couponservice.adapter.in.web.dto.response.ReserveCouponResponse;
+import com.example.couponservice.application.port.in.ConfirmCouponUseCase;
 import com.example.couponservice.application.port.in.ReserveCouponUseCase;
 import com.example.couponservice.domain.model.status.CouponStatus;
 import lombok.RequiredArgsConstructor;
@@ -14,16 +17,32 @@ import org.springframework.web.bind.annotation.*;
 public class CouponController {
 
     private final ReserveCouponUseCase reserveCouponUseCase;
+    private final ConfirmCouponUseCase confirmCouponUseCase;
 
     @PostMapping("/reserve")
     public ApiResponse<ReserveCouponResponse> reserveCoupon(@RequestBody ReserveCouponRequest request) {
         reserveCouponUseCase.reserve(request.couponNumber(), request.orderId());
 
-        // 지금은 단순히 RESERVED 라고 응답만 내려줌
-        ReserveCouponResponse response = new ReserveCouponResponse(
-                request.couponNumber(),
-                CouponStatus.RESERVED.name()
+        return ApiResponse.success(buildReserveResponse(request.couponNumber(), CouponStatus.RESERVED));
+    }
+
+    @PostMapping("/confirm")
+    public ApiResponse<ConfirmCouponResponse> confirmCoupon(@RequestBody ConfirmCouponRequest request) {
+        confirmCouponUseCase.confirm(request.couponNumber(), request.orderId());
+        return ApiResponse.success(buildConfirmResponse(request.couponNumber(), CouponStatus.USED));
+    }
+
+    private ReserveCouponResponse buildReserveResponse(String couponNumber, CouponStatus status) {
+        return new ReserveCouponResponse(
+                couponNumber,
+                status.name()
         );
-        return ApiResponse.success(response);
+    }
+
+    private ConfirmCouponResponse buildConfirmResponse(String couponNumber, CouponStatus status) {
+        return new ConfirmCouponResponse(
+                couponNumber,
+                status.name()
+        );
     }
 }

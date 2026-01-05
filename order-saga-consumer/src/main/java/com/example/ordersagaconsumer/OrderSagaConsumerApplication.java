@@ -9,6 +9,9 @@ import org.springframework.kafka.annotation.EnableKafka;
 public class OrderSagaConsumerApplication {
 
     public static void main(String[] args) {
+        if (System.getProperty("spring.profiles.active") == null) {
+            System.setProperty("spring.profiles.active", "test");
+        }
         new SpringApplicationBuilder(OrderSagaConsumerApplication.class)
                 .properties(
                         "spring.config.name=OSC_application"

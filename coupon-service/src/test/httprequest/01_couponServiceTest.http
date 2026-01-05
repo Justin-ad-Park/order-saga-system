@@ -10,6 +10,18 @@ Accept: application/json
 
 ###
 
+### 쿠폰 확정 요청 (RESERVED -> USED)
+POST http://localhost:8081/api/v1/coupons/confirm
+Content-Type: application/json
+Accept: application/json
+
+{
+  "couponNumber": "CPN-INT-AVAILABLE-001",
+  "orderId": "ORD-12345"
+}
+
+###
+
 # (선택) 서버 헬스 체크
 GET http://localhost:8081/actuator/health
 Accept: application/json

@@ -48,6 +48,49 @@ class ReserveCouponServiceTest {
     }
 
     @Test
+    void confirm_shouldChangeStatusToUsed_andSave() {
+        String couponNumber = "CPN-UNIT-RESERVED-001";
+        LocalDateTime now = LocalDateTime.now();
+        Coupon reserved = new Coupon(couponNumber, CouponStatus.RESERVED, now.minusDays(1), now.plusDays(1));
+
+        when(loadCouponPort.loadCoupon(couponNumber)).thenReturn(Optional.of(reserved));
+
+        reserveCouponService.confirm(couponNumber, "ORD-004");
+
+        verify(loadCouponPort, times(1)).loadCoupon(couponNumber);
+        verify(saveCouponPort, times(1)).save(argThat(saved ->
+                saved.couponNumber().equals(couponNumber)
+                        && saved.status() == CouponStatus.USED
+        ));
+    }
+
+    @Test
+    void confirm_shouldThrow_ifCouponNotFound() {
+        String couponNumber = "CPN-UNIT-NOTFOUND-002";
+        when(loadCouponPort.loadCoupon(couponNumber)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> reserveCouponService.confirm(couponNumber, "ORD-004"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("쿠폰을 찾을 수 없습니다");
+
+        verify(saveCouponPort, never()).save(any());
+    }
+
+    @Test
+    void confirm_shouldThrow_ifCouponNotReserved() {
+        String couponNumber = "CPN-UNIT-AVAILABLE-002";
+        LocalDateTime now = LocalDateTime.now();
+        Coupon available = new Coupon(couponNumber, CouponStatus.AVAILABLE, now.minusDays(1), now.plusDays(1));
+        when(loadCouponPort.loadCoupon(couponNumber)).thenReturn(Optional.of(available));
+
+        assertThatThrownBy(() -> reserveCouponService.confirm(couponNumber, "ORD-004"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("확정 불가능한 쿠폰");
+
+        verify(saveCouponPort, never()).save(any());
+    }
+
+    @Test
     void reserve_shouldThrow_ifCouponNotFound() {
         String couponNumber = "CPN-UNIT-NOTFOUND-001";
         when(loadCouponPort.loadCoupon(couponNumber)).thenReturn(Optional.empty());

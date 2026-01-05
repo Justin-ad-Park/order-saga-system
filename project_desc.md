@@ -31,15 +31,14 @@ yaml 파일의 이름은 OSC_application.yaml로 구성하되 orderOS_applicatio
 우선은 간단히 payload를 system.out.print 하는 로직으로만 구성하고 시작하자.
 
 
+order-orchestrator 프로젝트에서 order_saga 테이블이 point_number 컬럼이 없는데, 추가하고 이 값이 저장되도록 로직을 개선해줘.
 
 
 이제 Consumer 프로젝트의 기능을 확장할껀데 order-orchestrator의 구조와 로직을 참고해서 헥사고날 아키텍처로 아래 로직을 구성해줘. 
 1. 이벤트를 수신하면 이벤트를 순차적으로 처리할거야.
 2. 이벤트 payload에서 orderId와 status 값을 읽어와.
-3. orderId로 order_saga 테이블의 coupon_number와 point_number 값을 읽어와서 보기 좋게 출력해줘.
+3. 2에서 읽어온 orderId로 order_saga 테이블의 coupon_number와 point_number 값을 읽어와서 보기 좋게 출력해줘.
 
 
-4. 이벤트 payload의 type이 RESERVE_SUCCEEDED 이면, 각 MSA(coupon-service, point-service)의 Confirm API를 호출해야 해야 해. 
-5. Confirm API는 우선 coupon-service 먼저 작업하는데 CouponConfirmController를 추가하고, confirmCoupon API를 만들어줘. confirmCoupon API는  
-5. 
+1. coupon-service에 
 

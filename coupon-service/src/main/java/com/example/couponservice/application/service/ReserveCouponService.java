@@ -1,39 +1,63 @@
 package com.example.couponservice.application.service;
 
+import com.example.couponservice.application.port.in.ConfirmCouponUseCase;
 import com.example.couponservice.application.port.in.ReserveCouponUseCase;
 import com.example.couponservice.application.port.out.LoadCouponPort;
 import com.example.couponservice.application.port.out.SaveCouponPort;
 import com.example.couponservice.domain.model.Coupon;
 import com.example.couponservice.domain.model.status.CouponStatus;
 import jakarta.transaction.Transactional;
+import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ReserveCouponService implements ReserveCouponUseCase {
+public class ReserveCouponService implements ReserveCouponUseCase, ConfirmCouponUseCase {
 
     private final LoadCouponPort loadCouponPort;
     private final SaveCouponPort saveCouponPort;
 
     @Override
     public void reserve(String couponNumber, String orderId) {
+        updateStatus(couponNumber, CouponStatus.RESERVED, this::validateReservable);
+    }
+
+    @Override
+    public void confirm(String couponNumber, String orderId) {
+        updateStatus(couponNumber, CouponStatus.USED, this::validateConfirmable);
+    }
+
+    private void updateStatus(
+            String couponNumber,
+            CouponStatus targetStatus,
+            Consumer<Coupon> validator
+    ) {
         Coupon coupon = loadCouponPort.loadCoupon(couponNumber)
                 .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다: " + couponNumber));
 
-        if (!coupon.isAvailable()) {
-            throw new IllegalStateException("예약 불가능한 쿠폰입니다: " + couponNumber);
-        }
+        validator.accept(coupon);
 
-        // 지금은 간단히 status만 RESERVED로 변경한 새 인스턴스를 만든다고 가정
-        Coupon reserved = new Coupon(
+        Coupon updated = new Coupon(
                 coupon.couponNumber(),
-                CouponStatus.RESERVED,
+                targetStatus,
                 coupon.issuedAt(),
                 coupon.expiredAt()
         );
 
-        saveCouponPort.save(reserved);
+        saveCouponPort.save(updated);
+    }
+
+    private void validateReservable(Coupon coupon) {
+        if (!coupon.isAvailable()) {
+            throw new IllegalStateException("예약 불가능한 쿠폰입니다: " + coupon.couponNumber());
+        }
+    }
+
+    private void validateConfirmable(Coupon coupon) {
+        if (coupon.status() != CouponStatus.RESERVED) {
+            throw new IllegalStateException("확정 불가능한 쿠폰입니다: " + coupon.couponNumber());
+        }
     }
 }
