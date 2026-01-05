@@ -1,5 +1,6 @@
 package com.example.couponservice.adapter.in.web;
 
+import com.example.couponservice.adapter.in.web.dto.request.CompensateCouponRequest;
 import com.example.couponservice.adapter.in.web.dto.request.ConfirmCouponRequest;
 import com.example.couponservice.adapter.out.persistence.jpa.CouponJpaEntity;
 import com.example.couponservice.adapter.out.persistence.jpa.CouponJpaRepository;
@@ -137,6 +138,44 @@ class CouponControllerIntegrationTest {
         CouponJpaEntity updated =
                 couponJpaRepository.findById(couponNumber).orElseThrow();
         assertThat(updated.getStatus()).isEqualTo(CouponStatus.USED);
+    }
+
+    @Test
+    @Order(4)
+    void compensateCoupon_shouldChangeStatusToCompensated_whenReserved() {
+        String couponNumber = "CPN-INT-COMPENSATE-001";
+        makeTestCoupon(couponNumber);
+
+        String reserveUrl = "http://localhost:" + port + "/api/v1/coupons/reserve";
+        String compensateUrl = "http://localhost:" + port + "/api/v1/coupons/compensate";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        ReserveCouponRequest reserveRequest =
+                new ReserveCouponRequest(couponNumber, "ORD-12346");
+        ResponseEntity<String> reserveResponse =
+                restTemplate.postForEntity(
+                        reserveUrl,
+                        new HttpEntity<>(reserveRequest, headers),
+                        String.class
+                );
+        assertThat(reserveResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        CompensateCouponRequest compensateRequest =
+                new CompensateCouponRequest(couponNumber, "ORD-12346");
+        ResponseEntity<String> compensateResponse =
+                restTemplate.postForEntity(
+                        compensateUrl,
+                        new HttpEntity<>(compensateRequest, headers),
+                        String.class
+                );
+
+        assertThat(compensateResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        CouponJpaEntity updated =
+                couponJpaRepository.findById(couponNumber).orElseThrow();
+        assertThat(updated.getStatus()).isEqualTo(CouponStatus.COMPENSATED);
     }
 
     private void makeTestCoupon(String couponNumber) {

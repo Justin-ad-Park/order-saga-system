@@ -91,6 +91,45 @@ class ReserveCouponServiceMockTest {
     }
 
     @Test
+    void compensate_shouldChangeStatusToCompensated_andSave() {
+        String couponNumber = "CPN-UNIT-RESERVED-002";
+        LocalDateTime now = LocalDateTime.now();
+        Coupon reserved = new Coupon(couponNumber, CouponStatus.RESERVED, now.minusDays(1), now.plusDays(1));
+
+        when(loadCouponPort.loadCoupon(couponNumber)).thenReturn(Optional.of(reserved));
+
+        reserveCouponService.compensateCoupon(couponNumber, "ORD-005");
+
+        verify(loadCouponPort, times(1)).loadCoupon(couponNumber);
+        verify(saveCouponPort, times(1)).save(argThat(saved ->
+                saved.couponNumber().equals(couponNumber)
+                        && saved.status() == CouponStatus.COMPENSATED
+        ));
+    }
+
+    @Test
+    void compensate_shouldThrow_ifCouponNotFound() {
+        String couponNumber = "CPN-UNIT-NOTFOUND-003";
+        when(loadCouponPort.loadCoupon(couponNumber)).thenReturn(Optional.empty());
+
+        reserveCouponService.compensateCoupon(couponNumber, "ORD-005");
+
+        verify(saveCouponPort, never()).save(any());
+    }
+
+    @Test
+    void compensate_shouldThrow_ifCouponNotReserved() {
+        String couponNumber = "CPN-UNIT-AVAILABLE-003";
+        LocalDateTime now = LocalDateTime.now();
+        Coupon available = new Coupon(couponNumber, CouponStatus.AVAILABLE, now.minusDays(1), now.plusDays(1));
+        when(loadCouponPort.loadCoupon(couponNumber)).thenReturn(Optional.of(available));
+
+        reserveCouponService.compensateCoupon(couponNumber, "ORD-005");
+
+        verify(saveCouponPort, never()).save(any());
+    }
+
+    @Test
     void reserve_shouldThrow_ifCouponNotFound() {
         String couponNumber = "CPN-UNIT-NOTFOUND-001";
         when(loadCouponPort.loadCoupon(couponNumber)).thenReturn(Optional.empty());

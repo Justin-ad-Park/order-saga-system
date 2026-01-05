@@ -1,5 +1,6 @@
 package com.example.couponservice.application.service;
 
+import com.example.couponservice.application.port.in.CompensateCouponUseCase;
 import com.example.couponservice.application.port.in.ConfirmCouponUseCase;
 import com.example.couponservice.application.port.in.ReserveCouponUseCase;
 import com.example.couponservice.application.port.out.LoadCouponPort;
@@ -14,7 +15,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ReserveCouponService implements ReserveCouponUseCase, ConfirmCouponUseCase {
+public class ReserveCouponService implements ReserveCouponUseCase, ConfirmCouponUseCase, CompensateCouponUseCase {
 
     private final LoadCouponPort loadCouponPort;
     private final SaveCouponPort saveCouponPort;
@@ -27,6 +28,23 @@ public class ReserveCouponService implements ReserveCouponUseCase, ConfirmCoupon
     @Override
     public void confirm(String couponNumber, String orderId) {
         updateStatus(couponNumber, CouponStatus.USED, this::validateConfirmable);
+    }
+
+    @Override
+    public void compensateCoupon(String couponNumber, String orderId) {
+        Coupon coupon = loadCouponPort.loadCoupon(couponNumber)
+                .orElse(null);
+        if (coupon == null || coupon.status() != CouponStatus.RESERVED) {
+            return;
+        }
+
+        Coupon updated = new Coupon(
+                coupon.couponNumber(),
+                CouponStatus.COMPENSATED,
+                coupon.issuedAt(),
+                coupon.expiredAt()
+        );
+        saveCouponPort.save(updated);
     }
 
     private void updateStatus(
@@ -60,4 +78,5 @@ public class ReserveCouponService implements ReserveCouponUseCase, ConfirmCoupon
             throw new IllegalStateException("확정 불가능한 쿠폰입니다: " + coupon.couponNumber());
         }
     }
+
 }
