@@ -21,30 +21,28 @@ mkdir ~/test/mysql
 
 ### 2-2) k8s mysql.yaml 실행
 ```
-kubectl apply -f k8s/mysql.yaml
-kubectl get pods -w
-kubectl get svc -n msa
-kubectl get pvc,pv -n msa
+./bin_k8s/01_apply_mysql.sh
 
 ```
 Pod가 Running이 되면 OK
 PVC가 Bound인지 확인
 
-### 2-3) 삭제 방법
+### MySQL 중지
 ```
--- 한방에 삭제 
+./bin_k8s/_01_stop_mysql.sh
+```
+
+### MySQL 삭제 방법
+```
+# 한방에 삭제 
 kubectl delete -f k8s/mysql.yaml 
-
-또는 
-
-kubectl delete deployment mysql -n default
-kubectl delete service mysql -n default
-kubectl delete pvc mysql-pvc -n default
+# 또는
+./bin_k8s/_03_delete_all_deploy_msa.sh
 ```
 
 ## 3. 쿠버네티스의 mysql에 접속하기 위한 포트 포워드 실행 
 ```
-kubectl port-forward -n msa svc/mysql 3307:3306
+./bin_k8s/02_portforward.sh
 ```
 
 ### 3-1) mySql에 접속해서 스키마(데이터베이스)와 계정 생성
@@ -92,15 +90,20 @@ MODIFY COLUMN coupon_status VARCHAR(255) NOT NULL AFTER payload;
 
 ## MSA K8s에 배포 및 실행
 ```
-./bin/03_deploy_all.sh
+./bin_k8s/03_deploy_all.sh
 
-## 삭제 ## 
-./bin/_03_delete_all_deploy_msa.sh
+
+## 종료 
+./bin_k8s/_03_stop_msa.sh
+
+## 삭제 
+./bin_k8s/_03_delete_all_deploy_msa.sh
+
 ```
 
 ### 수정 사항 재배포 
 ```
-05_restart_msa.sh
+./bin_k8s/04_restart_msa.sh
 ```
 
 ## 카프카 배포 및 로컬 포트포워드
