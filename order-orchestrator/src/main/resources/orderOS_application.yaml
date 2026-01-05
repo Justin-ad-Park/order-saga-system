@@ -25,6 +25,8 @@ spring:
       schema-locations: classpath:orderOS_schema.sql
   kafka:
     bootstrap-servers: localhost:9094
+    admin:
+      auto-create: false
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
