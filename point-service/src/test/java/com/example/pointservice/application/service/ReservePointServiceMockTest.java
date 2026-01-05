@@ -48,6 +48,88 @@ class ReservePointServiceMockTest {
     }
 
     @Test
+    void confirm_shouldChangeStatusToUsed_andSave() {
+        String pointNumber = "PNT-UNIT-RESERVED-001";
+        LocalDateTime now = LocalDateTime.now();
+        Point reserved = new Point(pointNumber, PointStatus.RESERVED, now.minusDays(1), now.plusDays(1));
+
+        when(loadPointPort.loadPoint(pointNumber)).thenReturn(Optional.of(reserved));
+
+        reservePointService.confirm(pointNumber, "ORD-004");
+
+        verify(loadPointPort, times(1)).loadPoint(pointNumber);
+        verify(savePointPort, times(1)).save(argThat(saved ->
+                saved.pointNumber().equals(pointNumber)
+                        && saved.status() == PointStatus.USED
+        ));
+    }
+
+    @Test
+    void confirm_shouldThrow_ifPointNotFound() {
+        String pointNumber = "PNT-UNIT-NOTFOUND-002";
+        when(loadPointPort.loadPoint(pointNumber)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> reservePointService.confirm(pointNumber, "ORD-004"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("포인트를 찾을 수 없습니다");
+
+        verify(savePointPort, never()).save(any());
+    }
+
+    @Test
+    void confirm_shouldThrow_ifPointNotReserved() {
+        String pointNumber = "PNT-UNIT-AVAILABLE-002";
+        LocalDateTime now = LocalDateTime.now();
+        Point available = new Point(pointNumber, PointStatus.AVAILABLE, now.minusDays(1), now.plusDays(1));
+        when(loadPointPort.loadPoint(pointNumber)).thenReturn(Optional.of(available));
+
+        assertThatThrownBy(() -> reservePointService.confirm(pointNumber, "ORD-004"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("확정 불가능한 포인트");
+
+        verify(savePointPort, never()).save(any());
+    }
+
+    @Test
+    void compensate_shouldChangeStatusToCompensated_andSave() {
+        String pointNumber = "PNT-UNIT-RESERVED-002";
+        LocalDateTime now = LocalDateTime.now();
+        Point reserved = new Point(pointNumber, PointStatus.RESERVED, now.minusDays(1), now.plusDays(1));
+
+        when(loadPointPort.loadPoint(pointNumber)).thenReturn(Optional.of(reserved));
+
+        reservePointService.compensatePoint(pointNumber, "ORD-005");
+
+        verify(loadPointPort, times(1)).loadPoint(pointNumber);
+        verify(savePointPort, times(1)).save(argThat(saved ->
+                saved.pointNumber().equals(pointNumber)
+                        && saved.status() == PointStatus.COMPENSATED
+        ));
+    }
+
+    @Test
+    void compensate_shouldNoOp_ifPointNotFound() {
+        String pointNumber = "PNT-UNIT-NOTFOUND-003";
+        when(loadPointPort.loadPoint(pointNumber)).thenReturn(Optional.empty());
+
+        reservePointService.compensatePoint(pointNumber, "ORD-005");
+
+        verify(savePointPort, never()).save(any());
+    }
+
+    @Test
+    void compensate_shouldNoOp_ifPointNotReserved() {
+        String pointNumber = "PNT-UNIT-AVAILABLE-003";
+        LocalDateTime now = LocalDateTime.now();
+        Point available = new Point(pointNumber, PointStatus.AVAILABLE, now.minusDays(1), now.plusDays(1));
+        when(loadPointPort.loadPoint(pointNumber)).thenReturn(Optional.of(available));
+
+        reservePointService.compensatePoint(pointNumber, "ORD-005");
+
+        verify(savePointPort, never()).save(any());
+    }
+
+    @Test
     void reserve_shouldThrow_ifPointNotFound() {
         String pointNumber = "PNT-UNIT-NOTFOUND-001";
         when(loadPointPort.loadPoint(pointNumber)).thenReturn(Optional.empty());

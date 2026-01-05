@@ -1,39 +1,81 @@
 package com.example.pointservice.application.service;
 
+import com.example.pointservice.application.port.in.CompensatePointUseCase;
+import com.example.pointservice.application.port.in.ConfirmPointUseCase;
 import com.example.pointservice.application.port.in.ReservePointUseCase;
 import com.example.pointservice.application.port.out.LoadPointPort;
 import com.example.pointservice.application.port.out.SavePointPort;
 import com.example.pointservice.domain.model.Point;
 import com.example.pointservice.domain.model.status.PointStatus;
 import jakarta.transaction.Transactional;
+import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ReservePointService implements ReservePointUseCase {
+public class ReservePointService implements ReservePointUseCase, ConfirmPointUseCase, CompensatePointUseCase {
 
     private final LoadPointPort loadPointPort;
     private final SavePointPort savePointPort;
 
     @Override
     public void reserve(String pointNumber, String orderId) {
+        updateStatus(pointNumber, PointStatus.RESERVED, this::validateReservable);
+    }
+
+    @Override
+    public void confirm(String pointNumber, String orderId) {
+        updateStatus(pointNumber, PointStatus.USED, this::validateConfirmable);
+    }
+
+    @Override
+    public void compensatePoint(String pointNumber, String orderId) {
+        Point point = loadPointPort.loadPoint(pointNumber)
+                .orElse(null);
+        if (point == null || point.status() != PointStatus.RESERVED) {
+            return;
+        }
+
+        Point updated = new Point(
+                point.pointNumber(),
+                PointStatus.COMPENSATED,
+                point.issuedAt(),
+                point.expiredAt()
+        );
+        savePointPort.save(updated);
+    }
+
+    private void updateStatus(
+            String pointNumber,
+            PointStatus targetStatus,
+            Consumer<Point> validator
+    ) {
         Point point = loadPointPort.loadPoint(pointNumber)
                 .orElseThrow(() -> new IllegalArgumentException("포인트를 찾을 수 없습니다: " + pointNumber));
 
-        if (!point.isAvailable()) {
-            throw new IllegalStateException("예약 불가능한 포인트입니다: " + pointNumber);
-        }
+        validator.accept(point);
 
-        // 지금은 간단히 status만 RESERVED로 변경한 새 인스턴스를 만든다고 가정
-        Point reserved = new Point(
+        Point updated = new Point(
                 point.pointNumber(),
-                PointStatus.RESERVED,
+                targetStatus,
                 point.issuedAt(),
                 point.expiredAt()
         );
 
-        savePointPort.save(reserved);
+        savePointPort.save(updated);
+    }
+
+    private void validateReservable(Point point) {
+        if (!point.isAvailable()) {
+            throw new IllegalStateException("예약 불가능한 포인트입니다: " + point.pointNumber());
+        }
+    }
+
+    private void validateConfirmable(Point point) {
+        if (point.status() != PointStatus.RESERVED) {
+            throw new IllegalStateException("확정 불가능한 포인트입니다: " + point.pointNumber());
+        }
     }
 }

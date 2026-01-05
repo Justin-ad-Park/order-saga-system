@@ -10,6 +10,30 @@ Accept: application/json
 
 ###
 
+### 포인트 확정 요청 (RESERVED -> USED)
+POST http://localhost:8082/api/v1/points/confirm
+Content-Type: application/json
+Accept: application/json
+
+{
+  "pointNumber": "PNT-INT-AVAILABLE-001",
+  "orderId": "ORD-12345"
+}
+
+###
+
+### 포인트 보상 요청 (RESERVED -> COMPENSATED)
+POST http://localhost:8082/api/v1/points/compensate
+Content-Type: application/json
+Accept: application/json
+
+{
+  "pointNumber": "PNT-INT-AVAILABLE-001",
+  "orderId": "ORD-12345"
+}
+
+###
+
 # (선택) 서버 헬스 체크
 GET http://localhost:8082/actuator/health
 Accept: application/json
