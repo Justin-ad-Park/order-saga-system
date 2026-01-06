@@ -8,12 +8,12 @@ set -euo pipefail
 # Check if the `lsof` command exists on this system.
 if command -v lsof >/dev/null 2>&1; then
   lsof -ti tcp:8099 | xargs kill
-  lsof -ti tcp:8081 | xargs kill
-  lsof -ti tcp:8082 | xargs kill
+  lsof -ti tcp:8091 | xargs kill
+  lsof -ti tcp:8092 | xargs kill
 else
   ps aux | rg "kubectl port-forward" | rg "8099:8099" | awk '{print $2}' | xargs kill
-  ps aux | rg "kubectl port-forward" | rg "8081:8081" | awk '{print $2}' | xargs kill
-  ps aux | rg "kubectl port-forward" | rg "8082:8082" | awk '{print $2}' | xargs kill
+  ps aux | rg "kubectl port-forward" | rg "8091:8081" | awk '{print $2}' | xargs kill
+  ps aux | rg "kubectl port-forward" | rg "8092:8082" | awk '{print $2}' | xargs kill
 fi
 
 
