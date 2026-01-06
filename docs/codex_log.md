@@ -128,3 +128,42 @@ status가 Reserved이면
 - 필요한 MSA 호출이 모두 성공하면 outbox_message의 saga_status와 order_saga의 status를 confirm이 성공한 경우에는 Completed로
 - compensate를 성공한 경우에는 Compensated로 업데이트 해줘.
 
+## 27) K8s 포트포워딩 오류 및 outbox order_status 갱신
+- 사용자 요청: 05_msa_portforward.sh 실행 시 로그 파일이 read-only 경로로 떨어지는 오류 수정 요청.
+- Codex 응답: 스크립트에 ROOT_DIR 정의를 추가해 로그가 프로젝트 루트에 기록되도록 수정.
+- 사용자 요청: outbox_message의 saga_status가 Completed/Compensated가 될 때 order_status도 동일하게 업데이트.
+- Codex 응답: OutboxMessageStatusJdbcAdapter.updateSagaStatus에서 saga_status에 따라 order_status를 함께 갱신하도록 반영.
+
+### 28) updateSagaStatus 메서드 리팩터링
+OutboxMessageStatusJdbcAdapter.java 에서 하나의 메서드가 여러 역할을 하고 있는데, updateSagaCompetedStatus, updateSagaCompensatedStatus 처럼 각각의 메서드로 리팩토링 하자.
+    @Override
+    public void updateSagaStatus(String orderId, OrderSagaStatus status) {
+        if (status == OrderSagaStatus.Completed) {
+            jdbcTemplate.update(
+                    "update outbox_message set saga_status = ?, order_status = ?, updated_at = ? where order_id = ?",
+                    status.name(),
+                    MSAStatus.Completed.name(),
+                    Timestamp.valueOf(LocalDateTime.now()),
+                    orderId
+            );
+            return;
+        }
+
+        if (status == OrderSagaStatus.Compensated) {
+            jdbcTemplate.update(
+                    "update outbox_message set saga_status = ?, order_status = ?, updated_at = ? where order_id = ?",
+                    status.name(),
+                    MSAStatus.Compensated.name(),
+                    Timestamp.valueOf(LocalDateTime.now()),
+                    orderId
+            );
+            return;
+        }
+
+        jdbcTemplate.update(
+                "update outbox_message set saga_status = ?, updated_at = ? where order_id = ?",
+                status.name(),
+                Timestamp.valueOf(LocalDateTime.now()),
+                orderId
+        );
+    }

@@ -38,6 +38,28 @@ public class OutboxMessageStatusJdbcAdapter implements UpdateOutboxMessagePort {
     }
 
     @Override
+    public void updateCompletedStatus(String orderId) {
+        jdbcTemplate.update(
+                "update outbox_message set saga_status = ?, order_status = ?, updated_at = ? where order_id = ?",
+                OrderSagaStatus.Completed.name(),
+                MSAStatus.Completed.name(),
+                Timestamp.valueOf(LocalDateTime.now()),
+                orderId
+        );
+    }
+
+    @Override
+    public void updateCompensatedStatus(String orderId) {
+        jdbcTemplate.update(
+                "update outbox_message set saga_status = ?, order_status = ?, updated_at = ? where order_id = ?",
+                OrderSagaStatus.Compensated.name(),
+                MSAStatus.Compensated.name(),
+                Timestamp.valueOf(LocalDateTime.now()),
+                orderId
+        );
+    }
+
+    @Override
     public void updateSagaStatus(String orderId, OrderSagaStatus status) {
         jdbcTemplate.update(
                 "update outbox_message set saga_status = ?, updated_at = ? where order_id = ?",

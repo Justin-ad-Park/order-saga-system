@@ -96,7 +96,7 @@ public class ProcessOrderSagaEventService implements ProcessOrderSagaEventUseCas
         }
 
         if (couponOk && pointOk) {
-            updateOutboxMessagePort.updateSagaStatus(orderId, OrderSagaStatus.Completed);
+            updateOutboxMessagePort.updateCompletedStatus(orderId);
             updateOrderSagaStatusPort.updateStatus(orderId, OrderSagaStatus.Completed);
         }
     }
@@ -125,7 +125,7 @@ public class ProcessOrderSagaEventService implements ProcessOrderSagaEventUseCas
         }
 
         if (couponOk && pointOk) {
-            updateOutboxMessagePort.updateSagaStatus(orderId, OrderSagaStatus.Compensated);
+            updateOutboxMessagePort.updateCompensatedStatus(orderId);
             updateOrderSagaStatusPort.updateStatus(orderId, OrderSagaStatus.Compensated);
         }
     }
