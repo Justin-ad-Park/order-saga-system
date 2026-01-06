@@ -65,6 +65,20 @@ class ReservePointServiceMockTest {
     }
 
     @Test
+    void confirm_shouldNoOp_ifPointAlreadyUsed() {
+        String pointNumber = "PNT-UNIT-USED-001";
+        LocalDateTime now = LocalDateTime.now();
+        Point used = new Point(pointNumber, PointStatus.USED, now.minusDays(1), now.plusDays(1));
+
+        when(loadPointPort.loadPoint(pointNumber)).thenReturn(Optional.of(used));
+
+        reservePointService.confirm(pointNumber, "ORD-004");
+
+        verify(loadPointPort, times(1)).loadPoint(pointNumber);
+        verify(savePointPort, never()).save(any());
+    }
+
+    @Test
     void confirm_shouldThrow_ifPointNotFound() {
         String pointNumber = "PNT-UNIT-NOTFOUND-002";
         when(loadPointPort.loadPoint(pointNumber)).thenReturn(Optional.empty());

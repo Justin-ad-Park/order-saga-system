@@ -27,7 +27,20 @@ public class ReservePointService implements ReservePointUseCase, ConfirmPointUse
 
     @Override
     public void confirm(String pointNumber, String orderId) {
-        updateStatus(pointNumber, PointStatus.USED, this::validateConfirmable);
+        Point point = loadPointPort.loadPoint(pointNumber)
+                .orElseThrow(() -> new IllegalArgumentException("포인트를 찾을 수 없습니다: " + pointNumber));
+        if (point.status() == PointStatus.USED) {
+            return;
+        }
+        validateConfirmable(point);
+
+        Point updated = new Point(
+                point.pointNumber(),
+                PointStatus.USED,
+                point.issuedAt(),
+                point.expiredAt()
+        );
+        savePointPort.save(updated);
     }
 
     @Override

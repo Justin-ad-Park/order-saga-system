@@ -72,3 +72,12 @@
 ## 14) reserve/confirm 예외 처리 확대 요청
 - 사용자 요청: 동일한 작업을 reserve*, confirm* 메서드에도 적용 요청(쿠폰/포인트 서비스 모두).
 - Codex 응답: coupon-service에 전역 예외 처리기를 추가하고 reserve 실패 테스트를 CONFLICT로 조정해 reserve/confirm 오류도 명시적 응답으로 처리.
+
+## 15) confirm 멱등 처리 요청
+- 사용자 요청: 이미 confirm한 쿠폰/포인트를 다시 confirm하면 오류 대신 성공 처리(멱등) 요청.
+- Codex 응답: confirm 시 USED 상태면 no-op으로 처리하도록 서비스 로직을 변경하고 관련 테스트를 추가.
+
+
+## 17) order-orchestrator K8s 테스트 500 에러 문의
+- 사용자 요청: `00_init_k8s.sh` 실행 후 `01_orderOrchestratorK8sTest.http`의 주문 생성 요청에서 500 에러 발생.
+- Codex 응답: 원인 파악을 위해 관련 서비스/파드 로그와 상태 점검 진행 예정.

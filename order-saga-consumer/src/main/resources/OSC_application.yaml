@@ -40,7 +40,6 @@ order:
     events:
       topic: order-saga-events-test
 
-
 ---
 spring:
   config:

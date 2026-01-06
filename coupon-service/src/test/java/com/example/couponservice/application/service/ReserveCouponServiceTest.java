@@ -65,6 +65,20 @@ class ReserveCouponServiceTest {
     }
 
     @Test
+    void confirm_shouldNoOp_ifCouponAlreadyUsed() {
+        String couponNumber = "CPN-UNIT-USED-001";
+        LocalDateTime now = LocalDateTime.now();
+        Coupon used = new Coupon(couponNumber, CouponStatus.USED, now.minusDays(1), now.plusDays(1));
+
+        when(loadCouponPort.loadCoupon(couponNumber)).thenReturn(Optional.of(used));
+
+        reserveCouponService.confirm(couponNumber, "ORD-004");
+
+        verify(loadCouponPort, times(1)).loadCoupon(couponNumber);
+        verify(saveCouponPort, never()).save(any());
+    }
+
+    @Test
     void confirm_shouldThrow_ifCouponNotFound() {
         String couponNumber = "CPN-UNIT-NOTFOUND-002";
         when(loadCouponPort.loadCoupon(couponNumber)).thenReturn(Optional.empty());

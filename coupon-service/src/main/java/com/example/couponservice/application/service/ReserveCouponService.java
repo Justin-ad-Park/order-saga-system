@@ -27,7 +27,20 @@ public class ReserveCouponService implements ReserveCouponUseCase, ConfirmCoupon
 
     @Override
     public void confirm(String couponNumber, String orderId) {
-        updateStatus(couponNumber, CouponStatus.USED, this::validateConfirmable);
+        Coupon coupon = loadCouponPort.loadCoupon(couponNumber)
+                .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다: " + couponNumber));
+        if (coupon.status() == CouponStatus.USED) {
+            return;
+        }
+        validateConfirmable(coupon);
+
+        Coupon updated = new Coupon(
+                coupon.couponNumber(),
+                CouponStatus.USED,
+                coupon.issuedAt(),
+                coupon.expiredAt()
+        );
+        saveCouponPort.save(updated);
     }
 
     @Override
