@@ -5,4 +5,4 @@
 #cd "$ROOT_DIR"
 #
 #"${ROOT_DIR}/gradlew" :order-saga-consumer:bootRun \
-#  -Dspring.profiles.active=dev
+#  --args="--spring.profiles.active=dev"
