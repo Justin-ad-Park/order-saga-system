@@ -10,7 +10,6 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 kubectl get ns msa >/dev/null 2>&1 || kubectl create namespace msa
 
 bash "${ROOT_DIR}/01_apply_mysql.sh"
-bash "${ROOT_DIR}/02_portforward.sh"
 bash "${ROOT_DIR}/03_deploy_all.sh"
 bash "${ROOT_DIR}/05_msa_portforward.sh"
 bash "${ROOT_DIR}/06_deploy_kafka.sh"

@@ -11,3 +11,14 @@ kubectl -n msa apply -f "${ROOT_DIR}/mysql.yaml"
 kubectl -n msa get pods
 kubectl -n msa get svc
 kubectl -n msa get pvc,pv
+
+PID_FILE="${ROOT_DIR}/mysql-port-forward.pid"
+
+if [[ -f "${PID_FILE}" ]]; then
+  kill "$(cat "${PID_FILE}")" || true
+  rm -f "${PID_FILE}"
+fi
+
+kubectl -n msa port-forward svc/mysql 3307:3306 > "${ROOT_DIR}/mysql-port-forward.log" 2>&1 &
+echo $! > "${PID_FILE}"
+echo "MySQL port-forward started: localhost:3307 -> svc/mysql:3306"

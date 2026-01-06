@@ -23,12 +23,15 @@ spring:
     bootstrap-servers: localhost:9094
     admin:
       auto-create: false
+    consumer:
+      group-id: order-saga-consumer-test
+      auto-offset-reset: earliest
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
 server:
-  port: 8080
+  port: 8083
 
 external:
   coupon:
@@ -39,6 +42,7 @@ order:
   saga:
     events:
       topic: order-saga-events-test
+      consumer-group: order-saga-consumer-test
 
 ---
 spring:
