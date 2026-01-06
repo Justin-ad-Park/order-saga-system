@@ -36,10 +36,6 @@
 - HTTP 테스트 추가: `01_pointServiceTest.http`.
 - 테스트 확장: 단위/Mock/통합 테스트에 confirm/compensate 시나리오 추가.
 
-## point API에 추가
-› coupon-service에 추가한 confirm, compansate API를 point-service에도 동일한 방식으로 추가해 줘.
-
-
 ## 6) Logging Mode 변경
 - 사용자 요청: 지금부터 모든 발화를 `docs/codex_log.md`에 저장.
 - Codex 응답: 매 요청/응답마다 즉시 append 방식으로 기록 진행.
@@ -49,16 +45,30 @@
 - RESERVED가 아닌 경우(AVAILABLE 등)에는 기존대로 no-op 유지.
 - 관련 단위/Mock 테스트에 USED 케이스 추가.
 
+## 8) 보상 완료 상태 변경 요청
+- 사용자 요청: 포인트와 쿠폰의 보상 처리가 완료되면 point, coupon의 status는 AVAILABLE 상태가 되어야 함.
+- Codex 응답: 보상 처리 완료 시 coupon/point 상태를 AVAILABLE로 변경하도록 서비스/컨트롤러/테스트/HTTP 예시를 업데이트.
+
+## 9) USED 보상 오류 메시지 명시 요청
+- 사용자 요청: 이미 USED가 된 포인트를 보상하려고 하면 500 Internal Server Error가 발생하니, 서비스에서 담아주는 에러 메시지로 더 명시적으로 리턴 요청.
+- Codex 응답: point-service 보상 요청의 USED 상태 오류가 500이 아닌 명시적 에러로 반환되도록 전역 예외 처리기를 추가하고, 통합 테스트 기대 상태를 CONFLICT로 변경.
+
+## 10) reserve/confirm 응답 메시지 변경 요청
+- 사용자 요청: reserve, confirm API도 응답 메시지를 서비스에서 발생한 메시지로 변경하고, point, coupon 양쪽 모두 작업 요청.
+
+## 11) 작업 내용 확인 요청
+- 사용자 요청: 이 창이 닫히기 전에 작업했던 내용을 확인해줘.
+- Codex 응답: `docs/codex_log.md`에 정리된 작업 기록과 git 상태를 안내.
+
+## 12) 모든 발화 로깅 요청
+- 사용자 요청: 지금부터 모든 발화를 `docs/codex_log.md`에 저장해줘. 발화의 순번은 `## xx) 제목` 형식으로 기록 요청.
+- Codex 응답: 요청대로 `docs/codex_log.md`에 모든 발화를 바로 기록하겠다고 응답.
 
 
-### User
-포인트와 쿠폰의 보상 처리가 완료되면 point, coupon의 status는 AVAILABLE 상태가 되어야 해.
+## 13) 최근 커밋 요약 요청
+- 사용자 요청: 가장 최근에 커밋된 내용을 분석해서 요약해줘.
+- Codex 응답: 최근 커밋의 주요 변경 사항을 요약 제공.
 
-### Assistant
-보상 처리 완료 시 coupon/point 상태를 AVAILABLE로 변경하도록 서비스/컨트롤러/테스트/HTTP 예시를 업데이트.
-
-### User
-이미 USED가 된 포인트를 보상하려고 하면 500 Internal Server Error가 발생하니, 서비스에서 담아주는 에러 메시지로 더 명시적으로 리턴 요청.
-
-### Assistant
-point-service 보상 요청의 USED 상태 오류가 500이 아닌 명시적 에러로 반환되도록 전역 예외 처리기를 추가하고, 통합 테스트 기대 상태를 CONFLICT로 변경.
+## 14) reserve/confirm 예외 처리 확대 요청
+- 사용자 요청: 동일한 작업을 reserve*, confirm* 메서드에도 적용 요청(쿠폰/포인트 서비스 모두).
+- Codex 응답: coupon-service에 전역 예외 처리기를 추가하고 reserve 실패 테스트를 CONFLICT로 조정해 reserve/confirm 오류도 명시적 응답으로 처리.

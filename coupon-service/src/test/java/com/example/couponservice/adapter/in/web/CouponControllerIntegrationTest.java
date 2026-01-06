@@ -95,7 +95,7 @@ class CouponControllerIntegrationTest {
                 restTemplate.postForEntity(url, httpEntity, String.class);
 
         // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
 
         CouponJpaEntity updated =
                 couponJpaRepository.findById(couponNumber).orElseThrow();
