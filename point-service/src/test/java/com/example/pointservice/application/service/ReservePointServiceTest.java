@@ -91,7 +91,7 @@ class ReservePointServiceTest {
     }
 
     @Test
-    void compensate_shouldChangeStatusToCompensated_andSave() {
+    void compensate_shouldChangeStatusToAvailable_andSave() {
         String pointNumber = "PNT-UNIT-RESERVED-002";
         LocalDateTime now = LocalDateTime.now();
         Point reserved = new Point(pointNumber, PointStatus.RESERVED, now.minusDays(1), now.plusDays(1));
@@ -103,7 +103,7 @@ class ReservePointServiceTest {
         verify(loadPointPort, times(1)).loadPoint(pointNumber);
         verify(savePointPort, times(1)).save(argThat(saved ->
                 saved.pointNumber().equals(pointNumber)
-                        && saved.status() == PointStatus.COMPENSATED
+                        && saved.status() == PointStatus.AVAILABLE
         ));
     }
 
@@ -125,6 +125,20 @@ class ReservePointServiceTest {
         when(loadPointPort.loadPoint(pointNumber)).thenReturn(Optional.of(available));
 
         reservePointService.compensatePoint(pointNumber, "ORD-005");
+
+        verify(savePointPort, never()).save(any());
+    }
+
+    @Test
+    void compensate_shouldThrow_ifPointAlreadyUsed() {
+        String pointNumber = "PNT-UNIT-USED-002";
+        LocalDateTime now = LocalDateTime.now();
+        Point used = new Point(pointNumber, PointStatus.USED, now.minusDays(1), now.plusDays(1));
+        when(loadPointPort.loadPoint(pointNumber)).thenReturn(Optional.of(used));
+
+        assertThatThrownBy(() -> reservePointService.compensatePoint(pointNumber, "ORD-006"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("보상 불가능한 포인트");
 
         verify(savePointPort, never()).save(any());
     }

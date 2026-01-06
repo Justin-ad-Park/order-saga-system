@@ -91,7 +91,7 @@ class ReserveCouponServiceTest {
     }
 
     @Test
-    void compensate_shouldChangeStatusToCompensated_andSave() {
+    void compensate_shouldChangeStatusToAvailable_andSave() {
         String couponNumber = "CPN-UNIT-RESERVED-002";
         LocalDateTime now = LocalDateTime.now();
         Coupon reserved = new Coupon(couponNumber, CouponStatus.RESERVED, now.minusDays(1), now.plusDays(1));
@@ -103,7 +103,7 @@ class ReserveCouponServiceTest {
         verify(loadCouponPort, times(1)).loadCoupon(couponNumber);
         verify(saveCouponPort, times(1)).save(argThat(saved ->
                 saved.couponNumber().equals(couponNumber)
-                        && saved.status() == CouponStatus.COMPENSATED
+                        && saved.status() == CouponStatus.AVAILABLE
         ));
     }
 
@@ -125,6 +125,20 @@ class ReserveCouponServiceTest {
         when(loadCouponPort.loadCoupon(couponNumber)).thenReturn(Optional.of(available));
 
         reserveCouponService.compensateCoupon(couponNumber, "ORD-005");
+
+        verify(saveCouponPort, never()).save(any());
+    }
+
+    @Test
+    void compensate_shouldThrow_ifCouponAlreadyUsed() {
+        String couponNumber = "CPN-UNIT-USED-002";
+        LocalDateTime now = LocalDateTime.now();
+        Coupon used = new Coupon(couponNumber, CouponStatus.USED, now.minusDays(1), now.plusDays(1));
+        when(loadCouponPort.loadCoupon(couponNumber)).thenReturn(Optional.of(used));
+
+        assertThatThrownBy(() -> reserveCouponService.compensateCoupon(couponNumber, "ORD-006"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("보상 불가능한 쿠폰");
 
         verify(saveCouponPort, never()).save(any());
     }

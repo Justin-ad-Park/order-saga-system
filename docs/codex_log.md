@@ -43,3 +43,22 @@
 ## 6) Logging Mode 변경
 - 사용자 요청: 지금부터 모든 발화를 `docs/codex_log.md`에 저장.
 - Codex 응답: 매 요청/응답마다 즉시 append 방식으로 기록 진행.
+
+## 7) 보상 처리 예외 정책 변경
+- coupon-service/point-service의 compensate 메서드에서 status가 USED인 경우 예외를 반환하도록 변경.
+- RESERVED가 아닌 경우(AVAILABLE 등)에는 기존대로 no-op 유지.
+- 관련 단위/Mock 테스트에 USED 케이스 추가.
+
+
+
+### User
+포인트와 쿠폰의 보상 처리가 완료되면 point, coupon의 status는 AVAILABLE 상태가 되어야 해.
+
+### Assistant
+보상 처리 완료 시 coupon/point 상태를 AVAILABLE로 변경하도록 서비스/컨트롤러/테스트/HTTP 예시를 업데이트.
+
+### User
+이미 USED가 된 포인트를 보상하려고 하면 500 Internal Server Error가 발생하니, 서비스에서 담아주는 에러 메시지로 더 명시적으로 리턴 요청.
+
+### Assistant
+point-service 보상 요청의 USED 상태 오류가 500이 아닌 명시적 에러로 반환되도록 전역 예외 처리기를 추가하고, 통합 테스트 기대 상태를 CONFLICT로 변경.

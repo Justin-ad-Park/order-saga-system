@@ -142,7 +142,7 @@ class CouponControllerIntegrationTest {
 
     @Test
     @Order(4)
-    void compensateCoupon_shouldChangeStatusToCompensated_whenReserved() {
+    void compensateCoupon_shouldChangeStatusToAvailable_whenReserved() {
         String couponNumber = "CPN-INT-COMPENSATE-001";
         makeTestCoupon(couponNumber);
 
@@ -175,7 +175,7 @@ class CouponControllerIntegrationTest {
 
         CouponJpaEntity updated =
                 couponJpaRepository.findById(couponNumber).orElseThrow();
-        assertThat(updated.getStatus()).isEqualTo(CouponStatus.COMPENSATED);
+        assertThat(updated.getStatus()).isEqualTo(CouponStatus.AVAILABLE);
     }
 
     private void makeTestCoupon(String couponNumber) {

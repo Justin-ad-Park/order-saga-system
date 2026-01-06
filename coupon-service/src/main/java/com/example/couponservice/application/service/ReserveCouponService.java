@@ -34,13 +34,19 @@ public class ReserveCouponService implements ReserveCouponUseCase, ConfirmCoupon
     public void compensateCoupon(String couponNumber, String orderId) {
         Coupon coupon = loadCouponPort.loadCoupon(couponNumber)
                 .orElse(null);
-        if (coupon == null || coupon.status() != CouponStatus.RESERVED) {
+        if (coupon == null) {
+            return;
+        }
+        if (coupon.status() == CouponStatus.USED) {
+            throw new IllegalStateException("보상 불가능한 쿠폰입니다: " + coupon.couponNumber());
+        }
+        if (coupon.status() != CouponStatus.RESERVED) {
             return;
         }
 
         Coupon updated = new Coupon(
                 coupon.couponNumber(),
-                CouponStatus.COMPENSATED,
+                CouponStatus.AVAILABLE,
                 coupon.issuedAt(),
                 coupon.expiredAt()
         );

@@ -34,13 +34,19 @@ public class ReservePointService implements ReservePointUseCase, ConfirmPointUse
     public void compensatePoint(String pointNumber, String orderId) {
         Point point = loadPointPort.loadPoint(pointNumber)
                 .orElse(null);
-        if (point == null || point.status() != PointStatus.RESERVED) {
+        if (point == null) {
+            return;
+        }
+        if (point.status() == PointStatus.USED) {
+            throw new IllegalStateException("보상 불가능한 포인트입니다: " + point.pointNumber());
+        }
+        if (point.status() != PointStatus.RESERVED) {
             return;
         }
 
         Point updated = new Point(
                 point.pointNumber(),
-                PointStatus.COMPENSATED,
+                PointStatus.AVAILABLE,
                 point.issuedAt(),
                 point.expiredAt()
         );

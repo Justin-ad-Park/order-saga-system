@@ -22,7 +22,7 @@ Accept: application/json
 
 ###
 
-### 포인트 보상 요청 (RESERVED -> COMPENSATED)
+### 포인트 보상 요청 (RESERVED -> AVAILABLE)
 POST http://localhost:8082/api/v1/points/compensate
 Content-Type: application/json
 Accept: application/json

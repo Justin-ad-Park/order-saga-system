@@ -39,7 +39,7 @@ public class PointController {
     @PostMapping("/compensate")
     public ApiResponse<CompensatePointResponse> compensatePoint(@RequestBody CompensatePointRequest request) {
         compensatePointUseCase.compensatePoint(request.pointNumber(), request.orderId());
-        return ApiResponse.success(buildCompensateResponse(request.pointNumber(), PointStatus.COMPENSATED));
+        return ApiResponse.success(buildCompensateResponse(request.pointNumber(), PointStatus.AVAILABLE));
     }
 
     private ReservePointResponse buildReserveResponse(String pointNumber, PointStatus status) {

@@ -22,7 +22,7 @@ Accept: application/json
 
 ###
 
-### 쿠폰 보상 요청 (RESERVED -> COMPENSATED)
+### 쿠폰 보상 요청 (RESERVED -> AVAILABLE)
 POST http://localhost:8081/api/v1/coupons/compensate
 Content-Type: application/json
 Accept: application/json

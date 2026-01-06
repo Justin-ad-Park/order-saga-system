@@ -39,7 +39,7 @@ public class CouponController {
     @PostMapping("/compensate")
     public ApiResponse<CompensateCouponResponse> compensateCoupon(@RequestBody CompensateCouponRequest request) {
         compensateCouponUseCase.compensateCoupon(request.couponNumber(), request.orderId());
-        return ApiResponse.success(buildCompensateResponse(request.couponNumber(), CouponStatus.COMPENSATED));
+        return ApiResponse.success(buildCompensateResponse(request.couponNumber(), CouponStatus.AVAILABLE));
     }
 
     private ReserveCouponResponse buildReserveResponse(String couponNumber, CouponStatus status) {

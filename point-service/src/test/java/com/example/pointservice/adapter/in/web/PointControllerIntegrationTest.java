@@ -95,7 +95,7 @@ class PointControllerIntegrationTest {
                 restTemplate.postForEntity(url, httpEntity, String.class);
 
         // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
 
         PointJpaEntity updated =
                 pointJpaRepository.findById(pointNumber).orElseThrow();
@@ -142,7 +142,7 @@ class PointControllerIntegrationTest {
 
     @Test
     @Order(4)
-    void compensatePoint_shouldChangeStatusToCompensated_whenReserved() {
+    void compensatePoint_shouldChangeStatusToAvailable_whenReserved() {
         String pointNumber = "PNT-INT-COMPENSATE-001";
         makeTestPoint(pointNumber);
 
@@ -175,7 +175,7 @@ class PointControllerIntegrationTest {
 
         PointJpaEntity updated =
                 pointJpaRepository.findById(pointNumber).orElseThrow();
-        assertThat(updated.getStatus()).isEqualTo(PointStatus.COMPENSATED);
+        assertThat(updated.getStatus()).isEqualTo(PointStatus.AVAILABLE);
     }
 
     private void makeTestPoint(String pointNumber) {
