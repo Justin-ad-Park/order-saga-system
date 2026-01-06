@@ -1,8 +1,8 @@
 // src/main/java/com/example/orderorchestrator/adapter/out/persistence/jpa/OutboxMessageJpaEntity.java
 package com.example.orderorchestrator.adapter.out.persistence.jpa.entity;
 
-import com.example.orderorchestrator.domain.model.status.MSAStatus;
-import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
+import com.example.common.status.MSAStatus;
+import com.example.common.status.OrderSagaStatus;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;

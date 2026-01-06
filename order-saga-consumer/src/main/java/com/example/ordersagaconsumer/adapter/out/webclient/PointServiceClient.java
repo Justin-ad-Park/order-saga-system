@@ -2,22 +2,23 @@ package com.example.ordersagaconsumer.adapter.out.webclient;
 
 import com.example.ordersagaconsumer.adapter.out.webclient.dto.CompensatePointRequest;
 import com.example.ordersagaconsumer.adapter.out.webclient.dto.ConfirmPointRequest;
+import com.example.ordersagaconsumer.adapter.out.webclient.support.ServiceClientSupport;
 import com.example.ordersagaconsumer.application.port.out.PointServicePort;
+import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Component
-public class PointServiceClient implements PointServicePort {
-
-    private final WebClient webClient;
+public class PointServiceClient extends ServiceClientSupport implements PointServicePort {
 
     public PointServiceClient(
             WebClient.Builder builder,
-            @Value("${external.point.base-url}") String baseUrl
+            @Value("${external.point.base-url}") String baseUrl,
+            @Value("${external.client.timeout-seconds:3}") long timeoutSeconds,
+            @Value("${external.client.retry-count:0}") int retryCount
     ) {
-        this.webClient = builder.baseUrl(baseUrl).build();
+        super(builder, baseUrl, "Point", Duration.ofSeconds(timeoutSeconds), retryCount);
     }
 
     @Override
@@ -30,21 +31,5 @@ public class PointServiceClient implements PointServicePort {
     public boolean compensate(String pointNumber, String orderId) {
         CompensatePointRequest request = new CompensatePointRequest(pointNumber, orderId);
         return post("/api/v1/points/compensate", request);
-    }
-
-    private boolean post(String path, Object request) {
-        try {
-            webClient.post()
-                    .uri(path)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(request)
-                    .retrieve()
-                    .toBodilessEntity()
-                    .block();
-            return true;
-        } catch (Exception ex) {
-            System.out.println("### Point service call failed ### : path=" + path + " message=" + ex.getMessage());
-            return false;
-        }
     }
 }

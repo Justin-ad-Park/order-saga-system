@@ -134,36 +134,48 @@ status가 Reserved이면
 - 사용자 요청: outbox_message의 saga_status가 Completed/Compensated가 될 때 order_status도 동일하게 업데이트.
 - Codex 응답: OutboxMessageStatusJdbcAdapter.updateSagaStatus에서 saga_status에 따라 order_status를 함께 갱신하도록 반영.
 
+## 29) 리팩터링
+High Priority
+- 상태 모델 중복: order-orchestrator/src/main/java/com/example/orderorchestrator/domain/model/status/MSAStatus.java, order-saga-consumer/src/main/java/com/example/ordersagaconsumer/domain/model/status/MSAStatus.java 및 OrderSagaStatus가 모듈마다 중복 → common으로 이동해 단일화 필요.
+
+Medium Priority
+- WebClient 예외 처리 패턴: CouponServiceClient, PointServiceClient에서 공통 예외 처리/타임아웃/리트라이가 중복(order-saga-consumer/src/main/java/com/example/ordersagaconsumer/adapter/out/webclient/*.java) → 공통 클라이언트/헬퍼로 분리 권장.
+- SAGA 상태 업데이트 메서드 구조: 상태별 업데이트가 여러 메서드로 분리됐지만 호출 규칙이 산발적(order-saga-consumer/src/main/java/com/example/ordersagaconsumer/application/service/ProcessOrderSagaEventService.java, order-saga-consumer/src/main/java/com/example/ordersagaconsumer/adapter/out/persistence/OutboxMessageStatusJdbcAdapter.java) → 상태 전이 정책을 한 곳에서 관리하도록 묶는 리팩토링 고려.
+
+## 30) 리팩터링 반영: 공통 상태 모델, WebClient 헬퍼, Saga 전이 서비스
+- Codex 작업: MSAStatus/OrderSagaStatus를 common 모듈로 이동하고, 각 모듈의 import를 공통 패키지로 교체.
+- Codex 작업: order-saga-consumer에 WebClient 공통 헬퍼(ServiceClientSupport) 추가 및 Coupon/Point 클라이언트 공통화(타임아웃/리트라이 설정).
+- Codex 작업: SagaStatusTransitionService로 saga 상태 전이 업데이트를 한 곳에 집중하고 ProcessOrderSagaEventService에서 호출하도록 정리.
+
 ### 28) updateSagaStatus 메서드 리팩터링
 OutboxMessageStatusJdbcAdapter.java 에서 하나의 메서드가 여러 역할을 하고 있는데, updateSagaCompetedStatus, updateSagaCompensatedStatus 처럼 각각의 메서드로 리팩토링 하자.
     @Override
     public void updateSagaStatus(String orderId, OrderSagaStatus status) {
         if (status == OrderSagaStatus.Completed) {
-            jdbcTemplate.update(
-                    "update outbox_message set saga_status = ?, order_status = ?, updated_at = ? where order_id = ?",
-                    status.name(),
-                    MSAStatus.Completed.name(),
-                    Timestamp.valueOf(LocalDateTime.now()),
-                    orderId
-            );
+        //생략...
             return;
         }
 
         if (status == OrderSagaStatus.Compensated) {
-            jdbcTemplate.update(
-                    "update outbox_message set saga_status = ?, order_status = ?, updated_at = ? where order_id = ?",
-                    status.name(),
-                    MSAStatus.Compensated.name(),
-                    Timestamp.valueOf(LocalDateTime.now()),
-                    orderId
-            );
+            //생략...
             return;
         }
 
-        jdbcTemplate.update(
-                "update outbox_message set saga_status = ?, updated_at = ? where order_id = ?",
-                status.name(),
-                Timestamp.valueOf(LocalDateTime.now()),
-                orderId
-        );
+        //생략...
     }
+
+### 29) 리팩터링
+High Priority
+- 상태 모델 중복: order-orchestrator/src/main/java/com/example/orderorchestrator/domain/model/status/MSAStatus.java, order-saga-consumer/src/main/java/com/example/ordersagaconsumer/domain/model/status/MSAStatus.java 
+및 OrderSagaStatus가 모듈마다 중복 → common으로 이동해 단일화 필요. 
+
+Medium Priority
+- WebClient 예외 처리 패턴: CouponServiceClient, PointServiceClient에서 공통 예외 처리/타임아웃/리트라이가 중복(order-saga-consumer/src/main/java/com/example/ordersagaconsumer/adapter/out/webclient/*.java) → 공통 클라이언트/헬퍼로 분리 권장.
+- SAGA 상태 업데이트 메서드 구조: 상태별 업데이트가 여러 메서드로 분리됐지만 호출 규칙이 산발적(order-saga-consumer/src/main/java/com/example/
+  ordersagaconsumer/application/service/ProcessOrderSagaEventService.java, order-saga-consumer/src/main/java/com/example/ordersagaconsumer/adapter/
+  out/persistence/OutboxMessageStatusJdbcAdapter.java) → 상태 전이 정책을 한 곳에서 관리하도록 묶는 리팩토링 고려.
+
+
+- 스크립트 중복/불일치: 포트포워딩/kill 로직이 여러 스크립트에 분산(bin_k8s/_03_kill_portforward.sh, bin_k8s/_03_stop_msa.sh) → 공통 함수/스크립트
+  로 통합 권장.
+

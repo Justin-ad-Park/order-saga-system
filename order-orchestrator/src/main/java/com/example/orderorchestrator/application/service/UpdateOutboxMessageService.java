@@ -2,8 +2,8 @@ package com.example.orderorchestrator.application.service;
 
 import com.example.orderorchestrator.application.port.in.UpdateOutboxMessageUseCase;
 import com.example.orderorchestrator.application.port.out.UpdateOutboxMessagePort;
-import com.example.orderorchestrator.domain.model.status.MSAStatus;
-import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
+import com.example.common.status.MSAStatus;
+import com.example.common.status.OrderSagaStatus;
 import org.springframework.stereotype.Service;
 
 @Service

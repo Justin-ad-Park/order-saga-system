@@ -1,7 +1,7 @@
 package com.example.ordersagaconsumer.adapter.out.persistence;
 
 import com.example.ordersagaconsumer.application.port.out.UpdateOrderSagaStatusPort;
-import com.example.ordersagaconsumer.domain.model.status.OrderSagaStatus;
+import com.example.common.status.OrderSagaStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 

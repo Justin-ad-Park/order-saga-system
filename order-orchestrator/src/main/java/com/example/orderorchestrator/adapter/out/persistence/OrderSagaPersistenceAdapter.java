@@ -5,7 +5,7 @@ import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OrderIte
 import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OrderSagaJpaEntity;
 import com.example.orderorchestrator.application.port.out.SaveOrderSagaPort;
 import com.example.orderorchestrator.application.port.out.UpdateOrderSagaStatusPort;
-import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
+import com.example.common.status.OrderSagaStatus;
 import com.example.orderorchestrator.adapter.out.persistence.jpa.OrderSagaJpaRepository;
 import com.example.orderorchestrator.domain.model.OrderItem;
 import com.example.orderorchestrator.domain.model.OrderSaga;

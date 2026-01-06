@@ -8,8 +8,8 @@ import com.example.orderorchestrator.adapter.out.persistence.jpa.OrderSagaJpaRep
 import com.example.orderorchestrator.adapter.out.persistence.jpa.OutboxMessageJpaRepository;
 import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OrderSagaJpaEntity;
 import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OutboxMessageJpaEntity;
-import com.example.orderorchestrator.domain.model.status.MSAStatus;
-import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
+import com.example.common.status.MSAStatus;
+import com.example.common.status.OrderSagaStatus;
 import com.example.orderorchestrator.adapter.out.kafka.KafkaTopicPrinter;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;

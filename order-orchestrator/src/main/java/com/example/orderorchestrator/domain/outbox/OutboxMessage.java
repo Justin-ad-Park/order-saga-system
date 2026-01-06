@@ -2,8 +2,8 @@ package com.example.orderorchestrator.domain.outbox;
 
 import java.time.Instant;
 
-import com.example.orderorchestrator.domain.model.status.MSAStatus;
-import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
+import com.example.common.status.MSAStatus;
+import com.example.common.status.OrderSagaStatus;
 
 import java.time.LocalDateTime;
 

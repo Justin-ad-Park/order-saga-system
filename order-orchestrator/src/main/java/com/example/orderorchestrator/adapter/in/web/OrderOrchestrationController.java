@@ -12,8 +12,8 @@ import com.example.orderorchestrator.application.port.in.result.CreateOrderResul
 import com.example.orderorchestrator.application.port.out.OrderSagaEventPublisher;
 import com.example.orderorchestrator.domain.event.OrderSagaEvent;
 import com.example.orderorchestrator.domain.event.OrderSagaEventType;
-import com.example.orderorchestrator.domain.model.status.MSAStatus;
-import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
+import com.example.common.status.MSAStatus;
+import com.example.common.status.OrderSagaStatus;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

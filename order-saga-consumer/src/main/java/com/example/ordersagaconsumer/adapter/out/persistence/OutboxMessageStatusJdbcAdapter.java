@@ -1,8 +1,8 @@
 package com.example.ordersagaconsumer.adapter.out.persistence;
 
 import com.example.ordersagaconsumer.application.port.out.UpdateOutboxMessagePort;
-import com.example.ordersagaconsumer.domain.model.status.MSAStatus;
-import com.example.ordersagaconsumer.domain.model.status.OrderSagaStatus;
+import com.example.common.status.MSAStatus;
+import com.example.common.status.OrderSagaStatus;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import org.springframework.jdbc.core.JdbcTemplate;

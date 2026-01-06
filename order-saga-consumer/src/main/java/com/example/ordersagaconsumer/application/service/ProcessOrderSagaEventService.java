@@ -4,11 +4,10 @@ import com.example.ordersagaconsumer.application.port.in.ProcessOrderSagaEventUs
 import com.example.ordersagaconsumer.application.port.out.CouponServicePort;
 import com.example.ordersagaconsumer.application.port.out.LoadOrderSagaPort;
 import com.example.ordersagaconsumer.application.port.out.PointServicePort;
-import com.example.ordersagaconsumer.application.port.out.UpdateOrderSagaStatusPort;
 import com.example.ordersagaconsumer.application.port.out.UpdateOutboxMessagePort;
 import com.example.ordersagaconsumer.domain.model.OrderSagaInfo;
-import com.example.ordersagaconsumer.domain.model.status.MSAStatus;
-import com.example.ordersagaconsumer.domain.model.status.OrderSagaStatus;
+import com.example.common.status.MSAStatus;
+import com.example.common.status.OrderSagaStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -19,20 +18,20 @@ public class ProcessOrderSagaEventService implements ProcessOrderSagaEventUseCas
     private final CouponServicePort couponServicePort;
     private final PointServicePort pointServicePort;
     private final UpdateOutboxMessagePort updateOutboxMessagePort;
-    private final UpdateOrderSagaStatusPort updateOrderSagaStatusPort;
+    private final SagaStatusTransitionService sagaStatusTransitionService;
 
     public ProcessOrderSagaEventService(
             LoadOrderSagaPort loadOrderSagaPort,
             CouponServicePort couponServicePort,
             PointServicePort pointServicePort,
             UpdateOutboxMessagePort updateOutboxMessagePort,
-            UpdateOrderSagaStatusPort updateOrderSagaStatusPort
+            SagaStatusTransitionService sagaStatusTransitionService
     ) {
         this.loadOrderSagaPort = loadOrderSagaPort;
         this.couponServicePort = couponServicePort;
         this.pointServicePort = pointServicePort;
         this.updateOutboxMessagePort = updateOutboxMessagePort;
-        this.updateOrderSagaStatusPort = updateOrderSagaStatusPort;
+        this.sagaStatusTransitionService = sagaStatusTransitionService;
     }
 
     @Override
@@ -96,8 +95,7 @@ public class ProcessOrderSagaEventService implements ProcessOrderSagaEventUseCas
         }
 
         if (couponOk && pointOk) {
-            updateOutboxMessagePort.updateCompletedStatus(orderId);
-            updateOrderSagaStatusPort.updateStatus(orderId, OrderSagaStatus.Completed);
+            sagaStatusTransitionService.markCompleted(orderId);
         }
     }
 
@@ -125,8 +123,7 @@ public class ProcessOrderSagaEventService implements ProcessOrderSagaEventUseCas
         }
 
         if (couponOk && pointOk) {
-            updateOutboxMessagePort.updateCompensatedStatus(orderId);
-            updateOrderSagaStatusPort.updateStatus(orderId, OrderSagaStatus.Compensated);
+            sagaStatusTransitionService.markCompensated(orderId);
         }
     }
 

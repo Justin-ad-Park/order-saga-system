@@ -1,6 +1,6 @@
 package com.example.orderorchestrator.domain.event;
 
-import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
+import com.example.common.status.OrderSagaStatus;
 
 public record OrderSagaEvent(
         String orderId,

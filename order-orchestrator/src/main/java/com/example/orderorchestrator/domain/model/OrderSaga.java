@@ -1,6 +1,6 @@
 package com.example.orderorchestrator.domain.model;
 
-import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
+import com.example.common.status.OrderSagaStatus;
 
 import java.util.List;
 

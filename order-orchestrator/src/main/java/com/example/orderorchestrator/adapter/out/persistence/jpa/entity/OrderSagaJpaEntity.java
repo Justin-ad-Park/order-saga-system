@@ -1,6 +1,6 @@
 package com.example.orderorchestrator.adapter.out.persistence.jpa.entity;
 
-import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
+import com.example.common.status.OrderSagaStatus;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
