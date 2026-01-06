@@ -76,3 +76,42 @@ order:
   saga:
     events:
       topic: order-saga-events
+      consumer-group: order-saga-consumer-local
+
+---
+spring:
+  config:
+    activate:
+      on-profile: k8s-local
+  datasource:
+    url: jdbc:mysql://localhost:3307/order_orchestrator_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    username: order_orchestrator_user
+    password: order_orchestrator_pw
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    defer-datasource-initialization: true
+
+  kafka:
+    bootstrap-servers: localhost:9094
+    consumer:
+      group-id: order-saga-consumer-local
+      auto-offset-reset: earliest
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+server:
+  port: 8083
+
+external:
+  coupon:
+    base-url: http://localhost:8081
+  point:
+    base-url: http://localhost:8082
+order:
+  saga:
+    events:
+      topic: order-saga-events

@@ -77,7 +77,40 @@
 - 사용자 요청: 이미 confirm한 쿠폰/포인트를 다시 confirm하면 오류 대신 성공 처리(멱등) 요청.
 - Codex 응답: confirm 시 USED 상태면 no-op으로 처리하도록 서비스 로직을 변경하고 관련 테스트를 추가.
 
-
+1
 ## 17) order-orchestrator K8s 테스트 500 에러 문의
 - 사용자 요청: `00_init_k8s.sh` 실행 후 `01_orderOrchestratorK8sTest.http`의 주문 생성 요청에서 500 에러 발생.
 - Codex 응답: 원인 파악을 위해 관련 서비스/파드 로그와 상태 점검 진행 예정.
+
+## 18) OrderSagaConsumer 로컬 처리 작업 리스트 요청
+- 사용자 요청: k8s 배포 후 로컬 OrderSagaConsumerApplication(dev)에서 성공/실패 메시지를 처리하기 위한 작업 리스트 요청.
+- Codex 응답: 실행/연결/토픽/포트포워딩/프로파일 설정 중심의 작업 리스트 제공.
+
+## 19) OSC 로컬-쿠버네티스 연결 심화 분석 요청
+- 사용자 요청: 로컬 OSC에서 K8s 메시지 처리 위한 포트포워딩과 새 프로파일 추가 등 상세 분석 요청.
+- Codex 응답: Kafka/쿠폰/포인트/오케스트레이터 포트포워딩과 OSC_application.yaml 신규 프로파일 구성 및 실행 절차를 정리.
+
+## 20) K8s 포트포워딩 스크립트 확장 요청
+- 사용자 요청: `03_deploy_all.sh`에 포트포워딩 추가, `_03_kill_portforward.sh`에 종료 처리 추가.
+- Codex 응답: Kafka/쿠폰/포인트/오케스트레이터 포트포워딩 및 kill 로직을 스크립트에 반영.
+
+## 21) bin_k8s 쉘 점검 요청
+- 사용자 요청: bin_k8s 하위 쉘을 점검해 수정 필요 사항 확인.
+- Codex 응답: 포트포워딩 중복/순서/종료 스크립트 불일치 등 개선 포인트를 정리.
+
+## 22) Kafka 포트포워딩 순서 이슈 위치 문의
+- 사용자 요청: 03_deploy_all.sh에 Kafka 포트포워딩 추가로 인한 순서 이슈의 위치를 질문.
+- Codex 응답: 00_init_k8s.sh의 실행 순서와 03_deploy_all.sh 내 포워딩 라인을 근거로 설명.
+
+## 23) OSC k8s-local 프로파일 추가
+- 사용자 요청: OSC_application.yaml에 로컬→K8s 전용 프로파일 추가.
+- Codex 응답: k8s-local 프로파일을 추가해 로컬 포트포워딩 기반 설정을 반영.
+
+## 24) _03_stop_msa.sh 포트포워드 종료 확장
+- 사용자 요청: coupon/point 포트포워드 종료 추가.
+- Codex 응답: 8081/8082 포트포워드 종료 로직을 추가.
+
+## 25) K8s 테스트 후 로컬 OSC 미소비 원인 분석 요청
+- 사용자 요청: 00_init_k8s.sh, 07_dev_consumer.sh 실행 후 API 호출했지만 메시지 소비가 안 됨. 원인 분석 요청.
+- Codex 응답: 프로파일/포트포워딩/Kafka 접속 설정 불일치 가능성을 지적하고 점검 절차 제시.
+

@@ -10,7 +10,7 @@ public class OrderSagaConsumerApplication {
 
     public static void main(String[] args) {
         if (System.getProperty("spring.profiles.active") == null) {
-            System.setProperty("spring.profiles.active", "test");
+            System.setProperty("spring.profiles.active", "k8s-local");
         }
         new SpringApplicationBuilder(OrderSagaConsumerApplication.class)
                 .properties(

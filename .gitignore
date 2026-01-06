@@ -60,3 +60,5 @@ mysql-port-forward.log
 mysql-port-forward.pid
 order-port-forward.log
 order-port-forward.pid
+coupon-port-forward.log
+point-port-forward.log
