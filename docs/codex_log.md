@@ -114,3 +114,17 @@
 - 사용자 요청: 00_init_k8s.sh, 07_dev_consumer.sh 실행 후 API 호출했지만 메시지 소비가 안 됨. 원인 분석 요청.
 - Codex 응답: 프로파일/포트포워딩/Kafka 접속 설정 불일치 가능성을 지적하고 점검 절차 제시.
 
+## 26) ### Consumer의 SAGA 개발 ###
+ProcessOrderSagaEventService process 메소드에서 가장 하단에 SAGA 처리 로직을 추가할꺼야.
+status가 Reserved이면
+- info.couponNumber에 값이 존재하면 coupon-service confirm API를
+- info.pointNumber에 값이 존재하면 point-service confirm API를 각각 호출해줘.
+
+- status가 Compensating이면 
+- info.couponNumber에 값이 존재하면 coupon-service compensate API를
+- info.pointNumber에 값이 존재하면 point-service compensate API를 각각 호출해줘.
+
+- 각 MSA 호출 결과에 따라 outbox_message의 각 서비스(coupon_status, point_status)를 업데이트 하고, 
+- 필요한 MSA 호출이 모두 성공하면 outbox_message의 saga_status와 order_saga의 status를 confirm이 성공한 경우에는 Completed로
+- compensate를 성공한 경우에는 Compensated로 업데이트 해줘.
+

@@ -15,6 +15,4 @@ kubectl -n msa rollout restart deployment/coupon-service
 kubectl -n msa rollout restart deployment/point-service
 kubectl -n msa rollout restart deployment/order-orchestrator
 
-echo "order-orchestrator rollout 체크 중..."
-kubectl -n msa rollout status deployment/order-orchestrator
-kubectl port-forward -n msa svc/order-orchestrator 8099:8099  > "${ROOT_DIR}/order-port-forward.log" 2>&1 &
+bash "${ROOT_DIR}/05_msa_portforward.sh"
