@@ -77,7 +77,6 @@
 - 사용자 요청: 이미 confirm한 쿠폰/포인트를 다시 confirm하면 오류 대신 성공 처리(멱등) 요청.
 - Codex 응답: confirm 시 USED 상태면 no-op으로 처리하도록 서비스 로직을 변경하고 관련 테스트를 추가.
 
-1
 ## 17) order-orchestrator K8s 테스트 500 에러 문의
 - 사용자 요청: `00_init_k8s.sh` 실행 후 `01_orderOrchestratorK8sTest.http`의 주문 생성 요청에서 500 에러 발생.
 - Codex 응답: 원인 파악을 위해 관련 서비스/파드 로그와 상태 점검 진행 예정.
@@ -174,7 +173,6 @@ Medium Priority
 - SAGA 상태 업데이트 메서드 구조: 상태별 업데이트가 여러 메서드로 분리됐지만 호출 규칙이 산발적(order-saga-consumer/src/main/java/com/example/
   ordersagaconsumer/application/service/ProcessOrderSagaEventService.java, order-saga-consumer/src/main/java/com/example/ordersagaconsumer/adapter/
   out/persistence/OutboxMessageStatusJdbcAdapter.java) → 상태 전이 정책을 한 곳에서 관리하도록 묶는 리팩토링 고려.
-
 
 - 스크립트 중복/불일치: 포트포워딩/kill 로직이 여러 스크립트에 분산(bin_k8s/_03_kill_portforward.sh, bin_k8s/_03_stop_msa.sh) → 공통 함수/스크립트
   로 통합 권장.
