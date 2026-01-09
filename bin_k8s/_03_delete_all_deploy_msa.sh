@@ -8,3 +8,4 @@ set -euo pipefail
 kubectl -n msa delete -f "$(dirname "$0")/coupon-service.yaml"
 kubectl -n msa delete -f "$(dirname "$0")/point-service.yaml"
 kubectl -n msa delete -f "$(dirname "$0")/order-orchestrator.yaml"
+kubectl -n msa delete -f "$(dirname "$0")/order-saga-consumer.yaml"

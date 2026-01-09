@@ -22,6 +22,6 @@ kill_port 8099
 kill_port 8091
 kill_port 8092
 
-# 2) 로컬 Consumer 포트 종료 (k8s-local)
-echo "==> [3/3] 로컬 Consumer 포트 종료 (8094)"
-kill_port 8094
+# 2) Consumer 종료 (Deployment scale down + 기존 Pod 정리)
+echo "==> [3/3] Consumer 종료 (replicas=0)"
+kubectl -n msa scale deployment/order-saga-consumer --replicas=0 2>/dev/null || true

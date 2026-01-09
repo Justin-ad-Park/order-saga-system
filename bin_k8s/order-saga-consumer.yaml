@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-saga-consumer
+  namespace: msa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-saga-consumer
+  template:
+    metadata:
+      labels:
+        app: order-saga-consumer
+    spec:
+      containers:
+        - name: order-saga-consumer
+          image: order-saga-consumer:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8103
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: dev
+            - name: ORDER_ORCH_DB_PASSWORD
+              value: order_orchestrator_pw
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-saga-consumer
+  namespace: msa
+spec:
+  selector:
+    app: order-saga-consumer
+  ports:
+    - name: http
+      port: 8103
+      targetPort: 8103

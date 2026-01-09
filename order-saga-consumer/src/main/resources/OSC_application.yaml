@@ -69,7 +69,7 @@ spring:
   #      mode: embedded  #always | never | embedded
 
 server:
-  port: 8099
+  port: 8103
 
 external:
   coupon:
