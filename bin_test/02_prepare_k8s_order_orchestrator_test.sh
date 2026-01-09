@@ -41,21 +41,10 @@ kubectl -n msa port-forward svc/kafka 9094:9094 > "${ROOT_DIR}/kafka-port-forwar
 
 # 5) MSA 이미지 빌드 및 배포
 echo "==> [5/7] MSA 이미지 빌드 및 배포"
-cd "${ROOT_DIR}"
-"${ROOT_DIR}/gradlew" :coupon-service:bootJar
-docker build -t "coupon-service:local" "${ROOT_DIR}/coupon-service"
-kubectl -n msa apply -f "${ROOT_DIR}/bin_k8s/coupon-service.yaml"
-kubectl set env -n msa deployment/coupon-service SPRING_PROFILES_ACTIVE=dev
+"${ROOT_DIR}/coupon-service/scripts/deploy_k8s.sh"
+"${ROOT_DIR}/point-service/scripts/deploy_k8s.sh"
+"${ROOT_DIR}/order-orchestrator/scripts/deploy_k8s.sh"
 
-"${ROOT_DIR}/gradlew" :point-service:bootJar
-docker build -t "point-service:local" "${ROOT_DIR}/point-service"
-kubectl -n msa apply -f "${ROOT_DIR}/bin_k8s/point-service.yaml"
-kubectl set env -n msa deployment/point-service SPRING_PROFILES_ACTIVE=dev
-
-"${ROOT_DIR}/gradlew" :order-orchestrator:bootJar
-docker build -t "order-orchestrator:local" "${ROOT_DIR}/order-orchestrator"
-kubectl -n msa apply -f "${ROOT_DIR}/bin_k8s/order-orchestrator.yaml"
-kubectl set env -n msa deployment/order-orchestrator SPRING_PROFILES_ACTIVE=dev
 
 # 6) MSA 재기동 및 포트포워드
 echo "==> [6/7] MSA 재기동 및 포트포워드"
