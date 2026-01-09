@@ -1,3 +1,5 @@
+![Architecture Diagram](docs/architecture_diagram.svg.jpg)
+
 › 모든 프로젝트는 맥북에서 개발을 진행할 예정이며, 멀티모듈 프로젝트로 개발하려고 해. 로컬에 도커+쿠버네티스를 설치해서 MSA, Kafka 클러스터를 쿠버네티스로 구성할 예정이야. 우선 MSA는 1. 주문 오케스트레이션 MSA 1-1. orderID
 발행 1-2. 쿠폰MSA의 쿠폰 예약, 주문MSA의 주문 생성 API를 리액티브로 동시 호출 1-3. 1-2 모두 성공을 응답받으면 결제MSA의 결제요청 API 호출 1-3. 성공 시 주문 생성됨 outbox transaction 커밋과 Kafka이벤트발행(orderCompleted)
 1-3. 까지 성공해서 orderCompleted 이벤트가 발행되면, 각 MSA별 카프카 컨슈머가 확정 처리를 하는데, 이는 추후에 구현) 2. 쿠폰 MSA (쿠폰예약, 쿠폰 확정, 쿠폰보상트랜잭션) 3. 주문 MSA(주문생성, 주문확정, 주문보상) 4. 결제
@@ -41,4 +43,3 @@ order-orchestrator 프로젝트에서 order_saga 테이블이 point_number 컬�
 
 
 1. coupon-service에 
-

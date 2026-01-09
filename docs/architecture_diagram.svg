@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="720" viewBox="0 0 1400 720">
+  <style>
+    .box { fill: #f7f7f7; stroke: #333; stroke-width: 2; rx: 14; ry: 14; }
+    .box-blue { fill: #e6f2ff; stroke: #333; stroke-width: 2; rx: 14; ry: 14; }
+    .box-yellow { fill: #fff1cc; stroke: #333; stroke-width: 2; rx: 14; ry: 14; }
+    .box-green { fill: #e9f7ef; stroke: #333; stroke-width: 2; rx: 14; ry: 14; }
+    .box-red { fill: #fdecec; stroke: #333; stroke-width: 2; rx: 14; ry: 14; }
+    .box-grey { fill: #BBBBBB; stroke: #333; stroke-width: 2; rx: 14; ry: 14; }
+    .label { font-family: Arial, sans-serif; font-size: 22px; fill: #222; }
+    .title { font-family: Arial, sans-serif; font-size: 32px; fill: #222; }
+    .small { font-family: Arial, sans-serif; font-size: 18px; fill: #1f5fbf; }
+    .arrow { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+    .arrow-accent { stroke: #d64541; stroke-width: 2.6; fill: none; marker-end: url(#arrowhead-accent); }
+    .arrow-event { stroke: #333; stroke-width: 2; fill: none; stroke-dasharray: 8 6; marker-end: url(#arrowhead); }
+    .arrow-event-accent { stroke: #d64541; stroke-width: 2.6; fill: none; stroke-dasharray: 8 6; marker-end: url(#arrowhead-accent); }
+  </style>
+
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+    </marker>
+    <marker id="arrowhead-accent" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#d64541" />
+    </marker>
+  </defs>
+
+  <g transform="translate(120,80) scale(0.7)">
+    <!-- Boxes -->
+    <rect class="box-grey" x="80" y="10" width="800" height="60" />
+    <text class="title" x="460" y="50" text-anchor="middle">Order MSA + EDA(Hexagonal Architecture, JPA)</text>
+
+    <!-- Boxes -->
+    <rect class="box" x="80" y="120" width="240" height="90" />
+    <text class="label" x="200" y="175" text-anchor="middle">Client</text>
+
+    <rect class="box-blue" x="420" y="100" width="320" height="140" />
+    <text class="label" x="580" y="165" text-anchor="middle">order-orchestrator</text>
+    <text class="small" x="580" y="200" text-anchor="middle">(orders + saga)</text>
+
+    <rect class="box-green" x="860" y="100" width="300" height="110" />
+    <text class="label" x="1010" y="165" text-anchor="middle">coupon-service</text>
+
+    <rect class="box-green" x="860" y="260" width="300" height="110" />
+    <text class="label" x="1010" y="325" text-anchor="middle">point-service</text>
+
+    <rect class="box-red" x="1260" y="420" width="220" height="140" />
+    <text class="label" x="1370" y="485" text-anchor="middle">order-saga-consumer</text>
+    <text class="small" x="1370" y="520" text-anchor="middle">(confirm/compensate)</text>
+
+    <rect class="box-yellow" x="520" y="650" width="340" height="110" />
+    <text class="label" x="690" y="715" text-anchor="middle">Kafka (order-saga-events)</text>
+
+    <!-- Arrows -->
+    <!-- Client to Orchestrator -->
+    <line class="arrow" x1="320" y1="165" x2="420" y2="165" />
+    <text class="small" x="370" y="135" text-anchor="middle">POST /orders</text>
+
+    <!-- Orchestrator reserve to coupon/point (parallel emphasis) -->
+    <line class="arrow" x1="740" y1="160" x2="860" y2="160" />
+    <line class="arrow" x1="740" y1="190" x2="860" y2="315" />
+    <text class="small" x="800" y="140" text-anchor="middle">reserve</text>
+    <text class="small" x="800" y="285" text-anchor="middle">reserve</text>
+
+    <!-- Orchestrator to Kafka (event, dashed) -->
+    <line class="arrow-event" x1="580" y1="240" x2="640" y2="650" />
+    <text class="small" x="600" y="470" text-anchor="middle">publish saga event</text>
+
+    <!-- Kafka to Consumer (event, dashed, accent) -->
+    <line class="arrow-event-accent" x1="860" y1="705" x2="1260" y2="490" />
+    <text class="small" x="1030" y="640" text-anchor="middle">consume</text>
+
+    <!-- Consumer to coupon/point (accent, no overlap) -->
+    <line class="arrow-accent" x1="1260" y1="470" x2="1160" y2="210" />
+    <line class="arrow-accent" x1="1260" y1="530" x2="1160" y2="370" />
+    <text class="small" x="1260" y="340" text-anchor="middle">confirm/compensate</text>
+  </g>
+</svg>
