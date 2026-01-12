@@ -150,3 +150,143 @@ msa namespace에 실제로 배포하는 것으로 스크립트를 구성해.
 - 물론 새로 만든 03_* 은 consumer까지 K8s 안에서 실행이 되어야 하고, 
 - 마지막에 실행하는 Consumer의 system.out.log가 출력이 되도록 실행 스크립트를 만들어줘
 
+## 31)  circuit-breaker를 구성안 검토
+circuit-breaker를 구성해서 MSA(order, point)의 장애에 circuit-breaker가 동작하도록 하려고 해. 
+Istio를 비롯해서 현재 K8s(dev) 구성에서 circuit-breaker를 구성해서 장애 테스트를 쉽게 할 수 있는 방안을 몇 개 제안해 줘.
+
+[요구사항]
+- circuit breaker 구성
+- order, point, coupon의 timeout을 x초(yaml 설정, 5초)로 제안
+- 각 MSA 서비스(order, point, coupon)에서 timeout이 연속으로 x회(yaml 설정, 3회) 발생 시 circuit 차단
+- 이후 10초 이후에 트래픽을 흘려서 성공하면 즉시 circuit 재연결
+- timeout을 테스트 할 수 있도록 테스트 방법 제공
+
+[테스트]
+- order를 시작으로 coupon, point 정상 연결됨 1회
+- 이후 order는 연결되나 coupon API 3번 연속 timeout 발생
+- circuit 차단 확인
+- 5초 후 order 재호출, order -> coupon 호출 차단됨
+- 11초 후 order 재호출 order -> coupon 호출 성공됨
+
+위 요구사항과 테스트 시나리오를 바탕으로 현재 프로젝트에 어떻게 반영하는게 좋을지 제안해줘.
+
+--> 답변
+        • 다음처럼 “지금 K8s(dev) 구성에서 빠르게 테스트 가능한 circuit‑breaker” 옵션 3가지를 제안할게. 공통 파라미터는 요구사항대로 timeout=5s, 연속 실패 3회 차단, 10s 후 half‑open 트래픽 허용으로 맞춘다.
+        
+        Option 1: Istio(Envoy) 기반 – 가장 K8s‑네이티브, 중앙 제어
+        
+        - 장점: 앱 수정 없이 적용, dev 환경에 가장 잘 맞음.
+          - 핵심: DestinationRule + VirtualService로 timeout/CB 설정.
+        
+        예시(Concept)
+        
+        - VirtualService에서 timeout: 5s
+          - DestinationRule에서 outlierDetection
+              - consecutive5xxErrors: 3 또는 consecutiveGatewayErrors: 3
+              - baseEjectionTime: 10s
+              - interval: 5s (헬스 체크)
+              - maxEjectionPercent: 100
+        
+        타임아웃을 5s로 하고, 3회 연속 5xx(또는 gateway error) 발생 시 10s 동안 ejection(차단) → 10s 후 자동 복귀 시도. 성공하면 즉시 회복.
+        
+        테스트 방법
+        
+        1. coupon 서비스에 delay 주입(예: 응답 6초 이상 지연) → timeout 유도
+           2. order → coupon 3회 호출로 timeout 발생
+           3. 4번째부터는 circuit 차단 확인(즉시 실패)
+           4. 5초 후 재호출 시 still 차단
+           5. 11초 후 재호출 시 정상 회복 확인
+        
+        ———
+        
+        Option 2: Spring Cloud Resilience4j (앱 레벨)
+        
+        - 장점: 서비스별 세밀한 제어, 앱 로직에 맞춤형 회복 처리 가능.
+          - 단점: 모든 서비스에 코드/설정 필요.
+        
+        개념 설정(예)
+        
+        - timeout: 5s
+          - slidingWindowType: COUNT_BASED
+          - slidingWindowSize: 3
+          - minimumNumberOfCalls: 3
+          - failureRateThreshold: 100 (3번 모두 실패시 차단)
+          - waitDurationInOpenState: 10s
+          - permittedNumberOfCallsInHalfOpenState: 1 (성공 시 즉시 복귀)
+        
+        테스트 방법
+        
+        - coupon 응답 지연(6초) → 3회 타임아웃 → open
+          - 5초 후 재호출 실패 확인
+          - 11초 후 재호출 성공 시 즉시 close
+        
+        ———
+        
+        Option 3: Istio + Fault Injection 조합 (테스트 특화)
+        
+        - 장점: dev에서 테스트 자동화에 유리.
+          - 구성: 실제 CB는 Istio로 두고, VirtualService에 fault injection 추가해 timeout을 재현.
+          - 예: 100% delay 6s로 coupon에 적용 → order에서 3회 연속 timeout 유도
+          - 이후 fault 제거하고 11초 후 정상 복귀 확인
+        
+        ———
+        
+        ## 프로젝트 반영 제안 (현 상황 기준)
+        
+        dev 환경에서 손쉽게 장애 테스트가 필요하니 **Option 1(Istio)**을 기본으로 두고, Option 3로 테스트 시나리오를 자동화하는 구성이 가장 간결함.
+        order/point/coupon 모두 동일 파라미터 적용: timeout=5s, 3회 연속 timeout 시 10s 차단, 이후 성공 시 즉시 복귀.
+        
+        필요하면 다음 단계로 구체 YAML(각 서비스별 DestinationRule/VirtualService)까지 바로 작성해 줄게.
+        원하면 어느 옵션으로 갈지 번호로 알려줘.
+
+
+## 32)  circuit-breaker를 구성
+› dev 환경에서 손쉽게 장애 테스트가 필요하니 **Option 1(Istio)**을 기본으로 두고, Option 3로 테스트 시나리오를 자동화하는 구성이 가장 간결함.
+order/point/coupon 모두 동일 파라미터 적용: timeout=5s, 3회 연속 timeout 시 10s 차단, 이후 성공 시 즉시 복귀.
+
+필요하면 다음 단계로 구체 YAML(각 서비스별 DestinationRule/VirtualService)까지 바로 작성해
+
+
+## 33) circuit-breaker 배포 및 테스트 환경 업데이트
+circuit-breaker 실행 환경 업데이트
+
+#Apply (base CB)
+kubectl label namespace msa istio-injection=enabled --overwrite
+kubectl -n msa apply -f bin_k8s/istio/circuit-breaker.yaml
+는
+
+- 03_deploy_all.sh
+- 02_prepare_k8s_order_orchestrator_test.sh
+을 비롯해 아래 경로의 쉘에서 k8s 배포 및 테스트와 관련된 부분에 방금 제안한 istio 배포, 재기동 등이 적용되도록 sh을 수정해 줘.
+/bin_k8s
+/bin_test
+
+그리고, 테스트 방식으로 제안한 아래 부분도 메뉴얼이 아닌 자동으로 수행할 수 있는 방법을 제안해줘. 
+
+Fault injection on coupon (timeout 유도)
+
+kubectl -n msa apply -f bin_k8s/istio/coupon-fault-delay.yaml
+
+Test scenario (요구사항 그대로)
+
+1. order → coupon/point 정상 1회
+
+kubectl -n msa port-forward svc/order-orchestrator 8099:8099
+curl -X POST http://localhost:8099/api/v1/orders \
+-H "Content-Type: application/json" \
+-d '{"couponNumber":"CPN-INT-BOTH-001","pointNumber":"PNT-INT-BOTH-001","paymentNumber":"PAY-001","paymentAmount":15000,"orderItems":[{"itemNumber":"ITEM-001","quantity":2}]}'
+
+2. coupon 3회 연속 timeout 발생 (fault delay 6s + timeout 5s)
+
+for i in 1 2 3; do
+curl -X POST http://localhost:8099/api/v1/orders \
+-H "Content-Type: application/json" \
+-d '{"couponNumber":"CPN-INT-BOTH-001","pointNumber":"PNT-INT-BOTH-001","paymentNumber":"PAY-001","paymentAmount":15000,"orderItems":[{"itemNumber":"ITEM-001","quantity":2}]}'
+done
+
+3. fault 제거(서비스 정상화)
+
+kubectl -n msa apply -f bin_k8s/istio/circuit-breaker.yaml
+
+4. 5초 후 재호출 → circuit 차단 확인
+5. 11초 후 재호출 → circuit 복귀 확인

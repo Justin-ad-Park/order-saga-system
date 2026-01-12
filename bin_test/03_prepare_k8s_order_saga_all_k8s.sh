@@ -27,9 +27,10 @@ echo "==> [2/8] MySQL/Kafka 포트포워드 정리 (3307/9094)"
 kill_port 3307
 kill_port 9094
 
-# 3) 네임스페이스/MySQL/Kafka 적용
-echo "==> [3/8] 네임스페이스/MySQL/Kafka 적용"
+# 3) 네임스페이스/MySQL/Kafka/Istio 적용
+echo "==> [3/8] 네임스페이스/MySQL/Kafka/Istio 적용"
 kubectl get ns msa >/dev/null 2>&1 || kubectl create namespace msa
+bash "${ROOT_DIR}/bin_k8s/09_apply_istio_cb.sh"
 kubectl -n msa apply -f "${ROOT_DIR}/bin_k8s/mysql.yaml"
 kubectl -n msa apply -f "${ROOT_DIR}/bin_k8s/kafka.yaml"
 kubectl -n msa rollout status deployment/kafka

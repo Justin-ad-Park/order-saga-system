@@ -54,6 +54,8 @@ port-forward.pid
 
 ### Test ###
 **/data/
+bin_k8s/istio/
+
 kafka-port-forward.log
 kafka-port-forward.pid
 mysql-port-forward.log

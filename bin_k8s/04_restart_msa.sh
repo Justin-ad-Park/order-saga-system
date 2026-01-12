@@ -11,6 +11,8 @@ echo "${ROOT_DIR}/_03_kill_portforward.sh"
 
 bash "${ROOT_DIR}/_03_kill_portforward.sh"
 
+bash "${ROOT_DIR}/09_apply_istio_cb.sh"
+
 kubectl -n msa rollout restart deployment/coupon-service
 kubectl -n msa rollout restart deployment/point-service
 kubectl -n msa rollout restart deployment/order-orchestrator
