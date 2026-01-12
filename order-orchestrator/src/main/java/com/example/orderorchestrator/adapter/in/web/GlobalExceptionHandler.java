@@ -3,6 +3,8 @@ package com.example.orderorchestrator.adapter.in.web;
 import com.example.common.api.ApiError;
 import com.example.common.api.ApiResponse;
 import com.example.orderorchestrator.domain.exception.NotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,6 +13,7 @@ import javax.security.auth.login.AccountNotFoundException;
 // 전역 예외 처리기 (ApiResponse 패턴 적용 - 분리된 핸들러)
 @ControllerAdvice
 public class GlobalExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     // 1. AccountNotFoundException (404 Not Found 관련) 처리
     @ExceptionHandler(AccountNotFoundException.class)
@@ -34,6 +37,7 @@ public class GlobalExceptionHandler {
      /* 최종 fallback: 잡히지 않은 모든 Exception (500 Internal Server Error) 처리 */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleServerError(Exception ex) {
+        log.error("Unhandled exception", ex);
         return responseEntityWithHttpStatus(HttpStatus.INTERNAL_SERVER_ERROR, "SERVER_ERROR", "Internal Server Error occurred.");
     }
 

@@ -248,45 +248,138 @@ order/point/coupon 모두 동일 파라미터 적용: timeout=5s, 3회 연속 ti
 
 
 ## 33) circuit-breaker 배포 및 테스트 환경 업데이트
-circuit-breaker 실행 환경 업데이트
 
-#Apply (base CB)
-kubectl label namespace msa istio-injection=enabled --overwrite
-kubectl -n msa apply -f bin_k8s/istio/circuit-breaker.yaml
-는
+04_test_circuit_breaker.sh의 하단 부분을 발췌했는데, 
 
-- 03_deploy_all.sh
-- 02_prepare_k8s_order_orchestrator_test.sh
-을 비롯해 아래 경로의 쉘에서 k8s 배포 및 테스트와 관련된 부분에 방금 제안한 istio 배포, 재기동 등이 적용되도록 sh을 수정해 줘.
-/bin_k8s
-/bin_test
 
-그리고, 테스트 방식으로 제안한 아래 부분도 메뉴얼이 아닌 자동으로 수행할 수 있는 방법을 제안해줘. 
+echo "==> [3/7] 정상 호출 1회"
+post_order "normal-1" "${COUPON_CIRCUIT_OFF}" "${POINT_CIRCUIT_OFF}"
 
-Fault injection on coupon (timeout 유도)
-
-kubectl -n msa apply -f bin_k8s/istio/coupon-fault-delay.yaml
-
-Test scenario (요구사항 그대로)
-
-1. order → coupon/point 정상 1회
-
-kubectl -n msa port-forward svc/order-orchestrator 8099:8099
-curl -X POST http://localhost:8099/api/v1/orders \
--H "Content-Type: application/json" \
--d '{"couponNumber":"CPN-INT-BOTH-001","pointNumber":"PNT-INT-BOTH-001","paymentNumber":"PAY-001","paymentAmount":15000,"orderItems":[{"itemNumber":"ITEM-001","quantity":2}]}'
-
-2. coupon 3회 연속 timeout 발생 (fault delay 6s + timeout 5s)
-
-for i in 1 2 3; do
-curl -X POST http://localhost:8099/api/v1/orders \
--H "Content-Type: application/json" \
--d '{"couponNumber":"CPN-INT-BOTH-001","pointNumber":"PNT-INT-BOTH-001","paymentNumber":"PAY-001","paymentAmount":15000,"orderItems":[{"itemNumber":"ITEM-001","quantity":2}]}'
+echo "==> [4/7] 동일 쿠폰/포인트로 1회 성공 + 3회 5xx 실패"
+for i in 1 2 3 4; do
+if [[ "${i}" -eq 1 ]]; then
+post_order "success-${i}" "${COUPON_CIRCUIT_ON}" "${POINT_CIRCUIT_ON}"
+else
+post_order "fail-${i}" "${COUPON_CIRCUIT_ON}" "${POINT_CIRCUIT_ON}"
+fi
 done
 
-3. fault 제거(서비스 정상화)
+echo "==> [5/7] 2초 대기 (circuit break 유지, API 호출 실패해야 함)"
+sleep 2
+post_order "after-10s" "${COUPON_CIRCUIT_OFF}" "${POINT_CIRCUIT_OFF}"
 
-kubectl -n msa apply -f bin_k8s/istio/circuit-breaker.yaml
+echo "==> [6/7] 총 11초 경과 후 호출 (circuit 정상 여부 확인)"
+sleep 11
+post_order "after-10s" "${COUPON_CIRCUIT_OFF}" "${POINT_CIRCUIT_OFF}"
 
-4. 5초 후 재호출 → circuit 차단 확인
-5. 11초 후 재호출 → circuit 복귀 확인
+
+이 코드 중에서
+echo "==> [3/7] 정상 호출 1회"
+post_order "normal-1" "${COUPON_CIRCUIT_OFF}" "${POINT_CIRCUIT_OFF}"
+
+echo "==> [4/7] 동일 쿠폰/포인트로 1회 성공 + 3회 5xx 실패"
+for i in 1 2 3 4; do
+if [[ "${i}" -eq 1 ]]; then
+post_order "success-${i}" "${COUPON_CIRCUIT_ON}" "${POINT_CIRCUIT_ON}"
+else
+post_order "fail-${i}" "${COUPON_CIRCUIT_ON}" "${POINT_CIRCUIT_ON}"
+fi
+done
+
+
+이 부분은 문제가 없어. 
+문제는 아래 부분인데 
+
+echo "==> [5/7] 2초 대기 (circuit break 유지, API 호출 실패해야 함)"
+sleep 2
+post_order "after-10s" "${COUPON_CIRCUIT_OFF}" "${POINT_CIRCUIT_OFF}"
+
+echo "==> [6/7] 총 11초 경과 후 호출 (circuit 정상 여부 확인)"
+sleep 11
+post_order "after-10s" "${COUPON_CIRCUIT_OFF}" "${POINT_CIRCUIT_OFF}"
+
+이미 한번 테스트해서 성공한 쿠폰과 포인트로 테스트를 하고 있어서 11초 경과 후에도 실패를 하고 있어. 
+
+
+전체를 아래와 같이 변경했어. 
+변경 및 추가된 쿠폰, 포인트에 맞게 *schema.sql을 맞춰줘.
+
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ORDER_URL="http://localhost:8099/api/v1/orders"
+COUPON_BOTH="CPN-INT-BOTH-001"
+POINT_BOTH="PNT-INT-BOTH-001"
+
+COUPON_CIRCUIT_ON="CPN-INT-CIRCUIT-ON1"
+POINT_CIRCUIT_ON="PNT-INT-CIRCUIT-ON1"
+
+COUPON_CIRCUIT_OFF="CPN-INT-CIRCUIT-OFF1"
+POINT_CIRCUIT_OFF="PNT-INT-CIRCUIT-OFF1"
+
+COUPON_CIRCUIT_OFF2="CPN-INT-CIRCUIT-OFF2"
+POINT_CIRCUIT_OFF2="PNT-INT-CIRCUIT-OFF2"
+
+
+wait_for_port() {
+local port="$1"
+local retry=20
+while ! lsof -i "tcp:${port}" >/dev/null 2>&1; do
+retry=$((retry - 1))
+if [[ "${retry}" -le 0 ]]; then
+return 1
+fi
+sleep 0.5
+done
+}
+
+post_order() {
+local label="$1"
+local coupon_number="$2"
+local point_number="$3"
+
+local payload
+payload="$(cat <<EOF
+{"couponNumber":"${coupon_number}","pointNumber":"${point_number}","paymentNumber":"PAY-${label}","paymentAmount":15000,"orderItems":[{"itemNumber":"ITEM-001","quantity":2}]}
+EOF
+)"
+local code
+code="$(curl -s -o /dev/null -w "%{http_code}" -X POST "${ORDER_URL}" \
+-H "Content-Type: application/json" \
+--data-binary "${payload}" || true)"
+
+echo "${label} -> HTTP ${code} (coupon=${coupon_number}, point=${point_number})"
+}
+
+echo "==> [1/7] Istio circuit-breaker 적용"
+kubectl -n msa apply -f "${ROOT_DIR}/bin_k8s/istio/circuit-breaker.yaml"
+
+echo "==> [2/7] order-orchestrator 포트포워드 확인 (8099)"
+if ! lsof -i tcp:8099 >/dev/null 2>&1; then
+kubectl -n msa port-forward svc/order-orchestrator 8099:8099 > "${ROOT_DIR}/order-port-forward.log" 2>&1 &
+wait_for_port 8099
+fi
+
+echo "==> [3/7] 정상 호출 1회"
+post_order "normal-1" "${COUPON_CIRCUIT_OFF}" "${POINT_CIRCUIT_OFF}"
+
+echo "==> [4/7] 동일 쿠폰/포인트로 1회 성공 + 3회 5xx 실패"
+for i in 1 2 3 4; do
+if [[ "${i}" -eq 1 ]]; then
+post_order "success-${i}" "${COUPON_CIRCUIT_ON}" "${POINT_CIRCUIT_ON}"
+else
+post_order "fail-${i}" "${COUPON_CIRCUIT_ON}" "${POINT_CIRCUIT_ON}"
+fi
+done
+
+echo "==> [5/7] 2초 대기 (circuit break 유지, API 호출 실패해야 함)"
+sleep 2
+post_order "after-10s" "${COUPON_CIRCUIT_OFF2}" "${POINT_CIRCUIT_OFF2}"
+
+echo "==> [6/7] 총 11초 경과 후 호출 (circuit 정상 여부 확인)"
+sleep 11
+post_order "after-10s" "${COUPON_CIRCUIT_OFF2}" "${POINT_CIRCUIT_OFF2}"
+
+
+

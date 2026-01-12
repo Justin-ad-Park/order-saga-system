@@ -10,6 +10,7 @@ import com.example.pointservice.domain.model.status.PointStatus;
 import jakarta.transaction.Transactional;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,9 +20,14 @@ public class ReservePointService implements ReservePointUseCase, ConfirmPointUse
 
     private final LoadPointPort loadPointPort;
     private final SavePointPort savePointPort;
+    @Value("${circuit-test.point.delay-prefix:}")
+    private String delayPrefix;
+    @Value("${circuit-test.point.delay-ms:0}")
+    private long delayMs;
 
     @Override
     public void reserve(String pointNumber, String orderId) {
+        maybeDelay(pointNumber);
         updateStatus(pointNumber, PointStatus.RESERVED, this::validateReservable);
     }
 
@@ -95,6 +101,21 @@ public class ReservePointService implements ReservePointUseCase, ConfirmPointUse
     private void validateConfirmable(Point point) {
         if (point.status() != PointStatus.RESERVED) {
             throw new IllegalStateException("확정 불가능한 포인트입니다: " + point.pointNumber());
+        }
+    }
+
+    private void maybeDelay(String pointNumber) {
+        if (delayMs <= 0 || delayPrefix == null || delayPrefix.isBlank()) {
+            return;
+        }
+        if (!pointNumber.startsWith(delayPrefix)) {
+            return;
+        }
+        try {
+            Thread.sleep(delayMs);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Delay interrupted", ex);
         }
     }
 }

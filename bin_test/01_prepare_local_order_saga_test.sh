@@ -1,20 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-
-kill_port() {
-  local port="$1"
-  if command -v lsof >/dev/null 2>&1; then
-    local pids
-    pids="$(lsof -ti tcp:"${port}" || true)"
-    if [[ -n "${pids}" ]]; then
-      echo "${pids}" | xargs kill
-    fi
-  else
-    ps aux | rg "tcp:${port}" | awk '{print $2}' | xargs kill || true
-  fi
-}
+COMMON_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../bin_common" && pwd)"
+# shellcheck disable=SC1091
+source "${COMMON_DIR}/lib.sh"
 
 # 1) 로컬 MSA 포트 정리
 echo "==> [1/5] 로컬 MSA 포트 정리 (8080/8081/8082)"

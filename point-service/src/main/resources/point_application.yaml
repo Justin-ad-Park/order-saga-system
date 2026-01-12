@@ -30,6 +30,11 @@ spring:
 server:
   port: 8082
 
+circuit-test:
+  point:
+    delay-prefix: PNT-INT-CIRCUIT-ON
+    delay-ms: 8000
+
 ---
 spring:
   config:
@@ -56,3 +61,8 @@ spring:
 
 server:
   port: 8082
+
+circuit-test:
+  point:
+    delay-prefix: PNT-INT-CIRCUIT-ON
+    delay-ms: 8000
