@@ -10,5 +10,4 @@ fi
 
 kubectl get ns msa >/dev/null 2>&1 || kubectl create namespace msa
 kubectl label namespace msa istio-injection=enabled --overwrite
-kubectl -n msa apply -f "${ROOT_DIR}/bin_k8s/istio/circuit-breaker.yaml"
-
+kubectl -n msa apply -f "${ROOT_DIR}/bin_k8s/istio/config/circuit-breaker.yaml"

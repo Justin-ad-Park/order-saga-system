@@ -54,7 +54,7 @@ port-forward.pid
 
 ### Test ###
 **/data/
-bin_k8s/istio/
+bin_k8s/istio/dist/
 
 kafka-port-forward.log
 kafka-port-forward.pid

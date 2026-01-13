@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ISTIO_VERSION="${ISTIO_VERSION:-1.20.2}"
-ISTIO_DIR="${ROOT_DIR}/bin_k8s/istio/istio-${ISTIO_VERSION}"
+ISTIO_DIR="${ROOT_DIR}/bin_k8s/istio/dist/istio-${ISTIO_VERSION}"
 
 kill_port() {
   local port="$1"

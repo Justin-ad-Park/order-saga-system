@@ -1,0 +1,98 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: order-orchestrator-dr
+  namespace: msa
+spec:
+  host: order-orchestrator.msa.svc.cluster.local
+  trafficPolicy:
+    outlierDetection:
+      consecutive5xxErrors: 3
+      interval: 5s
+      baseEjectionTime: 10s
+      maxEjectionPercent: 100
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: coupon-service-dr
+  namespace: msa
+spec:
+  host: coupon-service.msa.svc.cluster.local
+  trafficPolicy:
+    outlierDetection:
+      consecutive5xxErrors: 3
+      interval: 5s
+      baseEjectionTime: 10s
+      maxEjectionPercent: 100
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: point-service-dr
+  namespace: msa
+spec:
+  host: point-service.msa.svc.cluster.local
+  trafficPolicy:
+    outlierDetection:
+      consecutive5xxErrors: 3
+      interval: 5s
+      baseEjectionTime: 10s
+      maxEjectionPercent: 100
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: order-orchestrator-vs
+  namespace: msa
+spec:
+  hosts:
+    - order-orchestrator.msa.svc.cluster.local
+  http:
+    - timeout: 2s
+      retries:
+        attempts: 0
+        retryOn: ""
+      route:
+        - destination:
+            host: order-orchestrator.msa.svc.cluster.local
+            port:
+              number: 8099
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: coupon-service-vs
+  namespace: msa
+spec:
+  hosts:
+    - coupon-service.msa.svc.cluster.local
+  http:
+    - timeout: 2s
+      retries:
+        attempts: 0
+        retryOn: ""
+      route:
+        - destination:
+            host: coupon-service.msa.svc.cluster.local
+            port:
+              number: 8081
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: point-service-vs
+  namespace: msa
+spec:
+  hosts:
+    - point-service.msa.svc.cluster.local
+  http:
+    - timeout: 2s
+      retries:
+        attempts: 0
+        retryOn: ""
+      route:
+        - destination:
+            host: point-service.msa.svc.cluster.local
+            port:
+              number: 8082

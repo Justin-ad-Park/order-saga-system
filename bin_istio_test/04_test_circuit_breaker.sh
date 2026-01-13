@@ -69,7 +69,7 @@ echo "==> [1/7] 테스트 데이터 초기화"
 "${ROOT_DIR}/bin_common/05_reset_test_data.sh"
 
 echo "==> [2/7] Istio circuit-breaker 적용"
-kubectl -n msa apply -f "${ROOT_DIR}/bin_k8s/istio/circuit-breaker.yaml"
+kubectl -n msa apply -f "${ROOT_DIR}/bin_k8s/istio/config/circuit-breaker.yaml"
 
 echo "==> [3/7] order-orchestrator 포트포워드 확인 (8099)"
 if ! lsof -i tcp:8099 >/dev/null 2>&1; then
