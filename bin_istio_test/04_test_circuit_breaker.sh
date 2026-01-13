@@ -65,27 +65,30 @@ EOF
   fi
 }
 
-echo "==> [1/7] Istio circuit-breaker 적용"
+echo "==> [1/7] 테스트 데이터 초기화"
+"${ROOT_DIR}/bin_common/05_reset_test_data.sh"
+
+echo "==> [2/7] Istio circuit-breaker 적용"
 kubectl -n msa apply -f "${ROOT_DIR}/bin_k8s/istio/circuit-breaker.yaml"
 
-echo "==> [2/7] order-orchestrator 포트포워드 확인 (8099)"
+echo "==> [3/7] order-orchestrator 포트포워드 확인 (8099)"
 if ! lsof -i tcp:8099 >/dev/null 2>&1; then
   kubectl -n msa port-forward svc/order-orchestrator 8099:8099 > "${ROOT_DIR}/order-port-forward.log" 2>&1 &
   wait_for_port 8099
 fi
 
-echo "==> [3/7] 정상 호출 1회"
+echo "==> [4/7] 정상 호출 1회"
 post_order "normal-1" "${COUPON_CIRCUIT_OFF}" "${POINT_CIRCUIT_OFF}"
 
-echo "==> [4/7] timeout 3회 연속 (circuit open 유도)"
+echo "==> [5/7] timeout 3회 연속 (circuit open 유도)"
 for i in 0 1 2; do
   post_order "timeout-$((i + 1))" "${COUPON_CIRCUIT_ON_LIST[$i]}" "${POINT_CIRCUIT_ON_LIST[$i]}"
 done
 
-echo "==> [5/7] 2초 대기 (circuit open 유지 예상)"
+echo "==> [6/7] 2초 대기 (circuit open 유지 예상)"
 sleep 2
 post_order "after-2s" "${COUPON_CIRCUIT_OFF2}" "${POINT_CIRCUIT_OFF2}"
 
-echo "==> [6/7] 총 15초 경과 후 호출 (circuit 정상 여부 확인)"
+echo "==> [7/7] 총 15초 경과 후 호출 (circuit 정상 여부 확인)"
 sleep 13
 post_order "after-15s" "${COUPON_CIRCUIT_OFF3}" "${POINT_CIRCUIT_OFF3}"

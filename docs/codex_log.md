@@ -2,6 +2,16 @@
 
 아래는 현재까지 대화에서 확정된 작업 내용을 순서대로 요약한 로그이다.
 
+## Logging Mode 추가
+- 지금부터 내가 지시한 프롬프트를 *** 매번 *** `docs/codex_log.md`의 하단에 포맷에 맞게 저장하고, 너가 작업한 부분을 하단에 간략히 요약해줘.
+- 포맷은 아래와 같아.
+## {no}) 요약 제목
+- 사용자 : 
+  {내가 지시한 프롬프트}
+- Codex 응답 :
+  {하단에 응답 또는 작업 내용 요약}
+
+
 ## 1) OrderSagaConsumer 모듈 추가 및 기본 컨슈머 구성
 - 새 모듈 `order-saga-consumer` 추가(기존 `OrderSagaConsumer`에서 이름 변경).
 - `OSC_application.yaml` 구성: `order-orchestrator`의 `orderOS_application.yaml` 내용을 복사하고 `sql.init` 제거.
@@ -35,10 +45,6 @@
 - compensate는 예약 실패 시 예외 없이 no-op 처리.
 - HTTP 테스트 추가: `01_pointServiceTest.http`.
 - 테스트 확장: 단위/Mock/통합 테스트에 confirm/compensate 시나리오 추가.
-
-## 6) Logging Mode 변경
-- 사용자 요청: 지금부터 모든 발화를 `docs/codex_log.md`에 저장.
-- Codex 응답: 매 요청/응답마다 즉시 append 방식으로 기록 진행.
 
 ## 7) 보상 처리 예외 정책 변경
 - coupon-service/point-service의 compensate 메서드에서 status가 USED인 경우 예외를 반환하도록 변경.
@@ -150,8 +156,59 @@ msa namespace에 실제로 배포하는 것으로 스크립트를 구성해.
 - 물론 새로 만든 03_* 은 consumer까지 K8s 안에서 실행이 되어야 하고, 
 - 마지막에 실행하는 Consumer의 system.out.log가 출력이 되도록 실행 스크립트를 만들어줘
 
+# Istio를 활용한 3회 실패(timeout) 시 circuit brreaker 동작하도록 환경 구성하는 프롬프트
+- Goal: After Istio install, make circuit-breaker reliably open after 3 failures and auto close ~15s later; provide a deterministic test script that validates this end-to-end.
+- Constraints:
+  - No manual fault removal; only use Istio + minimal app-side hooks if needed to reliably generate upstream 5xx/timeout.
+  - Avoid test flakiness from retries, propagation delay, or data reuse.
+  - Ensure test data can be reset quickly for repeat runs (snapshot + reset procedure).
+- Required changes:
+  1) Inspect actual call flow: OrderOrchestrator -> Coupon/Point WebClient; identify where errors are produced and how they surface (HTTP code, retries).
+  2) Make failure deterministic:
+     - Ensure upstream failures are real 5xx/timeout at envoy layer (disable retries on VS; align timeout settings).
+     - If needed, add explicit delay based on coupon/point prefix in reserve services to trigger timeouts.
+  3) Align Istio config:
+     - DestinationRule uses outlierDetection with consecutive5xxErrors: 3, baseEjectionTime: 10s, interval: 5s.
+     - VirtualService retries disabled (attempts: 0, retryOn: "") and timeout set to 2s.
+  4) Update test script:
+     - Use distinct coupon/point values for each failing call to avoid 409 reuse conflicts.
+     - Verify: 3 timeouts -> CB open; 2s later call fails; 15s later call succeeds.
+  5) Add reset tooling:
+     - Create snapshot tables + stored procs to reset coupon/point.
+     - Provide reset script for quick re-run.
+- Validation:
+  - Confirm envoy routes have timeout and retries disabled.
+  - Confirm 3 timeouts yield 5xx/timeout and CB opens.
+  - Confirm 15s later call succeeds.
+  - 
+- 한국어 버전(요약 프롬프트)
+  - 목표: Istio 설치 후 3회 실패로 circuit-breaker가 확실히 열리고, 약 15초 후 자동으로 닫히는 것을 재현/검증하는 테스트 스크립트를 만든다.
+  - 제약:
+    - 수동 fault 제거 없이 Istio + 최소한의 앱 훅으로 업스트림 5xx/timeout을 안정적으로 생성한다.
+    - retries, 전파 지연, 테스트 데이터 재사용으로 인한 플래키를 제거한다.
+    - 반복 테스트를 위해 스냅샷/리셋 기반 초기화 경로를 제공한다.
+  - 필수 작업:
+    1) 호출 흐름 분석: OrderOrchestrator → Coupon/Point(WebClient) 경로, 실패 코드 및 재시도 처리 확인.
+    2) 실패를 결정적으로 만들기:
+       - VS에서 retries 완전 비활성화, timeout 일치시키기.
+       - 필요 시 쿠폰/포인트 서비스에 prefix 기반 지연 훅 추가.
+    3) Istio 설정 정합:
+       - DestinationRule outlierDetection: consecutive5xxErrors=3, baseEjectionTime=10s, interval=5s.
+       - VirtualService timeout=2s, retries=0.
+    4) 테스트 스크립트 정리:
+       - 실패 호출마다 서로 다른 coupon/point 사용(409 재사용 실패 제거).
+       - 3회 timeout → CB open, 2초 후 실패, 15초 후 성공.
+    5) 리셋 도구:
+       - 스냅샷 테이블 + 프로시저로 쿠폰/포인트 빠른 초기화.
+  - 검증:
+    - envoy route에 timeout/ retries 비활성화가 적용되었는지 확인.
+    - timeout 3회가 5xx/timeout으로 집계되고 CB가 열리는지 확인.
+    - 15초 후 호출이 성공하는지 확인.
+
+
+
 ## 31)  circuit-breaker를 구성안 검토
-circuit-breaker를 구성해서 MSA(order, point)의 장애에 circuit-breaker가 동작하도록 하려고 해. 
+circuit-breaker를 구성해서 MSA(order, point)의 장애에 circuit-breaker가 동작하도록 하려고 해.
 Istio를 비롯해서 현재 K8s(dev) 구성에서 circuit-breaker를 구성해서 장애 테스트를 쉽게 할 수 있는 방안을 몇 개 제안해 줘.
 
 [요구사항]
@@ -171,8 +228,8 @@ Istio를 비롯해서 현재 K8s(dev) 구성에서 circuit-breaker를 구성해�
 위 요구사항과 테스트 시나리오를 바탕으로 현재 프로젝트에 어떻게 반영하는게 좋을지 제안해줘.
 
 --> 답변
-        • 다음처럼 “지금 K8s(dev) 구성에서 빠르게 테스트 가능한 circuit‑breaker” 옵션 3가지를 제안할게. 공통 파라미터는 요구사항대로 timeout=5s, 연속 실패 3회 차단, 10s 후 half‑open 트래픽 허용으로 맞춘다.
-        
+• 다음처럼 “지금 K8s(dev) 구성에서 빠르게 테스트 가능한 circuit‑breaker” 옵션 3가지를 제안할게. 공통 파라미터는 요구사항대로 timeout=5s, 연속 실패 3회 차단, 10s 후 half‑open 트래픽 허용으로 맞춘다.
+
         Option 1: Istio(Envoy) 기반 – 가장 K8s‑네이티브, 중앙 제어
         
         - 장점: 앱 수정 없이 적용, dev 환경에 가장 잘 맞음.
@@ -240,146 +297,51 @@ Istio를 비롯해서 현재 K8s(dev) 구성에서 circuit-breaker를 구성해�
         원하면 어느 옵션으로 갈지 번호로 알려줘.
 
 
-## 32)  circuit-breaker를 구성
-› dev 환경에서 손쉽게 장애 테스트가 필요하니 **Option 1(Istio)**을 기본으로 두고, Option 3로 테스트 시나리오를 자동화하는 구성이 가장 간결함.
-order/point/coupon 모두 동일 파라미터 적용: timeout=5s, 3회 연속 timeout 시 10s 차단, 이후 성공 시 즉시 복귀.
-
-필요하면 다음 단계로 구체 YAML(각 서비스별 DestinationRule/VirtualService)까지 바로 작성해
+## 32)  circuit-breaker를 구성 - 단순 정리. 프롬프트 X
+# › dev 환경에서 손쉽게 장애 테스트가 필요하니 **Option 1(Istio)**을 기본으로 두고, Option 3로 테스트 시나리오를 자동화하는 구성이 가장 간결함.
+# order/point/coupon 모두 동일 파라미터 적용: timeout=5s, 3회 연속 timeout 시 10s 차단, 이후 성공 시 즉시 복귀.
 
 
-## 33) circuit-breaker 배포 및 테스트 환경 업데이트
+## 32) Best Prompt (통합, Istio 설치 ~ CB 테스트 자동화)
+다음 요구사항을 **한 번에** 충족하도록 코드/스크립트/설정을 수정해줘. 결과물은 실행 순서까지 정리해줘.
 
-04_test_circuit_breaker.sh의 하단 부분을 발췌했는데, 
+### 목표
+- Istio 설치부터 회복 테스트까지 end-to-end로 자동화
+- 3회 timeout으로 circuit-breaker가 확실히 open되고, 약 15초 후 close되어 성공 호출되는 시나리오 재현
+- 반복 테스트가 쉽도록 스냅샷/리셋 도구 제공
 
+### 제약/주의
+- 재사용으로 인한 409/비즈니스 실패가 테스트 결과에 섞이지 않게, **각 실패 호출마다 서로 다른 coupon/point 사용**
+- retries/전파지연 때문에 timeout이 200으로 복귀하지 않도록 **VS에서 retries 완전 비활성화**
+- 수동 fault 제거 없이도 timeout이 안정적으로 발생하도록 **앱 레벨 delay 훅을 최소한으로 추가**
 
-echo "==> [3/7] 정상 호출 1회"
-post_order "normal-1" "${COUPON_CIRCUIT_OFF}" "${POINT_CIRCUIT_OFF}"
+### 해야 할 작업
+1) Istio 설치 및 적용
+   - `bin_k8s/09_apply_istio_cb.sh`에서 Istio 미설치 시 `bin_k8s/10_install_istio.sh` 자동 설치 연결
+   - `bin_k8s/istio/circuit-breaker.yaml`에 outlierDetection(consecutive5xxErrors=3, interval=5s, baseEjectionTime=10s) 설정
+   - VirtualService timeout=2s, retries=0( retryOn:"" 포함 )로 고정
 
-echo "==> [4/7] 동일 쿠폰/포인트로 1회 성공 + 3회 5xx 실패"
-for i in 1 2 3 4; do
-if [[ "${i}" -eq 1 ]]; then
-post_order "success-${i}" "${COUPON_CIRCUIT_ON}" "${POINT_CIRCUIT_ON}"
-else
-post_order "fail-${i}" "${COUPON_CIRCUIT_ON}" "${POINT_CIRCUIT_ON}"
-fi
-done
+2) timeout을 안정적으로 만들기(앱 최소 훅)
+   - coupon/point reserve 단계에 prefix 기반 지연 훅 추가
+   - 예: prefix `CPN-INT-CIRCUIT-ON*`, `PNT-INT-CIRCUIT-ON*`에 대해 8s sleep
+   - dev/test 프로파일에만 적용되도록 프로퍼티 추가
 
-echo "==> [5/7] 2초 대기 (circuit break 유지, API 호출 실패해야 함)"
-sleep 2
-post_order "after-10s" "${COUPON_CIRCUIT_OFF}" "${POINT_CIRCUIT_OFF}"
+3) 테스트 데이터 초기화
+   - 스냅샷 테이블 + 프로시저 생성 SQL 제공
+   - 스냅샷 생성 스크립트: `bin_common/04_create_test_snapshot_procs.sh`
+   - 리셋 스크립트: `bin_common/05_reset_test_data.sh`
+   - prepare 스크립트(`bin_common/02_prepare_*`, `bin_common/03_prepare_*`)에서 **스냅샷 생성**
+   - 테스트 시작 스크립트(`bin_istio_test/04_test_circuit_breaker.sh`)에서 **리셋 호출**
 
-echo "==> [6/7] 총 11초 경과 후 호출 (circuit 정상 여부 확인)"
-sleep 11
-post_order "after-10s" "${COUPON_CIRCUIT_OFF}" "${POINT_CIRCUIT_OFF}"
+4) 테스트 스크립트 정리
+   - `bin_istio_test/04_test_circuit_breaker.sh`에서
+     - 정상 1회 (OFF1)
+     - timeout 3회 (ON1/ON2/ON3 각각 사용)
+     - 2초 후 호출 실패(OFF2)
+     - 15초 후 호출 성공(OFF3)
 
-
-이 코드 중에서
-echo "==> [3/7] 정상 호출 1회"
-post_order "normal-1" "${COUPON_CIRCUIT_OFF}" "${POINT_CIRCUIT_OFF}"
-
-echo "==> [4/7] 동일 쿠폰/포인트로 1회 성공 + 3회 5xx 실패"
-for i in 1 2 3 4; do
-if [[ "${i}" -eq 1 ]]; then
-post_order "success-${i}" "${COUPON_CIRCUIT_ON}" "${POINT_CIRCUIT_ON}"
-else
-post_order "fail-${i}" "${COUPON_CIRCUIT_ON}" "${POINT_CIRCUIT_ON}"
-fi
-done
-
-
-이 부분은 문제가 없어. 
-문제는 아래 부분인데 
-
-echo "==> [5/7] 2초 대기 (circuit break 유지, API 호출 실패해야 함)"
-sleep 2
-post_order "after-10s" "${COUPON_CIRCUIT_OFF}" "${POINT_CIRCUIT_OFF}"
-
-echo "==> [6/7] 총 11초 경과 후 호출 (circuit 정상 여부 확인)"
-sleep 11
-post_order "after-10s" "${COUPON_CIRCUIT_OFF}" "${POINT_CIRCUIT_OFF}"
-
-이미 한번 테스트해서 성공한 쿠폰과 포인트로 테스트를 하고 있어서 11초 경과 후에도 실패를 하고 있어. 
-
-
-전체를 아래와 같이 변경했어. 
-변경 및 추가된 쿠폰, 포인트에 맞게 *schema.sql을 맞춰줘.
-
-#!/usr/bin/env bash
-set -euo pipefail
-
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ORDER_URL="http://localhost:8099/api/v1/orders"
-COUPON_BOTH="CPN-INT-BOTH-001"
-POINT_BOTH="PNT-INT-BOTH-001"
-
-COUPON_CIRCUIT_ON="CPN-INT-CIRCUIT-ON1"
-POINT_CIRCUIT_ON="PNT-INT-CIRCUIT-ON1"
-
-COUPON_CIRCUIT_OFF="CPN-INT-CIRCUIT-OFF1"
-POINT_CIRCUIT_OFF="PNT-INT-CIRCUIT-OFF1"
-
-COUPON_CIRCUIT_OFF2="CPN-INT-CIRCUIT-OFF2"
-POINT_CIRCUIT_OFF2="PNT-INT-CIRCUIT-OFF2"
-
-
-wait_for_port() {
-local port="$1"
-local retry=20
-while ! lsof -i "tcp:${port}" >/dev/null 2>&1; do
-retry=$((retry - 1))
-if [[ "${retry}" -le 0 ]]; then
-return 1
-fi
-sleep 0.5
-done
-}
-
-post_order() {
-local label="$1"
-local coupon_number="$2"
-local point_number="$3"
-
-local payload
-payload="$(cat <<EOF
-{"couponNumber":"${coupon_number}","pointNumber":"${point_number}","paymentNumber":"PAY-${label}","paymentAmount":15000,"orderItems":[{"itemNumber":"ITEM-001","quantity":2}]}
-EOF
-)"
-local code
-code="$(curl -s -o /dev/null -w "%{http_code}" -X POST "${ORDER_URL}" \
--H "Content-Type: application/json" \
---data-binary "${payload}" || true)"
-
-echo "${label} -> HTTP ${code} (coupon=${coupon_number}, point=${point_number})"
-}
-
-echo "==> [1/7] Istio circuit-breaker 적용"
-kubectl -n msa apply -f "${ROOT_DIR}/bin_k8s/istio/circuit-breaker.yaml"
-
-echo "==> [2/7] order-orchestrator 포트포워드 확인 (8099)"
-if ! lsof -i tcp:8099 >/dev/null 2>&1; then
-kubectl -n msa port-forward svc/order-orchestrator 8099:8099 > "${ROOT_DIR}/order-port-forward.log" 2>&1 &
-wait_for_port 8099
-fi
-
-echo "==> [3/7] 정상 호출 1회"
-post_order "normal-1" "${COUPON_CIRCUIT_OFF}" "${POINT_CIRCUIT_OFF}"
-
-echo "==> [4/7] 동일 쿠폰/포인트로 1회 성공 + 3회 5xx 실패"
-for i in 1 2 3 4; do
-if [[ "${i}" -eq 1 ]]; then
-post_order "success-${i}" "${COUPON_CIRCUIT_ON}" "${POINT_CIRCUIT_ON}"
-else
-post_order "fail-${i}" "${COUPON_CIRCUIT_ON}" "${POINT_CIRCUIT_ON}"
-fi
-done
-
-echo "==> [5/7] 2초 대기 (circuit break 유지, API 호출 실패해야 함)"
-sleep 2
-post_order "after-10s" "${COUPON_CIRCUIT_OFF2}" "${POINT_CIRCUIT_OFF2}"
-
-echo "==> [6/7] 총 11초 경과 후 호출 (circuit 정상 여부 확인)"
-sleep 11
-post_order "after-10s" "${COUPON_CIRCUIT_OFF2}" "${POINT_CIRCUIT_OFF2}"
-
-
+### 검증 체크
+- Envoy route에 timeout=2s, retries=0 적용 확인
+- timeout 3회가 5xx/timeout로 집계되고 CB open 되는지 확인
+- 2초 후 호출 실패, 15초 후 호출 성공 확인
 

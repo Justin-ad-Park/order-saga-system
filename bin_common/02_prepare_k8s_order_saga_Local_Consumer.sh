@@ -38,14 +38,17 @@ kubectl -n msa port-forward svc/mysql 3307:3306 > "${ROOT_DIR}/mysql-port-forwar
 kubectl -n msa port-forward svc/kafka 9094:9094 > "${ROOT_DIR}/kafka-port-forward.log" 2>&1 &
 
 # 5) MSA 이미지 빌드 및 배포
-echo "==> [5/7] MSA 이미지 빌드 및 배포"
+echo "==> [5/8] MSA 이미지 빌드 및 배포"
 "${ROOT_DIR}/coupon-service/scripts/deploy_k8s.sh"
 "${ROOT_DIR}/point-service/scripts/deploy_k8s.sh"
 "${ROOT_DIR}/order-orchestrator/scripts/deploy_k8s.sh"
 
+# 6) 테스트 스냅샷 준비
+echo "==> [6/8] 테스트 스냅샷 준비"
+"${ROOT_DIR}/bin_common/04_create_test_snapshot_procs.sh"
 
-# 6) MSA 재기동 및 포트포워드
-echo "==> [6/7] MSA 재기동 및 포트포워드"
+# 7) MSA 재기동 및 포트포워드
+echo "==> [7/8] MSA 재기동 및 포트포워드"
 kubectl -n msa rollout restart deployment/coupon-service
 kubectl -n msa rollout restart deployment/point-service
 kubectl -n msa rollout restart deployment/order-orchestrator
@@ -54,6 +57,6 @@ kubectl -n msa port-forward svc/order-orchestrator 8099:8099 > "${ROOT_DIR}/orde
 kubectl -n msa port-forward svc/coupon-service 8091:8081 > "${ROOT_DIR}/coupon-port-forward.log" 2>&1 &
 kubectl -n msa port-forward svc/point-service 8092:8082 > "${ROOT_DIR}/point-port-forward.log" 2>&1 &
 
-# 7) 로컬 Consumer 실행 (K8s 포트포워드 기준)
-echo "==> [7/7] 로컬 Consumer 실행 (order-saga-consumer, k8s-local)"
+# 8) 로컬 Consumer 실행 (K8s 포트포워드 기준)
+echo "==> [8/8] 로컬 Consumer 실행 (order-saga-consumer, k8s-local)"
 "${ROOT_DIR}/gradlew" :order-saga-consumer:bootRun --args="--spring.profiles.active=k8s-local"
