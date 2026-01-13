@@ -345,3 +345,52 @@ Istio를 비롯해서 현재 K8s(dev) 구성에서 circuit-breaker를 구성해�
 - timeout 3회가 5xx/timeout로 집계되고 CB open 되는지 확인
 - 2초 후 호출 실패, 15초 후 호출 성공 확인
 
+## 33) 매번 프롬프트 로그 추가 및 요약
+- 사용자 :
+  지금부터 내가 지시한 프롬프트를 *** 매번 *** `docs/codex_log.md`의 하단에 포맷에 맞게 저장하고, 너가 작업한 부분을 하단에 간략히 요약해줘.
+  포맷은 아래와 같아.
+  ## {no}) 요약 제목
+  - 사용자 : 
+    {내가 지시한 프롬프트}
+  - Codex 응답 :
+    {하단에 응답 또는 작업 내용 요약}
+- Codex 응답 :
+  요청한 포맷으로 요약 섹션을 `docs/codex_log.md` 하단에 추가함.
+
+## 34) Istio 모니터링 안내
+- 사용자 :
+  Istio로 circuit-breaker를 테스트하는 04_test_circuit_breaker.sh를 실행하는 동안 웹 화면에서 MSA가 어떻게 통신이 진행되고 있고, circuit 상태가 어떤지 모니터링을 하고 싶은데, 기 설치된 11_start_istio_monitoring.sh 에서 가능한 방법이 있으면 알려주고, 아니면 시각적으로 모니터링 가능한 방법을 제안해줘.
+- Codex 응답 :
+  `bin_k8s/11_start_istio_monitoring.sh`로 Kiali/Grafana/Prometheus/Jaeger를 띄우고, Kiali Graph에서 msa 네임스페이스 트래픽/에러율을 확인하는 방법을 안내함.
+
+가능합니다. 이미 설치된 bin_k8s/11_start_istio_monitoring.sh로 Kiali/Grafana/Prometheus/Jaeger를 띄울 수 있어요.
+
+이미 있는 스크립트로 가능한 모니터링
+
+- 실행: bin_k8s/11_start_istio_monitoring.sh
+- 접속:
+    - Kiali: http://localhost:20001
+    - Grafana: http://localhost:3000
+    - Prometheus: http://localhost:9090
+    - Jaeger: http://localhost:16686
+
+테스트 중에 보는 방법 (추천)
+
+1. 스크립트 실행 후 Kiali 접속
+2. Kiali → Graph
+    - Namespace: msa
+    - Time range: Last 1m
+    - Display: Traffic, Istio Config
+    - 확인 포인트: coupon/point 에러율, outlier ejection(만약 표시됨)
+
+시각적 모니터링 대안
+
+- Kiali가 가장 직관적(서비스 간 호출 그래프 + 오류율)
+- Grafana로 istio/ 대시보드 확인
+    - istio-mesh-dashboard, istio-service-dashboard 등이 보일 것
+- Prometheus로 직접 지표 확인
+    - e.g. istio_requests_total, istio_request_duration_milliseconds
+
+원하시면 11_start_istio_monitoring.sh 실행 후 Kiali에서 어떤 메뉴/설정을 봐야 하는지 스텝 가이드도 만들어 줄게요.
+
+

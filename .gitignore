@@ -64,3 +64,7 @@ order-port-forward.log
 order-port-forward.pid
 coupon-port-forward.log
 point-port-forward.log
+grafana-port-forward.log
+jaeger-port-forward.log
+kiali-port-forward.log
+prometheus-port-forward.log
