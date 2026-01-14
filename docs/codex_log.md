@@ -493,3 +493,52 @@ stale paths remain before summarizing next steps.
 - Codex 응답 :
   order_orchestrator_db용 truncate 프로시저(외래키 체크 비활성화 포함)를 추가하고, 리셋 스크립트에서 호출하도록 반영함.
 
+## 48) point delay-ms 설정 위치 설명 요청
+- 사용자 :
+  @Value("${circuit-test.point.delay-ms:0}")가 어디에서 값이 설정되어서  요청으로 전달되는지 설명해 줘
+- Codex 응답 :
+  point 서비스의 `point_application.yaml`에서 test/dev 프로파일로 `circuit-test.point.delay-ms`가 설정되고, Spring이 @Value로 주입하며 해당 값이 처리 로직에 적용됨.
+
+## 49) curl --max-time 역할 문의
+- 사용자 :
+  curl_out="$(curl -s -o /dev/null -w "%{http_code} %{time_total}" -X POST "${ORDER_URL}" \
+          -H "Content-Type: application/json" \
+          --max-time "${max_time}" \
+          --data-binary "${payload}" || true)" 에서 max-time이 어떤 역할을 해?
+- Codex 응답 :
+  curl 전체 요청(연결+전송+응답)을 max-time(초) 내에 끝내도록 제한하며, 초과 시 타임아웃으로 실패 처리됨을 설명함.
+
+## 50) max-time 사용 조건 확인 요청
+- 사용자 :
+  04_test_circuit_breaker.sh에서 실제로 max-time이 사용되는 조건이 있어?
+- Codex 응답 :
+  post_order의 4번째 인자를 전달할 때만 max-time이 적용되며, 현재 스크립트 호출부에서는 인자를 넘기지 않아 적용되지 않음을 설명함.
+
+## 51) 2,3,4 호출 500 발생 원인 질문
+- 사용자 :
+  그럼, 지금 circuit-breaker 2,3,4 호출에서 500에러가 발생하는 것은 어떻게 만든거야?
+- Codex 응답 :
+  쿠폰/포인트 서비스에 prefix 기반 지연(8s)을 넣고, Istio VirtualService timeout=2s로 설정해 upstream timeout을 유발해 500이 발생하도록 만든 흐름을 설명함.
+
+## 52) 지연 훅 적용 위치 상세 설명 요청
+- 사용자 :
+  COUPON_CIRCUIT_ON*, POINT_CIRCUIT_ON* 번호를 쓰면
+      쿠폰/포인트 서비스가 8초 지연하도록 구현돼 있음.
+  이 부분이 구체적으로 어디에 적용되어 있는지 자세히 설명해
+- Codex 응답 :
+  coupon/point 서비스의 Reserve*Service에서 delay-prefix와 delay-ms를 @Value로 주입받아 reserve 호출 시 prefix 일치하면 Thread.sleep(delayMs)로 지연시키는 로직이 적용됨을 설명함.
+
+## 53) 04_test_circuit_breaker.sh 정리 검토 요청
+- 사용자 :
+  04_test_circuit_breaker.sh 에서 --max-time "${max_time}" \ 을 비롯해서 불필요한 코드를 정리하는 것을 포함해서  이해하기 쉽게 정리할 수 있는 부분을 검토해줘
+- Codex 응답 :
+  사용되지 않는 변수/인자, 중복된 curl 분기, 반복 호출 구조 등 정리 포인트를 리뷰 형태로 정리함.
+
+## 54) 04_test_circuit_breaker.sh 정리 작업 요청
+- 사용자 :
+  - Remove unused variables and the max_time
+  - Refactor post_order to avoid duplicated curl and use conditional args. 
+  - Make the timeout loop iterate over arrays directly for clarity.
+- Codex 응답 :
+  사용되지 않는 변수와 max_time 분기를 제거하고, post_order의 curl 호출을 단일화했으며, timeout 루프를 배열 인덱스 순회로 정리함.
+
