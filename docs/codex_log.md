@@ -3,7 +3,8 @@
 아래는 현재까지 대화에서 확정된 작업 내용을 순서대로 요약한 로그이다.
 
 ## Logging Mode 추가
-- 지금부터 내가 지시한 프롬프트를 *** 매번 *** `docs/codex_log.md`의 하단에 포맷에 맞게 저장하고, 너가 작업한 부분을 하단에 간략히 요약해줘.
+- 지금부터 내가 지시한 프롬프트를 매번 대화를 진행할 때 마다 `docs/codex_log.md`의 하단에 포맷에 맞게 저장하고, 너가 작업한 부분을 하단에 간략히 요약해줘.
+- docs/codex_log.md는 내가 직접 수정하는 경우도 있으니, 새로운 내용을 추가하기 전에 매번 파일을 새롭게 읽어서 가장 하단에 추가될 수 있도록 해줘.
 - 포맷은 아래와 같아.
 ## {no}) 요약 제목
 - 사용자 : 
@@ -541,4 +542,120 @@ stale paths remain before summarizing next steps.
   - Make the timeout loop iterate over arrays directly for clarity.
 - Codex 응답 :
   사용되지 않는 변수와 max_time 분기를 제거하고, post_order의 curl 호출을 단일화했으며, timeout 루프를 배열 인덱스 순회로 정리함.
+
+## 55) maybeDelay의 OOP 원칙 위배 여부 검토 요청
+- 사용자 :
+  ReservePointService와 ReserveCouponService의 maybeDelay();가 reserve() 메서드 안에 들어간 것은 OOP 원칙에 위배되는 것인지 검토하고, 어떤 원칙에 위배되고, 이를 OOP 원칙에 맞게 수정하려면 어떤 방안이 좋을지 분석 및 제안해줘.
+- Codex 응답 :
+  도메인 서비스에 테스트용 지연 로직이 섞여 SRP/관심사 분리에 어긋날 수 있으며, 데코레이터/프록시, AOP, 전략 주입 등으로 분리하는 개선 방안을 제안함.
+
+## 56) Logging Mode 추가
+- 사용자 :
+  ## Logging Mode 추가
+  - 지금부터 내가 지시한 프롬프트를 매번 대화를 진행할 때 마다 `docs/codex_log.md`의 하단에 포맷에 맞게 저장하고, 너가 작업한 부분을 하단에 간략히 요약해줘.
+  - 포맷은 아래와 같아.
+  ## {no}) 요약 제목
+  - 사용자 : 
+    {내가 지시한 프롬프트}
+  - Codex 응답 :
+    {하단에 응답 또는 작업 내용 요약}
+- Codex 응답 :
+  요청한 포맷에 맞춰 `docs/codex_log.md` 하단에 이번 대화 로그를 추가함.
+
+## 57) 전체 프로젝트 구조 재파악
+- 사용자 :
+  전체 프로젝트 구조 재파악 
+  - docs/codex_log.md의 내용을 보고 현재까지 작업된 히스토리를 파악
+  - 전체 프로젝트를 스캔해서 어떤 구조인지 파악해. 
+  - 참고로 order-orchestrator 프로젝트가 API의 진입점이고, coupon-service, point-service의 MSA를 호출하도록 구성됨
+  - MSA 호출 성공 시 성공 메시지 발행. 둘 중에 하나라도 실패 시 실패 메시지 발행
+  - 성공 실패 메시지는 order-saga-consumer 모듈에서 이벤트 수신하여 confirm(확정) 또는 compensate(보상) 처리함 
+  - order-orchestrator의 *test 경로에 통합 테스트 존재
+  - bin_* 폴더에 K8s를 비롯한 서비스 구성 쉘 및 테스트용 쉘 존재함. 파악 요청
+  - yaml, *schema.sql 구조로 테스트 환경 및 데이터베이스 초기 데이터 파악 요청
+  
+  전체 구조를 파악했으면 파악한 내용을 요약해서 리스트업 해 줘.
+
+- Codex 응답 :
+  프로젝트 모듈/흐름, 테스트/스크립트 위치, YAML/스키마 초기 데이터 구성을 스캔해 요약함.
+
+프로젝트 히스토리와 구조를 스캔해서 정리했어. 아래는 핵심 요약 리스트야.
+
+히스토리 요약 (from docs/codex_log.md)
+
+- order-saga-consumer 모듈 추가/정비, 헥사고날 분리 및 이벤트 처리 로직 강화
+- coupon/point 서비스 confirm/compensate API 추가, 예외 처리/응답 메시지 정리
+- saga 상태 전이 및 outbox 업데이트 로직 보강
+- K8s 배포/포트포워딩/스크립트 정비, Istio CB 테스트 자동화 흐름 추가
+- 로깅 모드 유지: 매 대화 로그 적재
+
+프로젝트 구조
+
+- 모듈 구성: order-orchestrator, order-saga-consumer, coupon-service, point-service, common, account
+- 문서/다이어그램: docs/project_desc.md, docs/project_architechture.md, docs/architecture_diagram.svg.jpg
+- 빌드 루트: build.gradle, settings.gradle
+
+서비스 흐름 요약
+
+- API 진입점: order-orchestrator → coupon-service, point-service 예약 호출
+- 예약 성공 시 success 이벤트, 하나라도 실패 시 failure 이벤트 발행 (Kafka)
+- order-saga-consumer가 이벤트 수신 후 confirm/compensate 처리 및 상태 갱신
+- 참고 문서: docs/project_architechture.md, docs/project_desc.md
+
+테스트 위치
+
+- 통합/단위 테스트: order-orchestrator/src/test/java/...
+- HTTP 테스트: order-orchestrator/src/test/httprequest/01_orderOrchestratorTest.http, order-orchestrator/src/test/httprequest/01_orderOrchestratorK8sTest.http
+- 쿠폰/포인트 HTTP 테스트: coupon-service/src/test/httprequest/01_couponServiceTest.http, point-service/src/test/httprequest/01_pointServiceTest.http
+
+bin_ 스크립트 구조*
+
+- 공통 유틸: bin_common/*.sh (prepare/reset/snapshot, 디버그/클린업)
+- 로컬/테스트: bin_test/*.sh (로컬 준비/중지, K8s 테스트 플로우)
+- Istio 테스트: bin_istio_test/*.sh (CB 테스트용, bin_istio_test/README.md)
+- K8s 운영: bin_k8s/*.sh
+    - 핵심: bin_k8s/00_init_k8s.sh, bin_k8s/03_deploy_all.sh, bin_k8s/04_restart_msa.sh, bin_k8s/05_msa_portforward.sh
+    - Kafka: bin_k8s/06_deploy_kafka.sh, bin_k8s/_06_kill_kafka.sh
+    - Istio: bin_k8s/09_apply_istio_cb.sh, bin_k8s/10_install_istio.sh, bin_k8s/11_start_istio_monitoring.sh
+    - 테스트 실행: bin_k8s/08_integrationTest.sh
+
+YAML (환경/배포 구성)
+
+- 앱 설정:
+    - order-orchestrator/src/main/resources/orderOS_application.yaml
+    - coupon-service/src/main/resources/coupon_application.yaml
+    - point-service/src/main/resources/point_application.yaml
+    - order-saga-consumer/src/main/resources/OSC_application.yaml
+- K8s 매니페스트:
+    - bin_k8s/order-orchestrator.yaml, bin_k8s/coupon-service.yaml, bin_k8s/point-service.yaml, bin_k8s/order-saga-consumer.yaml
+    - bin_k8s/mysql.yaml, bin_k8s/kafka.yaml
+- Istio CB:
+    - bin_k8s/istio/config/circuit-breaker.yaml
+
+DB 스키마/초기 데이터
+
+- Order Orchestrator: order-orchestrator/src/main/resources/orderOS_schema.sql
+    - order_item, outbox_message, order_saga 정리용 DELETE
+- Coupon: coupon-service/src/main/resources/coupon_schema.sql
+    - coupon 테이블 생성 + CPN-INT-*, CPN-INT-CIRCUIT-* 초기 데이터
+- Point: point-service/src/main/resources/point_schema.sql
+    - point 테이블 생성 + PNT-INT-*, PNT-INT-CIRCUIT-* 초기 데이터
+- Account: account/src/main/resources/schema.sql
+- 테스트 스냅샷/리셋:
+    - bin_k8s/sql/create_test_snapshots.sql (coupon/point 스냅샷 + 리셋 프로시저, order_orchestrator truncate)
+    - bin_k8s/truncate_if_exists.sql
+
+
+## 58) maybeDelay 재분석 요청
+- 사용자 :
+  codex_log.md의 55번을 진행하다가 codex 계정을 변경했어. 55번을 다시 분석해서 제안해줘.
+- Codex 응답 :
+  maybeDelay가 도메인 서비스에 테스트 관심사를 섞는 문제를 다시 분석하고, 데코레이터/AOP/전략 주입으로 분리하는 대안을 정리함.
+
+## 59) AOP vs 데코레이터 재검토 요청
+- 사용자 :
+  개인적으로는 AOP가 좋지만, MSA+EDA 구조를 구성원에게 교육하기 위한 프로젝트라서 데코레이터/프록시도 좋을 것 같은데, 프로젝트 목적을 고려했을 때 어떤 방식이 좋을지 다시 검토해 줘.
+- Codex 응답 :
+  교육 목적을 고려한 선택 기준을 설명하고, 학습 가시성/명시성을 위해 데코레이터 우선 추천, AOP는 보조 옵션으로 제시함.
+
 
