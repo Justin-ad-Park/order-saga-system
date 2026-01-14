@@ -658,4 +658,33 @@ DB 스키마/초기 데이터
 - Codex 응답 :
   교육 목적을 고려한 선택 기준을 설명하고, 학습 가시성/명시성을 위해 데코레이터 우선 추천, AOP는 보조 옵션으로 제시함.
 
+## 60) 데코레이터/프록시로 작업 요청
+- 사용자 :
+  데코레이터/프록시로 작업해
+- Codex 응답 :
+  reserve 지연 로직을 데코레이터로 분리해 coupon/point 서비스에 적용함.
+
+## 61) 데코레이터 주입 방식 질문
+- 사용자 :
+  ReservePointUseCase를 구현한 구현체가 두 개 있는데, @Primary에 의해서 데코레이터가 빈 주입되는거야?
+- Codex 응답 :
+  @Primary가 적용된 데코레이터 빈이 ReservePointUseCase 타입 주입 시 우선 선택되며, 내부에서 실제 서비스 구현을 위임하도록 설명함.
+
+## 62) 프로파일별 데코레이터 적용 요청
+- 사용자 :
+  이렇게 하면 spring.profiles 구분없이 DelayDecorator만 사용하게 되잖아. profiles에 따라 빈주입을 결정하는 것이 상용 서비스까지 고려했을 때 더 나은 방법일 것 같은데
+- Codex 응답 :
+  dev/test 프로파일에서만 데코레이터가 활성화되도록 @Profile을 추가해 운영 환경에서는 순수 서비스만 주입되도록 조정함.
+
+@Service
+@Primary
+@Profile({"dev", "test"})
+@RequiredArgsConstructor
+public class ReservePointDelayDecorator implements ReservePointUseCase {
+
+## 63) delay guard 추가
+- 사용자 :
+  prod에서 의도치 않게 delay 설정이 들어와도 무시되도록 별도 guard를 추가해
+- Codex 응답 :
+  delay-enabled 플래그를 추가해 데코레이터 지연이 명시적으로 활성화된 경우에만 동작하도록 설정을 보강함.
 

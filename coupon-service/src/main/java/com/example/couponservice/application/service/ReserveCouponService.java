@@ -10,7 +10,6 @@ import com.example.couponservice.domain.model.status.CouponStatus;
 import jakarta.transaction.Transactional;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,14 +19,9 @@ public class ReserveCouponService implements ReserveCouponUseCase, ConfirmCoupon
 
     private final LoadCouponPort loadCouponPort;
     private final SaveCouponPort saveCouponPort;
-    @Value("${circuit-test.coupon.delay-prefix:}")
-    private String delayPrefix;
-    @Value("${circuit-test.coupon.delay-ms:0}")
-    private long delayMs;
 
     @Override
     public void reserve(String couponNumber, String orderId) {
-        maybeDelay(couponNumber);
         updateStatus(couponNumber, CouponStatus.RESERVED, this::validateReservable);
     }
 
@@ -101,21 +95,6 @@ public class ReserveCouponService implements ReserveCouponUseCase, ConfirmCoupon
     private void validateConfirmable(Coupon coupon) {
         if (coupon.status() != CouponStatus.RESERVED) {
             throw new IllegalStateException("확정 불가능한 쿠폰입니다: " + coupon.couponNumber());
-        }
-    }
-
-    private void maybeDelay(String couponNumber) {
-        if (delayMs <= 0 || delayPrefix == null || delayPrefix.isBlank()) {
-            return;
-        }
-        if (!couponNumber.startsWith(delayPrefix)) {
-            return;
-        }
-        try {
-            Thread.sleep(delayMs);
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("Delay interrupted", ex);
         }
     }
 
