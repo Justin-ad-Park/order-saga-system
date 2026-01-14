@@ -467,25 +467,29 @@ stale paths remain before summarizing next steps.
 - Codex 응답 :
   rg 미설치로 인한 경고이며, `rg` 설치 또는 `grep`로 대체하도록 안내함.
 
-• 제안 방향
+## 44) MySQL 접속 변경 여부 확인 요청
+- 사용자 :
+  datagrip 커넥션이 refused 되는데 mysql 접속 방식이 변경된게 있는지 최근 5일 이내 git 로그로 확인해
+- Codex 응답 :
+  최근 5일 내 MySQL 접속 방식 변경은 없었고, 공통 스크립트로 포트포워드 정리/재시작 로직만 이동된 것을 확인함.
 
-- 옮길 것: “우리가 직접 만든/수정한” Istio 리소스(YAML)만 bin_k8s/istio/config/로 옮김.
-    - 예: circuit-breaker.yaml, 향후 fault-injection.yaml, virtualservice-*.yaml, destinationrule-*.yaml, gateway-*.yaml 등
-- 옮기지 않을 것: Istio 설치물의 샘플/애드온 YAML은 dist/istio-<ver>/samples/addons 그대로 유지.
-    - 이유: 업스트림 설치물은 버전 의존+자동 업데이트 대상이고, 우리 레포 형상관리 대상이 아님.
+## 45) MySQL 접속 확인 응답
+- 사용자 :
+  ok
+- Codex 응답 :
+  포트포워드 상태 확인/재시작 안내를 제안함.
 
-추천 구조(확장 가능)
+## 46) 포트포워드 확인 방법 요청
+- 사용자 :
+  포트포워드 확인 방법을 안내한다면서?
+- Codex 응답 :
+  MySQL 포트포워드 확인 및 재시작 방법을 안내함.
 
-- bin_k8s/istio/config/
-    - traffic/ (VirtualService, DestinationRule, FaultInjection)
-    - gateways/ (Gateway 관련)
-    - addons/ (우리 쪽 커스텀 대시보드/패치가 생길 경우)
-    - env/ (dev/prod 분리 필요 시)
+## 47) order_orchestrator_db truncate 프로시저 추가 요청
+- 사용자 :
+  create_test_snapshots.sql에 order_orchestrator_db의 3개 테이블도 truncate table 하는 프로시저를 추가하고, 
+  05_reset_test_data.sh 에서 호출하도록 구성해줘.
+  order_orchestrator_db.ORDER_SAGA에 제약이 걸려서 truncate가 되지 않으면 제약을 무시하고, truncate 되도록 프로시저 내에서 제약 무시 로직도 추가해
+- Codex 응답 :
+  order_orchestrator_db용 truncate 프로시저(외래키 체크 비활성화 포함)를 추가하고, 리셋 스크립트에서 호출하도록 반영함.
 
-스크립트 처리 방식
-
-- 스크립트는 bin_k8s/istio/config만 참조하도록 고정.
-- Istio 설치물은 dist에서만 참조(istioctl, addons 적용).
-- 이렇게 하면 버전 업 시에도 dist만 교체하고 config는 그대로 유지 가능.
-
-원하면 지금 repo 안에 있는 Istio YAML 후보들을 찾아서 config로 이동 대상으로 리스트업해줄게.
