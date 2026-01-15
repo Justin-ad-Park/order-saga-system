@@ -7,11 +7,6 @@ INSERT INTO coupon_snapshot
 SELECT *
 FROM coupon;
 
-CREATE TABLE IF NOT EXISTS coupon_reservation_snapshot LIKE coupon_reservation;
-TRUNCATE TABLE coupon_reservation_snapshot;
-INSERT INTO coupon_reservation_snapshot
-SELECT *
-FROM coupon_reservation;
 
 DROP PROCEDURE IF EXISTS sp_reset_coupon_test_data;
 DELIMITER $$
@@ -20,7 +15,6 @@ BEGIN
   TRUNCATE TABLE coupon;
   TRUNCATE TABLE coupon_reservation;
   INSERT INTO coupon SELECT * FROM coupon_snapshot;
-  INSERT INTO coupon_reservation SELECT * FROM coupon_reservation_snapshot;
 END$$
 DELIMITER ;
 
@@ -48,12 +42,6 @@ INSERT INTO point_snapshot
 SELECT *
 FROM point;
 
-CREATE TABLE IF NOT EXISTS point_reservation_snapshot LIKE point_reservation;
-TRUNCATE TABLE point_reservation_snapshot;
-INSERT INTO point_reservation_snapshot
-SELECT *
-FROM point_reservation;
-
 DROP PROCEDURE IF EXISTS sp_reset_point_test_data;
 DELIMITER $$
 CREATE PROCEDURE sp_reset_point_test_data()
@@ -61,6 +49,5 @@ BEGIN
   TRUNCATE TABLE point;
   TRUNCATE TABLE point_reservation;
   INSERT INTO point SELECT * FROM point_snapshot;
-  INSERT INTO point_reservation SELECT * FROM point_reservation_snapshot;
 END$$
 DELIMITER ;

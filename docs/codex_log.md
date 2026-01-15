@@ -1819,3 +1819,9 @@ left unchanged, plus raise a question about whether reserve should throw instead
 - Codex 응답 :
   ReserveExternalResourcesService의 예약 병렬 처리와 outbox 상태 업데이트 흐름을 설명하는 간단한 주석을 추가함.
 
+
+## 78) 보상 테스트 실패 동작 설명
+- 사용자 :
+  05_test_saga_compensation.sh 에서 쿠폰 실패, 포인트 실패가 어떻게 실패가 되도록 동작하는지 MSA 코드와함께 설명해줘
+- Codex 응답 :
+  쿠폰/포인트 예약 시 delay 데코레이터가 prefix 기반으로 8초 지연을 주고, Istio timeout 설정으로 실패를 유발하는 흐름과 관련 MSA 코드 위치를 설명함.
