@@ -1695,8 +1695,3 @@ left unchanged, plus raise a question about whether reserve should throw instead
 - Codex 응답 :
   inbound 어댑터가 out 어댑터에 직접 의존하지 않도록 오케스트레이션 유스케이스를 분리하고, outbound 규칙에 common 허용을 추가해 규칙 위반을 해소함.
 
-## 73) ArchUnit 변경 원복 요청
-- 사용자 :
-  더 많은 Archunit 테스트에 실패했어. 우선 방금 Archunit 때문에 수정한 작업을 원복해
-- Codex 응답 :
-  ArchUnit 대응을 위해 수정했던 order-orchestrator/archunit 관련 변경과 추가 파일을 원복함.
