@@ -1,7 +1,9 @@
 package com.example.pointservice.application.service;
 
 import com.example.pointservice.application.port.out.LoadPointPort;
+import com.example.pointservice.application.port.out.LoadPointReservationPort;
 import com.example.pointservice.application.port.out.SavePointPort;
+import com.example.pointservice.application.port.out.SavePointReservationPort;
 import com.example.pointservice.domain.model.Point;
 import com.example.pointservice.domain.model.status.PointStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,13 +20,23 @@ class ReservePointServiceTest {
 
     private LoadPointPort loadPointPort;
     private SavePointPort savePointPort;
+    private LoadPointReservationPort loadPointReservationPort;
+    private SavePointReservationPort savePointReservationPort;
     private ReservePointService reservePointService;
 
     @BeforeEach
     void setUp() {
         loadPointPort = mock(LoadPointPort.class);
         savePointPort = mock(SavePointPort.class);
-        reservePointService = new ReservePointService(loadPointPort, savePointPort);
+        loadPointReservationPort = mock(LoadPointReservationPort.class);
+        savePointReservationPort = mock(SavePointReservationPort.class);
+        when(loadPointReservationPort.loadReservation(anyString())).thenReturn(Optional.empty());
+        reservePointService = new ReservePointService(
+                loadPointPort,
+                savePointPort,
+                loadPointReservationPort,
+                savePointReservationPort
+        );
     }
 
     @Test

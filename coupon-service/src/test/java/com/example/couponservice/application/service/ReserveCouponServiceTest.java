@@ -1,7 +1,9 @@
 package com.example.couponservice.application.service;
 
 import com.example.couponservice.application.port.out.LoadCouponPort;
+import com.example.couponservice.application.port.out.LoadCouponReservationPort;
 import com.example.couponservice.application.port.out.SaveCouponPort;
+import com.example.couponservice.application.port.out.SaveCouponReservationPort;
 import com.example.couponservice.domain.model.Coupon;
 import com.example.couponservice.domain.model.status.CouponStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,13 +20,23 @@ class ReserveCouponServiceTest {
 
     private LoadCouponPort loadCouponPort;
     private SaveCouponPort saveCouponPort;
+    private LoadCouponReservationPort loadCouponReservationPort;
+    private SaveCouponReservationPort saveCouponReservationPort;
     private ReserveCouponService reserveCouponService;
 
     @BeforeEach
     void setUp() {
         loadCouponPort = mock(LoadCouponPort.class);
         saveCouponPort = mock(SaveCouponPort.class);
-        reserveCouponService = new ReserveCouponService(loadCouponPort, saveCouponPort);
+        loadCouponReservationPort = mock(LoadCouponReservationPort.class);
+        saveCouponReservationPort = mock(SaveCouponReservationPort.class);
+        when(loadCouponReservationPort.loadReservation(anyString())).thenReturn(Optional.empty());
+        reserveCouponService = new ReserveCouponService(
+                loadCouponPort,
+                saveCouponPort,
+                loadCouponReservationPort,
+                saveCouponReservationPort
+        );
     }
 
     @Test

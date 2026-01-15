@@ -4,9 +4,13 @@ import com.example.pointservice.application.port.in.CompensatePointUseCase;
 import com.example.pointservice.application.port.in.ConfirmPointUseCase;
 import com.example.pointservice.application.port.in.ReservePointUseCase;
 import com.example.pointservice.application.port.out.LoadPointPort;
+import com.example.pointservice.application.port.out.LoadPointReservationPort;
 import com.example.pointservice.application.port.out.SavePointPort;
+import com.example.pointservice.application.port.out.SavePointReservationPort;
 import com.example.pointservice.domain.model.Point;
+import com.example.pointservice.domain.model.PointReservation;
 import com.example.pointservice.domain.model.status.PointStatus;
+import com.example.pointservice.domain.model.status.ReservationStatus;
 import jakarta.transaction.Transactional;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
@@ -19,10 +23,21 @@ public class ReservePointService implements ReservePointUseCase, ConfirmPointUse
 
     private final LoadPointPort loadPointPort;
     private final SavePointPort savePointPort;
+    private final LoadPointReservationPort loadPointReservationPort;
+    private final SavePointReservationPort savePointReservationPort;
 
     @Override
     public void reserve(String pointNumber, String orderId) {
+        if (isReservationCancelled(orderId)) {
+            return;
+        }
+        verifyReservationNotAlreadyReserved(orderId);
         updateStatus(pointNumber, PointStatus.RESERVED, this::validateReservable);
+        savePointReservationPort.saveReservation(new PointReservation(
+                orderId,
+                pointNumber,
+                ReservationStatus.RESERVED
+        ));
     }
 
     @Override
@@ -48,11 +63,14 @@ public class ReservePointService implements ReservePointUseCase, ConfirmPointUse
         Point point = loadPointPort.loadPoint(pointNumber)
                 .orElse(null);
         if (point == null) {
+            saveReservationCancelled(orderId, pointNumber);
             return;
         }
         if (point.status() == PointStatus.USED) {
             throw new IllegalStateException("보상 불가능한 포인트입니다: " + point.pointNumber());
         }
+
+        saveReservationCancelled(orderId, pointNumber);
         if (point.status() != PointStatus.RESERVED) {
             return;
         }
@@ -96,5 +114,27 @@ public class ReservePointService implements ReservePointUseCase, ConfirmPointUse
         if (point.status() != PointStatus.RESERVED) {
             throw new IllegalStateException("확정 불가능한 포인트입니다: " + point.pointNumber());
         }
+    }
+
+    private boolean isReservationCancelled(String orderId) {
+        return loadPointReservationPort.loadReservation(orderId)
+                .map(reservation -> reservation.status() == ReservationStatus.CANCELLED)
+                .orElse(false);
+    }
+
+    private void verifyReservationNotAlreadyReserved(String orderId) {
+        loadPointReservationPort.loadReservation(orderId)
+                .filter(reservation -> reservation.status() == ReservationStatus.RESERVED)
+                .ifPresent(reservation -> {
+                    throw new IllegalStateException("이미 예약된 주문입니다: " + reservation.orderId());
+                });
+    }
+
+    private void saveReservationCancelled(String orderId, String pointNumber) {
+        savePointReservationPort.saveReservation(new PointReservation(
+                orderId,
+                pointNumber,
+                ReservationStatus.CANCELLED
+        ));
     }
 }

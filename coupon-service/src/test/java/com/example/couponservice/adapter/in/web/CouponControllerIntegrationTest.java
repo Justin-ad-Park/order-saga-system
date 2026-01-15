@@ -54,7 +54,7 @@ class CouponControllerIntegrationTest {
         String url = "http://localhost:" + port + "/api/v1/coupons/reserve";
 
         ReserveCouponRequest requestBody =
-                new ReserveCouponRequest(couponNumber, "ORD-12345");
+                new ReserveCouponRequest(couponNumber, "ORD-COUPON-RESERVE-1");
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -82,7 +82,7 @@ class CouponControllerIntegrationTest {
         String url = "http://localhost:" + port + "/api/v1/coupons/reserve";
 
         ReserveCouponRequest requestBody =
-                new ReserveCouponRequest(couponNumber, "ORD-12345");
+                new ReserveCouponRequest(couponNumber, "ORD-COUPON-RESERVE-2");
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -115,7 +115,7 @@ class CouponControllerIntegrationTest {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         ReserveCouponRequest reserveRequest =
-                new ReserveCouponRequest(couponNumber, "ORD-12345");
+                new ReserveCouponRequest(couponNumber, "ORD-COUPON-CONFIRM-1");
         ResponseEntity<String> reserveResponse =
                 restTemplate.postForEntity(
                         reserveUrl,
@@ -125,7 +125,7 @@ class CouponControllerIntegrationTest {
         assertThat(reserveResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         ConfirmCouponRequest confirmRequest =
-                new ConfirmCouponRequest(couponNumber, "ORD-12345");
+                new ConfirmCouponRequest(couponNumber, "ORD-COUPON-CONFIRM-1");
         ResponseEntity<String> confirmResponse =
                 restTemplate.postForEntity(
                         confirmUrl,
@@ -153,7 +153,7 @@ class CouponControllerIntegrationTest {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         ReserveCouponRequest reserveRequest =
-                new ReserveCouponRequest(couponNumber, "ORD-12346");
+                new ReserveCouponRequest(couponNumber, "ORD-COUPON-COMPENSATE-1");
         ResponseEntity<String> reserveResponse =
                 restTemplate.postForEntity(
                         reserveUrl,
@@ -163,7 +163,7 @@ class CouponControllerIntegrationTest {
         assertThat(reserveResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         CompensateCouponRequest compensateRequest =
-                new CompensateCouponRequest(couponNumber, "ORD-12346");
+                new CompensateCouponRequest(couponNumber, "ORD-COUPON-COMPENSATE-1");
         ResponseEntity<String> compensateResponse =
                 restTemplate.postForEntity(
                         compensateUrl,

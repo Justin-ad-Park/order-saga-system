@@ -54,7 +54,7 @@ class PointControllerIntegrationTest {
         String url = "http://localhost:" + port + "/api/v1/points/reserve";
 
         ReservePointRequest requestBody =
-                new ReservePointRequest(pointNumber, "ORD-12345");
+                new ReservePointRequest(pointNumber, "ORD-POINT-RESERVE-1");
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -82,7 +82,7 @@ class PointControllerIntegrationTest {
         String url = "http://localhost:" + port + "/api/v1/points/reserve";
 
         ReservePointRequest requestBody =
-                new ReservePointRequest(pointNumber, "ORD-12345");
+                new ReservePointRequest(pointNumber, "ORD-POINT-RESERVE-2");
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -115,7 +115,7 @@ class PointControllerIntegrationTest {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         ReservePointRequest reserveRequest =
-                new ReservePointRequest(pointNumber, "ORD-12345");
+                new ReservePointRequest(pointNumber, "ORD-POINT-CONFIRM-1");
         ResponseEntity<String> reserveResponse =
                 restTemplate.postForEntity(
                         reserveUrl,
@@ -125,7 +125,7 @@ class PointControllerIntegrationTest {
         assertThat(reserveResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         ConfirmPointRequest confirmRequest =
-                new ConfirmPointRequest(pointNumber, "ORD-12345");
+                new ConfirmPointRequest(pointNumber, "ORD-POINT-CONFIRM-1");
         ResponseEntity<String> confirmResponse =
                 restTemplate.postForEntity(
                         confirmUrl,
@@ -153,7 +153,7 @@ class PointControllerIntegrationTest {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         ReservePointRequest reserveRequest =
-                new ReservePointRequest(pointNumber, "ORD-12346");
+                new ReservePointRequest(pointNumber, "ORD-POINT-COMPENSATE-1");
         ResponseEntity<String> reserveResponse =
                 restTemplate.postForEntity(
                         reserveUrl,
@@ -163,7 +163,7 @@ class PointControllerIntegrationTest {
         assertThat(reserveResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         CompensatePointRequest compensateRequest =
-                new CompensatePointRequest(pointNumber, "ORD-12346");
+                new CompensatePointRequest(pointNumber, "ORD-POINT-COMPENSATE-1");
         ResponseEntity<String> compensateResponse =
                 restTemplate.postForEntity(
                         compensateUrl,

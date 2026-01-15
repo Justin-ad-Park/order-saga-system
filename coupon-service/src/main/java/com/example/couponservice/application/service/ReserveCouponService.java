@@ -4,9 +4,13 @@ import com.example.couponservice.application.port.in.CompensateCouponUseCase;
 import com.example.couponservice.application.port.in.ConfirmCouponUseCase;
 import com.example.couponservice.application.port.in.ReserveCouponUseCase;
 import com.example.couponservice.application.port.out.LoadCouponPort;
+import com.example.couponservice.application.port.out.LoadCouponReservationPort;
 import com.example.couponservice.application.port.out.SaveCouponPort;
+import com.example.couponservice.application.port.out.SaveCouponReservationPort;
 import com.example.couponservice.domain.model.Coupon;
+import com.example.couponservice.domain.model.CouponReservation;
 import com.example.couponservice.domain.model.status.CouponStatus;
+import com.example.couponservice.domain.model.status.ReservationStatus;
 import jakarta.transaction.Transactional;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
@@ -19,10 +23,21 @@ public class ReserveCouponService implements ReserveCouponUseCase, ConfirmCoupon
 
     private final LoadCouponPort loadCouponPort;
     private final SaveCouponPort saveCouponPort;
+    private final LoadCouponReservationPort loadCouponReservationPort;
+    private final SaveCouponReservationPort saveCouponReservationPort;
 
     @Override
     public void reserve(String couponNumber, String orderId) {
+        if (isReservationCancelled(orderId)) {
+            return;
+        }
+        verifyReservationNotAlreadyReserved(orderId);
         updateStatus(couponNumber, CouponStatus.RESERVED, this::validateReservable);
+        saveCouponReservationPort.saveReservation(new CouponReservation(
+                orderId,
+                couponNumber,
+                ReservationStatus.RESERVED
+        ));
     }
 
     @Override
@@ -48,11 +63,14 @@ public class ReserveCouponService implements ReserveCouponUseCase, ConfirmCoupon
         Coupon coupon = loadCouponPort.loadCoupon(couponNumber)
                 .orElse(null);
         if (coupon == null) {
+            saveReservationCancelled(orderId, couponNumber);
             return;
         }
         if (coupon.status() == CouponStatus.USED) {
             throw new IllegalStateException("보상 불가능한 쿠폰입니다: " + coupon.couponNumber());
         }
+
+        saveReservationCancelled(orderId, couponNumber);
         if (coupon.status() != CouponStatus.RESERVED) {
             return;
         }
@@ -64,6 +82,28 @@ public class ReserveCouponService implements ReserveCouponUseCase, ConfirmCoupon
                 coupon.expiredAt()
         );
         saveCouponPort.save(updated);
+    }
+
+    private boolean isReservationCancelled(String orderId) {
+        return loadCouponReservationPort.loadReservation(orderId)
+                .map(reservation -> reservation.status() == ReservationStatus.CANCELLED)
+                .orElse(false);
+    }
+
+    private void verifyReservationNotAlreadyReserved(String orderId) {
+        loadCouponReservationPort.loadReservation(orderId)
+                .filter(reservation -> reservation.status() == ReservationStatus.RESERVED)
+                .ifPresent(reservation -> {
+                    throw new IllegalStateException("이미 예약된 주문입니다: " + reservation.orderId());
+                });
+    }
+
+    private void saveReservationCancelled(String orderId, String couponNumber) {
+        saveCouponReservationPort.saveReservation(new CouponReservation(
+                orderId,
+                couponNumber,
+                ReservationStatus.CANCELLED
+        ));
     }
 
     private void updateStatus(
