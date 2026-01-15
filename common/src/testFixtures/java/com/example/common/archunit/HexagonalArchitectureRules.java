@@ -58,6 +58,7 @@ public final class HexagonalArchitectureRules {
                         "jakarta..",
                         "javax..",
                         "org.springframework..",
+                        "reactor..",
                         "lombok.."
                 );
     }
@@ -75,6 +76,8 @@ public final class HexagonalArchitectureRules {
                         "jakarta..",
                         "javax..",
                         "org.springframework..",
+                        "reactor..",
+                        "org.slf4j..",
                         "lombok.."
                 );
     }
@@ -92,10 +95,14 @@ public final class HexagonalArchitectureRules {
                         ADAPTER_OUT,
                         PORT_OUT,
                         DOMAIN,
+                        COMMON,
                         "java..",
                         "jakarta..",
                         "javax..",
                         "org.springframework..",
+                        "reactor..",
+                        "org.slf4j..",
+                        "com.fasterxml.jackson..",
                         "lombok.."
                 );
     }

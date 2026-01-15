@@ -2,28 +2,22 @@ package com.example.orderorchestrator.adapter.in.web;
 
 import com.example.orderorchestrator.adapter.in.web.dto.request.CreateOrderRequest;
 import com.example.orderorchestrator.adapter.in.web.dto.response.CreateOrderResponse;
-import com.example.orderorchestrator.adapter.out.webclient.CouponServiceClient;
-import com.example.orderorchestrator.adapter.out.webclient.PointServiceClient;
 import com.example.orderorchestrator.application.port.in.CreateOrderUseCase;
 import com.example.orderorchestrator.application.port.in.UpdateOrderSagaStatusUseCase;
 import com.example.orderorchestrator.application.port.in.UpdateOutboxMessageUseCase;
 import com.example.orderorchestrator.application.port.in.command.CreateOrderCommand;
 import com.example.orderorchestrator.application.port.in.result.CreateOrderResult;
-import com.example.orderorchestrator.application.port.out.OrderSagaEventPublisher;
-import com.example.orderorchestrator.domain.event.OrderSagaEvent;
+import com.example.orderorchestrator.application.service.OrderSagaEventService;
+import com.example.orderorchestrator.application.service.ReserveExternalResourcesService;
 import com.example.orderorchestrator.domain.event.OrderSagaEventType;
-import com.example.common.status.MSAStatus;
 import com.example.common.status.OrderSagaStatus;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
 import java.util.stream.Collectors;
-import java.util.ArrayList;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -31,11 +25,10 @@ import java.util.List;
 public class OrderOrchestrationController {
 
     private final CreateOrderUseCase createOrderUseCase;
-    private final CouponServiceClient couponServiceClient;
-    private final PointServiceClient pointServiceClient;
+    private final ReserveExternalResourcesService reserveExternalResourcesService;
     private final UpdateOutboxMessageUseCase updateOutboxMessageUseCase;
     private final UpdateOrderSagaStatusUseCase updateOrderSagaStatusUseCase;
-    private final OrderSagaEventPublisher orderSagaEventPublisher;
+    private final OrderSagaEventService orderSagaEventService;
 
     @PostMapping
     public Mono<ResponseEntity<CreateOrderResponse>> createOrder(
@@ -44,7 +37,11 @@ public class OrderOrchestrationController {
         CreateOrderCommand command = mapToCommand(request);
         CreateOrderResult result = createOrderUseCase.createOrder(command);
 
-        return reserveExternalResources(request, result)
+        return reserveExternalResourcesService.reserveExternalResources(
+                        result.orderId(),
+                        request.couponNumber(),
+                        request.pointNumber()
+                )
                 .then(Mono.fromRunnable(() -> {
                     updateSagaStatus(result.orderId(), OrderSagaStatus.Reserved);
                     publishSagaEvent(result, OrderSagaStatus.Reserved, OrderSagaEventType.RESERVE_SUCCEEDED);
@@ -82,52 +79,12 @@ public class OrderOrchestrationController {
         );
     }
 
-    private Mono<Void> reserveExternalResources(CreateOrderRequest request, CreateOrderResult result) {
-        List<Mono<?>> calls = new ArrayList<>();
-        if (StringUtils.hasText(request.couponNumber())) {
-            calls.add(reserveCoupon(request.couponNumber(), result.orderId()));
-        }
-        if (StringUtils.hasText(request.pointNumber())) {
-            calls.add(reservePoint(request.pointNumber(), result.orderId()));
-        }
-        if (calls.isEmpty()) {
-            return Mono.empty();
-        }
-        return Mono.whenDelayError(calls).then();
-    }
-
     private void updateSagaStatus(String orderId, OrderSagaStatus status) {
         updateOrderSagaStatusUseCase.updateStatus(orderId, status);
         updateOutboxMessageUseCase.updateSagaStatus(orderId, status);
     }
 
     private void publishSagaEvent(CreateOrderResult result, OrderSagaStatus status, OrderSagaEventType type) {
-        OrderSagaEvent event = new OrderSagaEvent(
-                result.orderId(),
-                result.sagaId(),
-                type,
-                status
-        );
-        orderSagaEventPublisher.publish(event);
-    }
-
-    private Mono<Void> reserveCoupon(String couponNumber, String orderId) {
-        return couponServiceClient.reserveCoupon(couponNumber, orderId)
-                .doOnSuccess(response -> updateOutboxMessageUseCase.updateCouponStatus(orderId, MSAStatus.Reserved))
-                .onErrorResume(ex -> {
-                    updateOutboxMessageUseCase.updateCouponStatus(orderId, MSAStatus.Failed);
-                    return Mono.error(ex);
-                })
-                .then();
-    }
-
-    private Mono<Void> reservePoint(String pointNumber, String orderId) {
-        return pointServiceClient.reservePoint(pointNumber, orderId)
-                .doOnSuccess(response -> updateOutboxMessageUseCase.updatePointStatus(orderId, MSAStatus.Reserved))
-                .onErrorResume(ex -> {
-                    updateOutboxMessageUseCase.updatePointStatus(orderId, MSAStatus.Failed);
-                    return Mono.error(ex);
-                })
-                .then();
+        orderSagaEventService.publish(result.orderId(), result.sagaId(), status, type);
     }
 }
