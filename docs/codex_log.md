@@ -1825,3 +1825,48 @@ left unchanged, plus raise a question about whether reserve should throw instead
   05_test_saga_compensation.sh 에서 쿠폰 실패, 포인트 실패가 어떻게 실패가 되도록 동작하는지 MSA 코드와함께 설명해줘
 - Codex 응답 :
   쿠폰/포인트 예약 시 delay 데코레이터가 prefix 기반으로 8초 지연을 주고, Istio timeout 설정으로 실패를 유발하는 흐름과 관련 MSA 코드 위치를 설명함.
+
+## 79) 지연 보상 테스트 조건 명칭 및 테스트 쿠폰,포인트 명칭 조정
+point-service, coupon-service에 강제 지연에 사용되는 속성값이 delay-prefix=*-INT-CIRCUIT-ON 로 되어 있는데,
+*-INT-CIRCUIT-ON이 값을 *-INT-FORCE-DELAY 로 변경하는게 어떨까?
+
+이렇게 한다면 함께 수정해야 하는 yaml, *_schema.sql, *.sh 및 소스 코드도 파악해줘.
+
+그리고,
+04_test_circuit_breaker.sh, 05_test_saga_compensation.sh에 사용되는 ON, OFF도 
+테스트 케이스 시점상 ON, OFF와 매칭이 안되고 있어.
+
+일단, *ON은 *-INT-FORCE-DELAY 으로 변경해야 하고,  
+OFF도 최초 성공과 실패(아직 서킷 연결전), circuit재연결 후 성공을 직관적으로 알 수 있으면서 쿠폰, 포인트명이 너무 길지 않도록 조정하는게 좋을 것 같아. 
+이 부분까지 포함해서 수정 범위를 구체적으로 파악해서 알려줘.
+
+
+- circuit open 확인 직후 시도(실패 예상)
+  - CPN-INT-OK-AFTER-OPEN, PNT-INT-OK-AFTER-OPEN -> 실패가 예상인데 OK가 들어가서 직관적이지 않아. 
+  - *-INT-OK-RECOVER -> -INT_AFTER-RECOVER 가 좋겠어. 
+
+## 80) 지연 테스트 명칭 일괄 변경
+- 사용자 :
+  명칭 변경 진행 요청 및 05_test_saga_compensation.sh에서 COUPON_OK를 CPN-INT-OK-START로 지정 요청
+- Codex 응답 :
+  delay-prefix와 테스트 데이터/스크립트의 CIRCUIT-ON/OFF 명칭을 FORCE-DELAY/OK-START/AFTER-OPEN/AFTER-RECOVER로 일괄 변경하고, 05_test_saga_compensation.sh의 COUPON_OK를 OK-START로 수정함.
+
+
+## 81) circuit-breaker 테스트 500 원인 분석
+- 사용자 :
+  04_test_circuit_breaker.sh에서 200 대신 500 발생 원인 확인 요청
+- Codex 응답 :
+  order-orchestrator 로그에서 coupon/point reserve가 400으로 실패하고 있음을 확인하고, reset 스냅샷이 구명칭 데이터로 되어 있어 새 쿠폰/포인트가 없기 때문에 400이 발생한다는 원인을 설명함.
+
+## 82) 로컬 소비자 준비 스크립트 스냅샷 순서 이슈
+- 사용자 :
+  02_prepare_k8s_order_saga_Local_Consumer.sh 실행 후 새 테스트 데이터가 반영되지 않는 이유 문의
+- Codex 응답 :
+  스냅샷 생성이 쿠폰/포인트 재기동 및 스키마 초기화 전에 실행되어 기존 데이터가 스냅샷으로 남는 순서 문제를 지적하고, rollout 대기 후 스냅샷 생성으로 순서 조정이 필요하다고 안내함.
+
+## 83) 로컬 소비자 준비 스냅샷 순서 수정
+- 사용자 :
+  OK
+- Codex 응답 :
+  bin_common/02_prepare_k8s_order_saga_Local_Consumer.sh에서 쿠폰/포인트 재기동 및 롤아웃 완료 후 스냅샷을 생성하도록 순서를 변경하고, 쿠폰/포인트 rollout status 대기를 추가함.
+

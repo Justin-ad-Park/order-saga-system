@@ -128,7 +128,7 @@ VALUES (
 
 INSERT INTO point (point_number, status, issued_at, expired_at)
 VALUES (
-           'PNT-INT-CIRCUIT-ON1',
+           'PNT-INT-FORCE-DELAY1',
            'AVAILABLE',
            CURRENT_TIMESTAMP,
            DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
@@ -140,7 +140,7 @@ VALUES (
 
 INSERT INTO point (point_number, status, issued_at, expired_at)
 VALUES (
-           'PNT-INT-CIRCUIT-ON2',
+           'PNT-INT-FORCE-DELAY2',
            'AVAILABLE',
            CURRENT_TIMESTAMP,
            DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
@@ -152,7 +152,7 @@ VALUES (
 
 INSERT INTO point (point_number, status, issued_at, expired_at)
 VALUES (
-           'PNT-INT-CIRCUIT-ON3',
+           'PNT-INT-FORCE-DELAY3',
            'AVAILABLE',
            CURRENT_TIMESTAMP,
            DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
@@ -164,7 +164,7 @@ VALUES (
 
 INSERT INTO point (point_number, status, issued_at, expired_at)
 VALUES (
-           'PNT-INT-CIRCUIT-OFF1',
+           'PNT-INT-OK-START',
            'AVAILABLE',
            CURRENT_TIMESTAMP,
            DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
@@ -176,7 +176,7 @@ VALUES (
 
 INSERT INTO point (point_number, status, issued_at, expired_at)
 VALUES (
-           'PNT-INT-CIRCUIT-OFF2',
+           'PNT-INT-AFTER-OPEN',
            'AVAILABLE',
            CURRENT_TIMESTAMP,
            DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
@@ -188,7 +188,7 @@ VALUES (
 
 INSERT INTO point (point_number, status, issued_at, expired_at)
 VALUES (
-           'PNT-INT-CIRCUIT-OFF3',
+           'PNT-INT-AFTER-RECOVER',
            'AVAILABLE',
            CURRENT_TIMESTAMP,
            DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
@@ -197,3 +197,9 @@ VALUES (
                          status = VALUES(status),
                          issued_at = VALUES(issued_at),
                          expired_at = VALUES(expired_at);
+
+CREATE TABLE IF NOT EXISTS point_snapshot LIKE point;
+TRUNCATE TABLE point_snapshot;
+INSERT INTO point_snapshot
+SELECT *
+FROM point;

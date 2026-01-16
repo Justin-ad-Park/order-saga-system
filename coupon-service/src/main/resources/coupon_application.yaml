@@ -33,7 +33,7 @@ server:
 circuit-test:
   coupon:
     delay-enabled: true
-    delay-prefix: CPN-INT-CIRCUIT-ON
+    delay-prefix: CPN-INT-FORCE-DELAY
     delay-ms: 8000
 
 ---
@@ -66,5 +66,5 @@ server:
 circuit-test:
   coupon:
     delay-enabled: true
-    delay-prefix: CPN-INT-CIRCUIT-ON
+    delay-prefix: CPN-INT-FORCE-DELAY
     delay-ms: 8000

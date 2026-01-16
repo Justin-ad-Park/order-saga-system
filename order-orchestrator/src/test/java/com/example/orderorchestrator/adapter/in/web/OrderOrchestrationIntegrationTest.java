@@ -45,7 +45,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Sql(
-        scripts = "/orderOS_cleanup.sql",
+        scripts = "/orderOS_schema.sql",
         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_CLASS
 )
 @Transactional(isolation = Isolation.READ_COMMITTED)

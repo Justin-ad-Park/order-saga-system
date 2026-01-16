@@ -33,7 +33,7 @@ server:
 circuit-test:
   point:
     delay-enabled: true
-    delay-prefix: PNT-INT-CIRCUIT-ON
+    delay-prefix: PNT-INT-FORCE-DELAY
     delay-ms: 8000
 
 ---
@@ -66,5 +66,5 @@ server:
 circuit-test:
   point:
     delay-enabled: true
-    delay-prefix: PNT-INT-CIRCUIT-ON
+    delay-prefix: PNT-INT-FORCE-DELAY
     delay-ms: 8000

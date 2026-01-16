@@ -127,7 +127,7 @@ VALUES (
 
 INSERT INTO coupon (coupon_number, status, issued_at, expired_at)
 VALUES (
-           'CPN-INT-CIRCUIT-ON1',
+           'CPN-INT-FORCE-DELAY1',
            'AVAILABLE',
            CURRENT_TIMESTAMP,
            DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
@@ -139,7 +139,7 @@ VALUES (
 
 INSERT INTO coupon (coupon_number, status, issued_at, expired_at)
 VALUES (
-           'CPN-INT-CIRCUIT-ON2',
+           'CPN-INT-FORCE-DELAY2',
            'AVAILABLE',
            CURRENT_TIMESTAMP,
            DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
@@ -151,7 +151,7 @@ VALUES (
 
 INSERT INTO coupon (coupon_number, status, issued_at, expired_at)
 VALUES (
-           'CPN-INT-CIRCUIT-ON3',
+           'CPN-INT-FORCE-DELAY3',
            'AVAILABLE',
            CURRENT_TIMESTAMP,
            DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
@@ -163,7 +163,7 @@ VALUES (
 
 INSERT INTO coupon (coupon_number, status, issued_at, expired_at)
 VALUES (
-           'CPN-INT-CIRCUIT-OFF1',
+           'CPN-INT-OK-START',
            'AVAILABLE',
            CURRENT_TIMESTAMP,
            DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
@@ -175,7 +175,7 @@ VALUES (
 
 INSERT INTO coupon (coupon_number, status, issued_at, expired_at)
 VALUES (
-           'CPN-INT-CIRCUIT-OFF2',
+           'CPN-INT-AFTER-OPEN',
            'AVAILABLE',
            CURRENT_TIMESTAMP,
            DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
@@ -187,7 +187,7 @@ VALUES (
 
 INSERT INTO coupon (coupon_number, status, issued_at, expired_at)
 VALUES (
-           'CPN-INT-CIRCUIT-OFF3',
+           'CPN-INT-AFTER-RECOVER',
            'AVAILABLE',
            CURRENT_TIMESTAMP,
            DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
@@ -196,3 +196,10 @@ VALUES (
                          status = VALUES(status),
                          issued_at = VALUES(issued_at),
                          expired_at = VALUES(expired_at);
+
+
+CREATE TABLE IF NOT EXISTS coupon_snapshot LIKE coupon;
+TRUNCATE TABLE coupon_snapshot;
+INSERT INTO coupon_snapshot
+SELECT *
+FROM coupon;
