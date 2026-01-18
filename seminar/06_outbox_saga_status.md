@@ -50,6 +50,26 @@
 - 핵심 로직: API 엔드포인트 처리 흐름
 - 구조 변화: 모듈/기능 추가로 책임 분리
 - 주요 파일: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`, `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/persistence/OutboxMessagePersistenceAdapter.java`
+- 변경 전/후 비교: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
+- diff 스타일
+```diff
+@@ -4,9 +4,11 @@ import com.example.orderorchestrator.adapter.in.web.dto.request.CreateOrderReque
+ import com.example.orderorchestrator.adapter.in.web.dto.response.CreateOrderResponse;
+ import com.example.orderorchestrator.adapter.out.webclient.CouponServiceClient;
+ import com.example.orderorchestrator.adapter.out.webclient.PointServiceClient;
++import com.example.orderorchestrator.application.port.in.CreateOrderUseCase;
++import com.example.orderorchestrator.application.port.in.UpdateOutboxMessageUseCase;
+ import com.example.orderorchestrator.application.port.in.command.CreateOrderCommand;
+ import com.example.orderorchestrator.application.port.in.result.CreateOrderResult;
+-import com.example.orderorchestrator.application.port.in.CreateOrderUseCase;
++import com.example.orderorchestrator.domain.model.status.MSAStatus;
+ import jakarta.validation.Valid;
+ import lombok.RequiredArgsConstructor;
+ import org.springframework.http.ResponseEntity;
+@@ -26,6 +28,7 @@ public class OrderOrchestrationController {
+     private final CreateOrderUseCase createOrderUseCase;
+     private final CouponServiceClient couponServiceClient;
+```
 - 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
 ```diff
 +import com.example.orderorchestrator.application.port.in.CreateOrderUseCase;
@@ -77,6 +97,26 @@
 - 핵심 로직: 사가 상태/메시지 저장 로직
 - 구조 변화: 모듈/기능 추가로 책임 분리
 - 주요 파일: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/persistence/OutboxMessagePersistenceAdapter.java`, `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/persistence/jpa/entity/OutboxMessageJpaEntity.java`
+- 변경 전/후 비교: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/persistence/OutboxMessagePersistenceAdapter.java`
+- diff 스타일
+```diff
+@@ -24,6 +24,7 @@ public class OutboxMessagePersistenceAdapter implements SaveOutboxMessagePort {
+                 message.orderId(),
+                 message.payload(),
+                 message.couponStatus(),
++                message.pointStatus(),
+                 message.orderStatus(),
+                 message.paymentStatus(),
+                 message.sagaStatus(),
+@@ -39,6 +40,7 @@ public class OutboxMessagePersistenceAdapter implements SaveOutboxMessagePort {
+                 saved.getOrderId(),
+                 saved.getPayload(),
+                 saved.getCouponStatus(),
++                saved.getPointStatus(),
+                 saved.getOrderStatus(),
+                 saved.getPaymentStatus(),
+                 saved.getSagaStatus(),
+```
 - 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/persistence/OutboxMessagePersistenceAdapter.java`
 ```diff
 +                message.pointStatus(),
@@ -98,6 +138,26 @@
 - 핵심 로직: 예약/확정/보상 API
 - 구조 변화: 오케스트레이터 책임/상태 관리 강화
 - 주요 파일: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`, `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/persistence/OrderSagaPersistenceAdapter.java`
+- 변경 전/후 비교: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
+- diff 스타일
+```diff
+@@ -5,10 +5,12 @@ import com.example.orderorchestrator.adapter.in.web.dto.response.CreateOrderResp
+ import com.example.orderorchestrator.adapter.out.webclient.CouponServiceClient;
+ import com.example.orderorchestrator.adapter.out.webclient.PointServiceClient;
+ import com.example.orderorchestrator.application.port.in.CreateOrderUseCase;
++import com.example.orderorchestrator.application.port.in.UpdateOrderSagaStatusUseCase;
+ import com.example.orderorchestrator.application.port.in.UpdateOutboxMessageUseCase;
+ import com.example.orderorchestrator.application.port.in.command.CreateOrderCommand;
+ import com.example.orderorchestrator.application.port.in.result.CreateOrderResult;
+ import com.example.orderorchestrator.domain.model.status.MSAStatus;
++import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
+ import jakarta.validation.Valid;
+ import lombok.RequiredArgsConstructor;
+ import org.springframework.http.ResponseEntity;
+@@ -29,6 +31,7 @@ public class OrderOrchestrationController {
+     private final CouponServiceClient couponServiceClient;
+     private final PointServiceClient pointServiceClient;
+```
 - 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
 ```diff
 +import com.example.orderorchestrator.application.port.in.UpdateOrderSagaStatusUseCase;
@@ -126,8 +186,13 @@
 - 핵심 로직: 구조/중복 리팩터링
 - 구조 변화: 소비자 모듈 또는 이벤트 처리 흐름 확장
 - 주요 파일: `docs/codex_log.md`, `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/adapter/out/persistence/OutboxMessageStatusJdbcAdapter.java`
-- 코드 발췌: `docs/codex_log.md`
+- 변경 전/후 비교: `docs/codex_log.md`
+- diff 스타일
 ```diff
+@@ -128,3 +128,42 @@ status가 Reserved이면
+ - 필요한 MSA 호출이 모두 성공하면 outbox_message의 saga_status와 order_saga의 status를 confirm이 성공한 경우에는 Completed로
+ - compensate를 성공한 경우에는 Compensated로 업데이트 해줘.
+ 
 +## 27) K8s 포트포워딩 오류 및 outbox order_status 갱신
 +- 사용자 요청: 05_msa_portforward.sh 실행 시 로그 파일이 read-only 경로로 떨어지는 오류 수정 요청.
 +- Codex 응답: 스크립트에 ROOT_DIR 정의를 추가해 로그가 프로젝트 루트에 기록되도록 수정.
@@ -136,100 +201,11 @@
 +
 +### 28) updateSagaStatus 메서드 리팩터링
 +OutboxMessageStatusJdbcAdapter.java 에서 하나의 메서드가 여러 역할을 하고 있는데, updateSagaCompetedStatus, updateSagaCompensatedStatus 처럼 각각의 메서드로 리팩토링 하자.
-```
-- 코드 발췌: `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/adapter/out/persistence/OutboxMessageStatusJdbcAdapter.java`
-```diff
 +    @Override
-+    public void updateCompletedStatus(String orderId) {
-+        jdbcTemplate.update(
-+                "update outbox_message set saga_status = ?, order_status = ?, updated_at = ? where order_id = ?",
-+                OrderSagaStatus.Completed.name(),
-+                MSAStatus.Completed.name(),
-+                Timestamp.valueOf(LocalDateTime.now()),
-+                orderId
++    public void updateSagaStatus(String orderId, OrderSagaStatus status) {
++        if (status == OrderSagaStatus.Completed) {
++            jdbcTemplate.update(
 ```
-
-### d95cb17 outbox_message MSA 상태 저장 로직 추가
-- 변경 요약: outbox_message MSA 상태 저장 로직 추가
-- 핵심 로직: API 엔드포인트 처리 흐름
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`, `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/persistence/OutboxMessagePersistenceAdapter.java`
-- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
-```diff
-+import com.example.orderorchestrator.application.port.in.CreateOrderUseCase;
-+import com.example.orderorchestrator.application.port.in.UpdateOutboxMessageUseCase;
-+import com.example.orderorchestrator.domain.model.status.MSAStatus;
-+    private final UpdateOutboxMessageUseCase updateOutboxMessageUseCase;
-+                request.pointNumber(),
-+            calls.add(reserveCoupon(request.couponNumber(), result.orderId()));
-+            calls.add(reservePoint(request.pointNumber(), result.orderId()));
-```
-- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/persistence/OutboxMessagePersistenceAdapter.java`
-```diff
-+import com.example.orderorchestrator.application.port.out.UpdateOutboxMessagePort;
-+import com.example.orderorchestrator.domain.model.status.MSAStatus;
-+import java.time.LocalDateTime;
-+
-+public class OutboxMessagePersistenceAdapter implements SaveOutboxMessagePort, UpdateOutboxMessagePort {
-+
-+    @Override
-+    public void updateCouponStatus(String orderId, MSAStatus status) {
-```
-
-### 0d2221b outboxMessage에 pointStatus 컬럼 추가
-- 변경 요약: outboxMessage에 pointStatus 컬럼 추가
-- 핵심 로직: 사가 상태/메시지 저장 로직
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/persistence/OutboxMessagePersistenceAdapter.java`, `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/persistence/jpa/entity/OutboxMessageJpaEntity.java`
-- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/persistence/OutboxMessagePersistenceAdapter.java`
-```diff
-+                message.pointStatus(),
-+                saved.getPointStatus(),
-```
-- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/persistence/jpa/entity/OutboxMessageJpaEntity.java`
-```diff
-+    @Enumerated(EnumType.STRING)
-+    @Column(name = "point_status", nullable = false)
-+    private MSAStatus pointStatus;
-+
-+            MSAStatus pointStatus,
-+        this.pointStatus = pointStatus;
-+    public MSAStatus getPointStatus() { return pointStatus; }
-```
-
-### 982ec0a saga_status가 결과에 맞게 Reserved 또는 Compensating으로 업데이트 되도록 로직 수정
-- 변경 요약: saga_status가 결과에 맞게 Reserved 또는 Compensating으로 업데이트 되도록 로직 수정
-- 핵심 로직: 예약/확정/보상 API
-- 구조 변화: 오케스트레이터 책임/상태 관리 강화
-- 주요 파일: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`, `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/persistence/OrderSagaPersistenceAdapter.java`
-- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
-```diff
-+import com.example.orderorchestrator.application.port.in.UpdateOrderSagaStatusUseCase;
-+import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
-+    private final UpdateOrderSagaStatusUseCase updateOrderSagaStatusUseCase;
-+                .then(Mono.fromRunnable(() -> updateSagaStatus(result.orderId(), OrderSagaStatus.Reserved)))
-+                .onErrorResume(ex -> {
-+                    updateSagaStatus(result.orderId(), OrderSagaStatus.Compensating);
-+                    return Mono.error(ex);
-+                })
-```
-- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/persistence/OrderSagaPersistenceAdapter.java`
-```diff
-+import com.example.orderorchestrator.application.port.out.UpdateOrderSagaStatusPort;
-+import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
-+public class OrderSagaPersistenceAdapter implements SaveOrderSagaPort, UpdateOrderSagaStatusPort {
-+
-+    @Override
-+    public void updateStatus(String orderId, OrderSagaStatus status) {
-+        OrderSagaJpaEntity entity = orderSagaJpaRepository.findByOrderId(orderId)
-+                .orElseThrow(() -> new IllegalArgumentException("Order saga not found: " + orderId));
-```
-
-### 0531530 updateSagaStatus 메서드 리팩터링
-- 변경 요약: updateSagaStatus 메서드 리팩터링
-- 핵심 로직: 구조/중복 리팩터링
-- 구조 변화: 소비자 모듈 또는 이벤트 처리 흐름 확장
-- 주요 파일: `docs/codex_log.md`, `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/adapter/out/persistence/OutboxMessageStatusJdbcAdapter.java`
 - 코드 발췌: `docs/codex_log.md`
 ```diff
 +## 27) K8s 포트포워딩 오류 및 outbox order_status 갱신

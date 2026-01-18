@@ -81,6 +81,26 @@ public class ArchitectureTest4OrderOrchestrator extends HexagonalArchitectureTes
 - 핵심 로직: 아키텍처 규칙 테스트
 - 구조 변화: 모듈/기능 추가로 책임 분리
 - 주요 파일: `order-orchestrator/src/test/java/com/example/orderorchestrator/archunit/ArchitectureTest.java`
+- 변경 전/후 비교: `order-orchestrator/src/test/java/com/example/orderorchestrator/archunit/ArchitectureTest.java`
+- diff 스타일
+```diff
+@@ -1,235 +1,161 @@
+ package com.example.orderorchestrator.archunit;
+ 
+-import com.tngtech.archunit.core.domain.JavaClasses;
+-import com.tngtech.archunit.core.importer.ClassFileImporter;
+ import com.tngtech.archunit.core.importer.ImportOption;
+ import com.tngtech.archunit.junit.AnalyzeClasses;
+ import com.tngtech.archunit.junit.ArchTest;
+ import com.tngtech.archunit.lang.ArchRule;
+-import org.apache.ibatis.annotations.Mapper;
+-import org.springframework.context.annotation.Configuration;
+ 
+ import static com.tngtech.archunit.base.DescribedPredicate.not;
+ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
+ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
+ import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
+```
 - 코드 발췌: `order-orchestrator/src/test/java/com/example/orderorchestrator/archunit/ArchitectureTest.java`
 ```diff
 +        packages = "com.example.orderorchestrator",
@@ -115,90 +135,25 @@ public class ArchitectureTest4OrderOrchestrator extends HexagonalArchitectureTes
 - 핵심 로직: 아키텍처 규칙 테스트
 - 구조 변화: 오케스트레이터 책임/상태 관리 강화
 - 주요 파일: `common/build.gradle`, `common/src/testFixtures/java/com/example/common/archunit/HexagonalArchitectureRules.java`
-- 코드 발췌: `common/build.gradle`
+- 변경 전/후 비교: `common/build.gradle`
+- diff 스타일
 ```diff
+@@ -1,6 +1,7 @@
+ // org.springframework.boot 플러그인 절대 적용하지 않기
+ plugins {
+     id 'java-library'
 +    id 'java-test-fixtures'
+ }
+ 
+ group = 'com.example'
+@@ -18,9 +19,10 @@ dependencies {
+ 
+     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
+     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
 +
 +    testFixturesImplementation 'com.tngtech.archunit:archunit-junit5:1.3.0'
+ }
 ```
-- 코드 발췌: `common/src/testFixtures/java/com/example/common/archunit/HexagonalArchitectureRules.java`
-```diff
-+package com.example.common.archunit;
-+
-+import com.tngtech.archunit.lang.ArchRule;
-+
-+import static com.tngtech.archunit.base.DescribedPredicate.not;
-+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
-+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
-+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
-```
-
-### e37883c ### Common 모듈 추가 ######################
-- 변경 요약: ### Common 모듈 추가 ######################
-- 핵심 로직: 모듈/의존성 구성 변경
-- 구조 변화: 공통 모듈 추가 및 의존성 정리
-- 주요 파일: `common/build.gradle`, `common/src/main/java/com/example/common/api/ApiError.java`
-- 코드 발췌: `common/build.gradle`
-```diff
-+// org.springframework.boot 플러그인 절대 적용하지 않기
-+plugins {
-+    id 'java-library'
-+}
-+
-+group = 'com.example'
-+version = '0.0.1-SNAPSHOT'
-```
-- 코드 발췌: `common/src/main/java/com/example/common/api/ApiError.java`
-```diff
-+package com.example.common.api;
-+
-+// 공통 에러 DTO (web 계층)
-+public class ApiError {
-+    private final String code;
-+    private final String message;
-+    private ApiError(String code, String message) { this.code = code; this.message = message; }
-+    public String getCode() { return code; }
-```
-
-### 868aa6f Archunit 검증 테스트 추가
-- 변경 요약: Archunit 검증 테스트 추가
-- 핵심 로직: 아키텍처 규칙 테스트
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `order-orchestrator/src/test/java/com/example/orderorchestrator/archunit/ArchitectureTest.java`
-- 코드 발췌: `order-orchestrator/src/test/java/com/example/orderorchestrator/archunit/ArchitectureTest.java`
-```diff
-+        packages = "com.example.orderorchestrator",
-+        importOptions = { ImportOption.DoNotIncludeTests.class }
-+    private static final String PORT_IN = "..application..port..in..";
-+    private static final String PORT_OUT = "..application..port..out..";
-+    private static final String SERVICE = "..application..service..";
-+    private static final String ADAPTER_IN = "..adapter..in..";
-+    private static final String ADAPTER_OUT = "..adapter..out..";
-+    private static final String ADAPTER_OUT_JPA = "..adapter..out.persistence.jpa..";
-```
-
-### 1475eba ArchitectureUnit 테스트 추가
-- 변경 요약: ArchitectureUnit 테스트 추가
-- 핵심 로직: 테스트 케이스 확장
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `coupon-service/src/test/java/com/example/couponservice/archunit/ArchitectureTest4CouponSercice.java`
-- 코드 발췌: `coupon-service/src/test/java/com/example/couponservice/archunit/ArchitectureTest4CouponSercice.java`
-```diff
-+package com.example.couponservice.archunit;
-+
-+import com.tngtech.archunit.core.importer.ImportOption;
-+import com.tngtech.archunit.junit.AnalyzeClasses;
-+import com.tngtech.archunit.junit.ArchTest;
-+import com.tngtech.archunit.lang.ArchRule;
-+
-+import static com.tngtech.archunit.base.DescribedPredicate.not;
-```
-
-### 6e8df39 Archunit 중복제거 리팩토링
-- 변경 요약: Archunit 중복제거 리팩토링
-- 핵심 로직: 아키텍처 규칙 테스트
-- 구조 변화: 오케스트레이터 책임/상태 관리 강화
-- 주요 파일: `common/build.gradle`, `common/src/testFixtures/java/com/example/common/archunit/HexagonalArchitectureRules.java`
 - 코드 발췌: `common/build.gradle`
 ```diff
 +    id 'java-test-fixtures'

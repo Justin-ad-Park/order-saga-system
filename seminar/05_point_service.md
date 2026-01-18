@@ -100,8 +100,13 @@
 - 핵심 로직: 테스트 케이스 확장
 - 구조 변화: 모듈/기능 추가로 책임 분리
 - 주요 파일: `point-service/src/main/resources/point_dev_schema.sql`, `point-service/src/main/resources/point_schema.sql`
-- 코드 발췌: `point-service/src/main/resources/point_dev_schema.sql`
+- 변경 전/후 비교: `point-service/src/main/resources/point_dev_schema.sql`
+- diff 스타일
 ```diff
+@@ -54,3 +54,27 @@ VALUES (
+                          status = VALUES(status),
+                          issued_at = VALUES(issued_at),
+                          expired_at = VALUES(expired_at);
 +
 +INSERT INTO point (point_number, status, issued_at, expired_at)
 +VALUES (
@@ -110,80 +115,11 @@
 +           CURRENT_TIMESTAMP,
 +           DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
 +       )
++    ON DUPLICATE KEY UPDATE
++                         status = VALUES(status),
++                         issued_at = VALUES(issued_at),
++                         expired_at = VALUES(expired_at);
 ```
-- 코드 발췌: `point-service/src/main/resources/point_schema.sql`
-```diff
-+
-+INSERT INTO point (point_number, status, issued_at, expired_at)
-+VALUES (
-+           'PNT-INT-AVAILABLE-001',
-+           'AVAILABLE',
-+           CURRENT_TIMESTAMP,
-+           DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
-+       )
-```
-
-### 34f3209 통합 테스트 확장
-- 변경 요약: 통합 테스트 확장
-- 핵심 로직: 테스트 케이스 확장
-- 구조 변화: 오케스트레이터 책임/상태 관리 강화
-- 주요 파일: `order-orchestrator/scripts/run_local_msa.sh`, `order-orchestrator/scripts/stop_local_msa.sh`
-- 코드 발췌: `order-orchestrator/scripts/run_local_msa.sh`
-```diff
-+#!/usr/bin/env bash
-+set -euo pipefail
-+
-+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-+
-+"${ROOT_DIR}/gradlew" :coupon-service:bootRun \
-+  -Dspring.profiles.active=test \
-+  -Dspring.config.name=coupon_application \
-```
-- 코드 발췌: `order-orchestrator/scripts/stop_local_msa.sh`
-```diff
-+#!/usr/bin/env bash
-+set -euo pipefail
-+
-+if command -v lsof >/dev/null 2>&1; then
-+  lsof -ti tcp:8080 | xargs kill
-+  lsof -ti tcp:8081 | xargs kill
-+  lsof -ti tcp:8082 | xargs kill
-+else
-```
-
-### 193e5e2 First commit for Point MSA
-- 변경 요약: First commit for Point MSA
-- 핵심 로직: 모듈/의존성 구성 변경
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `point-service/build.gradle`, `point-service/src/main/java/com/example/pointservice/PointServiceApplication.java`
-- 코드 발췌: `point-service/build.gradle`
-```diff
-+plugins {
-+    id 'org.springframework.boot'
-+    id 'io.spring.dependency-management' version '1.1.5'
-+    id 'java'
-+}
-+
-+dependencies {
-+    // Web API (기존 ver08과 동일하게 MVC 기반으로 시작)
-```
-- 코드 발췌: `point-service/src/main/java/com/example/pointservice/PointServiceApplication.java`
-```diff
-+package com.example.pointservice;
-+
-+import org.springframework.boot.SpringApplication;
-+import org.springframework.boot.autoconfigure.SpringBootApplication;
-+import org.springframework.boot.builder.SpringApplicationBuilder;
-+
-+
-+@SpringBootApplication
-```
-
-### 6bb3683 point-service, coupon-service 테스트 케이스 추가
-- 변경 요약: point-service, coupon-service 테스트 케이스 추가
-- 핵심 로직: 테스트 케이스 확장
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `point-service/src/main/resources/point_dev_schema.sql`, `point-service/src/main/resources/point_schema.sql`
 - 코드 발췌: `point-service/src/main/resources/point_dev_schema.sql`
 ```diff
 +

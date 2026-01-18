@@ -1924,3 +1924,49 @@ OFF도 최초 성공과 실패(아직 서킷 연결전), circuit재연결 후 �
   표가 텍스트로 보이는 문제 원인 파악 및 수정 요청
 - Codex 응답 :
   관련 커밋 섹션에서 커밋 목록을 추출해 표를 재구성하고, 잘못된 헤더/구분선/중복 행을 제거해 MD 표가 정상 렌더링되도록 수정함.
+
+## 93) 커밋 전후 비교 블록 추가
+- 사용자 :
+  커밋별 변경 전/후 비교(주요 메서드 비교 블럭) 추가 요청
+- Codex 응답 :
+  각 회차 문서의 커밋 상세 섹션을 재생성해 변경 전/후 비교 블럭을 추가하고, 전후 구분 라벨을 명확히 표기함.
+
+## 94) 커밋 전후 비교 diff 스타일 추가
+- 사용자 :
+  변경 전/후 비교를 diff 스타일과 요약 설명까지 추가 요청
+- Codex 응답 :
+  각 커밋 상세에 전/후 비교 블록과 diff 스타일 블록, 1줄 요약 설명을 추가함.
+
+## 95) 세미나 자료에서 account 모듈 제거
+- 사용자 :
+  account 모듈을 세미나 자료에서 제외 요청
+- Codex 응답 :
+  seminar/01_overview_architecture.md에서 account 모듈 언급과 관련 코드 발췌를 제거하고 오케스트레이터 골격 예시로 대체함.
+
+## 96) 세미나 diff 표현 정리
+- 사용자 :
+  변경 전/후 제거, diff만 유지, ---/+++ 제거 요청
+- Codex 응답 :
+  seminar 문서 전부에서 전/후 블록과 요약을 제거하고 diff 스타일만 유지하며 diff 헤더/파일표시/No newline 문구를 정리함.
+
+
+[참고 코드]
+- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
+```diff
++import com.example.orderorchestrator.adapter.out.webclient.PointServiceClient;
++    private final PointServiceClient pointServiceClient;
++        return Mono.when(
++                        couponServiceClient.reserveCoupon(request.couponNumber(), result.orderId()),
++                        pointServiceClient.reservePoint(request.pointNumber(), result.orderId())
++                )
+```
+
+[작업 지시]
+위와 같은 코드에서 클래스, 메서드가 표시가 안되니까 추가, 삭제된 코드가 어디에 작업된 건지 알수가 없어. 
+변경이 없는 코드라도 클래스 선언부, 메소드 선언부와 클래스, 메서드의 시작과 끝에 해당하는 {}는 넣어주고,  
+중간에 생략된 코드는 아래와 같은 주석을 달아줘.
+
+// ... 생략  
+
+seminar의 전체 코드를 대상으로 작업하고, diff 당시의 클래스, 메서드 코드로 내용이 정리가 되어야 하니까
+git 명령어를 적절히 활용해서 문서를 업데이트 해.

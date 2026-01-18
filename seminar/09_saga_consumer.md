@@ -79,6 +79,18 @@
 - 핵심 로직: 이벤트 소비/처리 로직
 - 구조 변화: 모듈/기능 추가로 책임 분리
 - 주요 파일: `order-saga-consumer/build.gradle`, `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/adapter/out/persistence/OrderSagaStatusJdbcAdapter.java`
+- 변경 전/후 비교: `order-saga-consumer/build.gradle`
+- diff 스타일
+```diff
+@@ -8,6 +8,7 @@ dependencies {
+     implementation 'org.springframework.boot:spring-boot-starter'
+     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
++    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+     implementation 'org.springframework.kafka:spring-kafka'
+     implementation 'org.springframework.boot:spring-boot-starter-json'
+     implementation 'com.mysql:mysql-connector-j'
+```
 - 코드 발췌: `order-saga-consumer/build.gradle`
 ```diff
 +    implementation 'org.springframework.boot:spring-boot-starter-webflux'
@@ -100,6 +112,19 @@
 - 핵심 로직: 이벤트 소비/처리 로직
 - 구조 변화: 소비자 모듈 또는 이벤트 처리 흐름 확장
 - 주요 파일: `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/OrderSagaConsumerApplication.java`, `order-saga-consumer/src/main/resources/OSC_application.yaml`
+- 변경 전/후 비교: `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/OrderSagaConsumerApplication.java`
+- diff 스타일
+```diff
+@@ -10,7 +10,7 @@ public class OrderSagaConsumerApplication {
+ 
+     public static void main(String[] args) {
+         if (System.getProperty("spring.profiles.active") == null) {
+-            System.setProperty("spring.profiles.active", "test");
++            System.setProperty("spring.profiles.active", "k8s-local");
+         }
+         new SpringApplicationBuilder(OrderSagaConsumerApplication.class)
+                 .properties(
+```
 - 코드 발췌: `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/OrderSagaConsumerApplication.java`
 ```diff
 +            System.setProperty("spring.profiles.active", "k8s-local");
@@ -121,6 +146,26 @@
 - 핵심 로직: 이벤트 소비 및 후속 처리 로직
 - 구조 변화: 소비자 모듈 또는 이벤트 처리 흐름 확장
 - 주요 파일: `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/OrderSagaConsumerApplication.java`, `order-saga-consumer/src/main/resources/OSC_application.yaml`
+- 변경 전/후 비교: `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/OrderSagaConsumerApplication.java`
+- diff 스타일
+```diff
+@@ -3,13 +3,21 @@ package com.example.ordersagaconsumer;
+ import org.springframework.boot.autoconfigure.SpringBootApplication;
+ import org.springframework.boot.builder.SpringApplicationBuilder;
+ import org.springframework.kafka.annotation.EnableKafka;
++import java.util.Arrays;
+ 
+ @EnableKafka
+ @SpringBootApplication
+ public class OrderSagaConsumerApplication {
+ 
+     public static void main(String[] args) {
+-        if (System.getProperty("spring.profiles.active") == null) {
++        String systemProfile = System.getProperty("spring.profiles.active");
++        boolean hasProfileArg = Arrays.stream(args)
++                .anyMatch(arg -> arg.startsWith("--spring.profiles.active="));
++        String envProfile = System.getenv("SPRING_PROFILES_ACTIVE");
+```
 - 코드 발췌: `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/OrderSagaConsumerApplication.java`
 ```diff
 +import java.util.Arrays;
@@ -146,140 +191,28 @@
 - 핵심 로직: 이벤트 소비/처리 로직
 - 구조 변화: 소비자 모듈 또는 이벤트 처리 흐름 확장
 - 주요 파일: `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/OrderSagaConsumerApplication.java`
-- 코드 발췌: `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/OrderSagaConsumerApplication.java`
-```
-package com.example.ordersagaconsumer;
-
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.kafka.annotation.EnableKafka;
-
-@EnableKafka
-@SpringBootApplication
-```
-
-### 9e08ba1 ### Consumer K8s 배포 및 실행 스크립트 추사 ###
-- 변경 요약: ### Consumer K8s 배포 및 실행 스크립트 추사 ###
-- 핵심 로직: 이벤트 소비/처리 로직
-- 구조 변화: 소비자 모듈 또는 이벤트 처리 흐름 확장
-- 주요 파일: `order-saga-consumer/scripts/deploy_k8s.sh`, `order-saga-consumer/src/main/resources/OSC_application.yaml`
-- 코드 발췌: `order-saga-consumer/scripts/deploy_k8s.sh`
+- 변경 전/후 비교: `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/OrderSagaConsumerApplication.java`
+- diff 스타일
 ```diff
-+#!/usr/bin/env bash
-+set -euo pipefail
-+
-+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-+SERVICE_DIR="${ROOT_DIR}/order-saga-consumer"
-+MANIFEST="${ROOT_DIR}/bin_k8s/order-saga-consumer.yaml"
-+IMAGE_NAME="order-saga-consumer:local"
-```
-- 코드 발췌: `order-saga-consumer/src/main/resources/OSC_application.yaml`
-```diff
-+  port: 8103
-```
-
-### 3afbfb9 Comsumer 기본 프로젝트 및 기본 로직 구성
-- 변경 요약: Comsumer 기본 프로젝트 및 기본 로직 구성
-- 핵심 로직: 모듈/의존성 구성 변경
-- 구조 변화: 소비자 모듈 또는 이벤트 처리 흐름 확장
-- 주요 파일: `order-saga-consumer/build.gradle`, `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/OrderSagaConsumerApplication.java`
-- 코드 발췌: `order-saga-consumer/build.gradle`
-```diff
-+plugins {
-+    id 'org.springframework.boot'
-+    id 'io.spring.dependency-management' version '1.1.5'
-+    id 'java'
-+}
-+
-+dependencies {
-+    implementation 'org.springframework.boot:spring-boot-starter'
+@@ -3,23 +3,12 @@ package com.example.ordersagaconsumer;
+ import org.springframework.boot.autoconfigure.SpringBootApplication;
+ import org.springframework.boot.builder.SpringApplicationBuilder;
+ import org.springframework.kafka.annotation.EnableKafka;
+-import java.util.Arrays;
+ 
+ @EnableKafka
+ @SpringBootApplication
+ public class OrderSagaConsumerApplication {
+ 
+     public static void main(String[] args) {
+-        String systemProfile = System.getProperty("spring.profiles.active");
+-        boolean hasProfileArg = Arrays.stream(args)
+-                .anyMatch(arg -> arg.startsWith("--spring.profiles.active="));
+-        String envProfile = System.getenv("SPRING_PROFILES_ACTIVE");
+-
 ```
 - 코드 발췌: `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/OrderSagaConsumerApplication.java`
-```diff
-+package com.example.ordersagaconsumer;
-+
-+import org.springframework.boot.autoconfigure.SpringBootApplication;
-+import org.springframework.boot.builder.SpringApplicationBuilder;
-+import org.springframework.kafka.annotation.EnableKafka;
-+
-+@EnableKafka
-+@SpringBootApplication
-```
-
-### 0b73be2 ### Saga 컨슈머 confirm, compensate 로직 추가 ###
-- 변경 요약: ### Saga 컨슈머 confirm, compensate 로직 추가 ###
-- 핵심 로직: 이벤트 소비/처리 로직
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `order-saga-consumer/build.gradle`, `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/adapter/out/persistence/OrderSagaStatusJdbcAdapter.java`
-- 코드 발췌: `order-saga-consumer/build.gradle`
-```diff
-+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
-```
-- 코드 발췌: `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/adapter/out/persistence/OrderSagaStatusJdbcAdapter.java`
-```diff
-+package com.example.ordersagaconsumer.adapter.out.persistence;
-+
-+import com.example.ordersagaconsumer.application.port.out.UpdateOrderSagaStatusPort;
-+import com.example.ordersagaconsumer.domain.model.status.OrderSagaStatus;
-+import org.springframework.jdbc.core.JdbcTemplate;
-+import org.springframework.stereotype.Repository;
-+
-+@Repository
-```
-
-### a1f74d8 ### Consumer host Test ###
-- 변경 요약: ### Consumer host Test ###
-- 핵심 로직: 이벤트 소비/처리 로직
-- 구조 변화: 소비자 모듈 또는 이벤트 처리 흐름 확장
-- 주요 파일: `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/OrderSagaConsumerApplication.java`, `order-saga-consumer/src/main/resources/OSC_application.yaml`
-- 코드 발췌: `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/OrderSagaConsumerApplication.java`
-```diff
-+            System.setProperty("spring.profiles.active", "k8s-local");
-```
-- 코드 발췌: `order-saga-consumer/src/main/resources/OSC_application.yaml`
-```diff
-+order:
-+  saga:
-+    events:
-+      topic: order-saga-events
-+      consumer-group: order-saga-consumer-local
-+
-+---
-+spring:
-```
-
-### 576a868 Comsumer 실행 시 profile 설정 안되는 오류 수정
-- 변경 요약: Comsumer 실행 시 profile 설정 안되는 오류 수정
-- 핵심 로직: 이벤트 소비 및 후속 처리 로직
-- 구조 변화: 소비자 모듈 또는 이벤트 처리 흐름 확장
-- 주요 파일: `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/OrderSagaConsumerApplication.java`, `order-saga-consumer/src/main/resources/OSC_application.yaml`
-- 코드 발췌: `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/OrderSagaConsumerApplication.java`
-```diff
-+import java.util.Arrays;
-+        String systemProfile = System.getProperty("spring.profiles.active");
-+        boolean hasProfileArg = Arrays.stream(args)
-+                .anyMatch(arg -> arg.startsWith("--spring.profiles.active="));
-+        String envProfile = System.getenv("SPRING_PROFILES_ACTIVE");
-+
-+        if ((systemProfile == null || systemProfile.isBlank())
-+                && !hasProfileArg
-```
-- 코드 발췌: `order-saga-consumer/src/main/resources/OSC_application.yaml`
-```diff
-+    consumer:
-+      group-id: order-saga-consumer-test
-+      auto-offset-reset: earliest
-+  port: 8083
-+      consumer-group: order-saga-consumer-test
-```
-
-### 5a250f8 ### Saga Local & K8s + Host Consumer 테스트 완료 ###
-- 변경 요약: ### Saga Local & K8s + Host Consumer 테스트 완료 ###
-- 핵심 로직: 이벤트 소비/처리 로직
-- 구조 변화: 소비자 모듈 또는 이벤트 처리 흐름 확장
-- 주요 파일: `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/OrderSagaConsumerApplication.java`
-- 코드 발췌: `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/OrderSagaConsumerApplication.java`
-```
+```java
 package com.example.ordersagaconsumer;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;

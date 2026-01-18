@@ -60,6 +60,26 @@
 - 핵심 로직: 예약/확정/보상 API
 - 구조 변화: 모듈/기능 추가로 책임 분리
 - 주요 파일: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`, `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/dto/request/ConfirmCouponRequest.java`
+- 변경 전/후 비교: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
+- diff 스타일
+```diff
+@@ -1,8 +1,11 @@
+ package com.example.couponservice.adapter.in.web;
+ 
+ import com.example.common.api.ApiResponse;
++import com.example.couponservice.adapter.in.web.dto.request.ConfirmCouponRequest;
+ import com.example.couponservice.adapter.in.web.dto.request.ReserveCouponRequest;
++import com.example.couponservice.adapter.in.web.dto.response.ConfirmCouponResponse;
+ import com.example.couponservice.adapter.in.web.dto.response.ReserveCouponResponse;
++import com.example.couponservice.application.port.in.ConfirmCouponUseCase;
+ import com.example.couponservice.application.port.in.ReserveCouponUseCase;
+ import com.example.couponservice.domain.model.status.CouponStatus;
+ import lombok.RequiredArgsConstructor;
+@@ -14,16 +17,32 @@ import org.springframework.web.bind.annotation.*;
+ public class CouponController {
+ 
+     private final ReserveCouponUseCase reserveCouponUseCase;
+```
 - 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
 ```diff
 +import com.example.couponservice.adapter.in.web.dto.request.ConfirmCouponRequest;
@@ -87,6 +107,25 @@
 - 핵심 로직: 예약/확정/보상 API
 - 구조 변화: 모듈/기능 추가로 책임 분리
 - 주요 파일: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`, `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/dto/request/CompensateCouponRequest.java`
+- 변경 전/후 비교: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
+- diff 스타일
+```diff
+@@ -1,10 +1,13 @@
+ package com.example.couponservice.adapter.in.web;
+ 
+ import com.example.common.api.ApiResponse;
++import com.example.couponservice.adapter.in.web.dto.request.CompensateCouponRequest;
+ import com.example.couponservice.adapter.in.web.dto.request.ConfirmCouponRequest;
+ import com.example.couponservice.adapter.in.web.dto.request.ReserveCouponRequest;
++import com.example.couponservice.adapter.in.web.dto.response.CompensateCouponResponse;
+ import com.example.couponservice.adapter.in.web.dto.response.ConfirmCouponResponse;
+ import com.example.couponservice.adapter.in.web.dto.response.ReserveCouponResponse;
++import com.example.couponservice.application.port.in.CompensateCouponUseCase;
+ import com.example.couponservice.application.port.in.ConfirmCouponUseCase;
+ import com.example.couponservice.application.port.in.ReserveCouponUseCase;
+ import com.example.couponservice.domain.model.status.CouponStatus;
+@@ -18,6 +21,7 @@ public class CouponController {
+```
 - 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
 ```diff
 +import com.example.couponservice.adapter.in.web.dto.request.CompensateCouponRequest;
@@ -114,6 +153,26 @@
 - 핵심 로직: 예약/확정/보상 API
 - 구조 변화: 모듈/기능 추가로 책임 분리
 - 주요 파일: `point-service/src/main/java/com/example/pointservice/adapter/in/web/PointController.java`, `point-service/src/main/java/com/example/pointservice/adapter/in/web/dto/request/CompensatePointRequest.java`
+- 변경 전/후 비교: `point-service/src/main/java/com/example/pointservice/adapter/in/web/PointController.java`
+- diff 스타일
+```diff
+@@ -1,8 +1,14 @@
+ package com.example.pointservice.adapter.in.web;
+ 
+ import com.example.common.api.ApiResponse;
++import com.example.pointservice.adapter.in.web.dto.request.CompensatePointRequest;
++import com.example.pointservice.adapter.in.web.dto.request.ConfirmPointRequest;
+ import com.example.pointservice.adapter.in.web.dto.request.ReservePointRequest;
++import com.example.pointservice.adapter.in.web.dto.response.CompensatePointResponse;
++import com.example.pointservice.adapter.in.web.dto.response.ConfirmPointResponse;
+ import com.example.pointservice.adapter.in.web.dto.response.ReservePointResponse;
++import com.example.pointservice.application.port.in.CompensatePointUseCase;
++import com.example.pointservice.application.port.in.ConfirmPointUseCase;
+ import com.example.pointservice.application.port.in.ReservePointUseCase;
+ import com.example.pointservice.domain.model.status.PointStatus;
+ import lombok.RequiredArgsConstructor;
+@@ -14,16 +20,46 @@ import org.springframework.web.bind.annotation.*;
+```
 - 코드 발췌: `point-service/src/main/java/com/example/pointservice/adapter/in/web/PointController.java`
 ```diff
 +import com.example.pointservice.adapter.in.web.dto.request.CompensatePointRequest;
@@ -141,6 +200,19 @@
 - 핵심 로직: API 엔드포인트 처리 흐름
 - 구조 변화: 쿠폰/포인트 서비스의 계약 또는 테스트 동시 확장
 - 주요 파일: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`, `coupon-service/src/main/java/com/example/couponservice/application/service/ReserveCouponService.java`
+- 변경 전/후 비교: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
+- diff 스타일
+```diff
+@@ -39,7 +39,7 @@ public class CouponController {
+     @PostMapping("/compensate")
+     public ApiResponse<CompensateCouponResponse> compensateCoupon(@RequestBody CompensateCouponRequest request) {
+         compensateCouponUseCase.compensateCoupon(request.couponNumber(), request.orderId());
+-        return ApiResponse.success(buildCompensateResponse(request.couponNumber(), CouponStatus.COMPENSATED));
++        return ApiResponse.success(buildCompensateResponse(request.couponNumber(), CouponStatus.AVAILABLE));
+     }
+ 
+     private ReserveCouponResponse buildReserveResponse(String couponNumber, CouponStatus status) {
+```
 - 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
 ```diff
 +        return ApiResponse.success(buildCompensateResponse(request.couponNumber(), CouponStatus.AVAILABLE));
@@ -183,8 +255,14 @@
 - 핵심 로직: 비즈니스 서비스 로직(예약/확정/보상)
 - 구조 변화: 소비자 모듈 또는 이벤트 처리 흐름 확장
 - 주요 파일: `coupon-service/src/main/java/com/example/couponservice/application/service/ReserveCouponService.java`, `coupon-service/src/test/java/com/example/couponservice/application/service/ReserveCouponServiceMockTest.java`
-- 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/application/service/ReserveCouponService.java`
+- 변경 전/후 비교: `coupon-service/src/main/java/com/example/couponservice/application/service/ReserveCouponService.java`
+- diff 스타일
 ```diff
+@@ -27,7 +27,20 @@ public class ReserveCouponService implements ReserveCouponUseCase, ConfirmCoupon
+ 
+     @Override
+     public void confirm(String couponNumber, String orderId) {
+-        updateStatus(couponNumber, CouponStatus.USED, this::validateConfirmable);
 +        Coupon coupon = loadCouponPort.loadCoupon(couponNumber)
 +                .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다: " + couponNumber));
 +        if (coupon.status() == CouponStatus.USED) {
@@ -193,146 +271,10 @@
 +        validateConfirmable(coupon);
 +
 +        Coupon updated = new Coupon(
++                coupon.couponNumber(),
++                CouponStatus.USED,
++                coupon.issuedAt(),
 ```
-- 코드 발췌: `coupon-service/src/test/java/com/example/couponservice/application/service/ReserveCouponServiceMockTest.java`
-```diff
-+    @Test
-+    void confirm_shouldNoOp_ifCouponAlreadyUsed() {
-+        String couponNumber = "CPN-UNIT-USED-001";
-+        LocalDateTime now = LocalDateTime.now();
-+        Coupon used = new Coupon(couponNumber, CouponStatus.USED, now.minusDays(1), now.plusDays(1));
-+
-+        when(loadCouponPort.loadCoupon(couponNumber)).thenReturn(Optional.of(used));
-```
-
-### 542ed97 ### Coupon-service confirm API 추가 ###
-- 변경 요약: ### Coupon-service confirm API 추가 ###
-- 핵심 로직: 예약/확정/보상 API
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`, `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/dto/request/ConfirmCouponRequest.java`
-- 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
-```diff
-+import com.example.couponservice.adapter.in.web.dto.request.ConfirmCouponRequest;
-+import com.example.couponservice.adapter.in.web.dto.response.ConfirmCouponResponse;
-+import com.example.couponservice.application.port.in.ConfirmCouponUseCase;
-+    private final ConfirmCouponUseCase confirmCouponUseCase;
-+        return ApiResponse.success(buildReserveResponse(request.couponNumber(), CouponStatus.RESERVED));
-+    }
-+
-+    @PostMapping("/confirm")
-```
-- 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/dto/request/ConfirmCouponRequest.java`
-```diff
-+package com.example.couponservice.adapter.in.web.dto.request;
-+
-+public record ConfirmCouponRequest(
-+        String couponNumber,
-+        String orderId
-+) {
-+}
-```
-
-### 091c2a7 coupon-service에 보상(compensateCoupon) API 추가
-- 변경 요약: coupon-service에 보상(compensateCoupon) API 추가
-- 핵심 로직: 예약/확정/보상 API
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`, `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/dto/request/CompensateCouponRequest.java`
-- 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
-```diff
-+import com.example.couponservice.adapter.in.web.dto.request.CompensateCouponRequest;
-+import com.example.couponservice.adapter.in.web.dto.response.CompensateCouponResponse;
-+import com.example.couponservice.application.port.in.CompensateCouponUseCase;
-+    private final CompensateCouponUseCase compensateCouponUseCase;
-+    @PostMapping("/compensate")
-+    public ApiResponse<CompensateCouponResponse> compensateCoupon(@RequestBody CompensateCouponRequest request) {
-+        compensateCouponUseCase.compensateCoupon(request.couponNumber(), request.orderId());
-+        return ApiResponse.success(buildCompensateResponse(request.couponNumber(), CouponStatus.COMPENSATED));
-```
-- 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/dto/request/CompensateCouponRequest.java`
-```diff
-+package com.example.couponservice.adapter.in.web.dto.request;
-+
-+public record CompensateCouponRequest(
-+        String couponNumber,
-+        String orderId
-+) {
-+}
-```
-
-### 66c93ca confirm, compansate API를 point-service에도 동일한 방식으로 추가
-- 변경 요약: confirm, compansate API를 point-service에도 동일한 방식으로 추가
-- 핵심 로직: 예약/확정/보상 API
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `point-service/src/main/java/com/example/pointservice/adapter/in/web/PointController.java`, `point-service/src/main/java/com/example/pointservice/adapter/in/web/dto/request/CompensatePointRequest.java`
-- 코드 발췌: `point-service/src/main/java/com/example/pointservice/adapter/in/web/PointController.java`
-```diff
-+import com.example.pointservice.adapter.in.web.dto.request.CompensatePointRequest;
-+import com.example.pointservice.adapter.in.web.dto.request.ConfirmPointRequest;
-+import com.example.pointservice.adapter.in.web.dto.response.CompensatePointResponse;
-+import com.example.pointservice.adapter.in.web.dto.response.ConfirmPointResponse;
-+import com.example.pointservice.application.port.in.CompensatePointUseCase;
-+import com.example.pointservice.application.port.in.ConfirmPointUseCase;
-+    private final ConfirmPointUseCase confirmPointUseCase;
-+    private final CompensatePointUseCase compensatePointUseCase;
-```
-- 코드 발췌: `point-service/src/main/java/com/example/pointservice/adapter/in/web/dto/request/CompensatePointRequest.java`
-```diff
-+package com.example.pointservice.adapter.in.web.dto.request;
-+
-+public record CompensatePointRequest(
-+        String pointNumber,
-+        String orderId
-+) {
-+}
-```
-
-### 35b85e3 API 응답 에러 명시적으로 변경 중
-- 변경 요약: API 응답 에러 명시적으로 변경 중
-- 핵심 로직: API 엔드포인트 처리 흐름
-- 구조 변화: 쿠폰/포인트 서비스의 계약 또는 테스트 동시 확장
-- 주요 파일: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`, `coupon-service/src/main/java/com/example/couponservice/application/service/ReserveCouponService.java`
-- 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
-```diff
-+        return ApiResponse.success(buildCompensateResponse(request.couponNumber(), CouponStatus.AVAILABLE));
-```
-- 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/application/service/ReserveCouponService.java`
-```diff
-+        if (coupon == null) {
-+            return;
-+        }
-+        if (coupon.status() == CouponStatus.USED) {
-+            throw new IllegalStateException("보상 불가능한 쿠폰입니다: " + coupon.couponNumber());
-+        }
-+        if (coupon.status() != CouponStatus.RESERVED) {
-+                CouponStatus.AVAILABLE,
-```
-
-### 605354d coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
-- 변경 요약: coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
-- 핵심 로직: API 엔드포인트 처리 흐름
-- 구조 변화: 모듈 또는 테스트 구조 변경
-- 주요 파일: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/GlobalExceptionHandler.java`, `coupon-service/src/test/java/com/example/couponservice/adapter/in/web/CouponControllerIntegrationTest.java`
-- 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/GlobalExceptionHandler.java`
-```diff
-+package com.example.couponservice.adapter.in.web;
-+
-+import com.example.common.api.ApiError;
-+import com.example.common.api.ApiResponse;
-+import org.springframework.http.HttpStatus;
-+import org.springframework.http.ResponseEntity;
-+import org.springframework.web.bind.annotation.ExceptionHandler;
-+import org.springframework.web.bind.annotation.RestControllerAdvice;
-```
-- 코드 발췌: `coupon-service/src/test/java/com/example/couponservice/adapter/in/web/CouponControllerIntegrationTest.java`
-```diff
-+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-```
-
-### 7d9e662 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
-- 변경 요약: 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
-- 핵심 로직: 비즈니스 서비스 로직(예약/확정/보상)
-- 구조 변화: 소비자 모듈 또는 이벤트 처리 흐름 확장
-- 주요 파일: `coupon-service/src/main/java/com/example/couponservice/application/service/ReserveCouponService.java`, `coupon-service/src/test/java/com/example/couponservice/application/service/ReserveCouponServiceMockTest.java`
 - 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/application/service/ReserveCouponService.java`
 ```diff
 +        Coupon coupon = loadCouponPort.loadCoupon(couponNumber)

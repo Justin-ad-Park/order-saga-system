@@ -44,7 +44,6 @@ rootProject.name = 'order-saga-system'
 
 include 'order-orchestrator'
 include 'order-saga-consumer'
-include 'account'
 include 'common'
 include 'coupon-service'
 include 'point-service'
@@ -84,113 +83,7 @@ include 'point-service'
 - 변경 요약: 주문 오케스트레이터의 기본 골격만 완성. Persistent 개발 안됨
 - 핵심 로직: 모듈/의존성 구성 변경
 - 구조 변화: 오케스트레이터 책임/상태 관리 강화
-- 주요 파일: `account/build.gradle`, `account/settings.gradle`
-- 코드 발췌: `account/build.gradle`
-```diff
-+plugins {
-+    id 'java'
-+    id 'org.springframework.boot' version '3.3.2'
-+    id 'io.spring.dependency-management' version '1.1.5'
-+}
-+
-+group = 'com.example'
-+version = '1.0.0'
-```
-- 코드 발췌: `account/settings.gradle`
-```diff
-+rootProject.name = 'account'
-```
-
-### e37883c ### Common 모듈 추가 ######################
-- 변경 요약: ### Common 모듈 추가 ######################
-- 핵심 로직: 모듈/의존성 구성 변경
-- 구조 변화: 공통 모듈 추가 및 의존성 정리
-- 주요 파일: `common/build.gradle`, `common/src/main/java/com/example/common/api/ApiError.java`
-- 코드 발췌: `common/build.gradle`
-```diff
-+// org.springframework.boot 플러그인 절대 적용하지 않기
-+plugins {
-+    id 'java-library'
-+}
-+
-+group = 'com.example'
-+version = '0.0.1-SNAPSHOT'
-```
-- 코드 발췌: `common/src/main/java/com/example/common/api/ApiError.java`
-```diff
-+package com.example.common.api;
-+
-+// 공통 에러 DTO (web 계층)
-+public class ApiError {
-+    private final String code;
-+    private final String message;
-+    private ApiError(String code, String message) { this.code = code; this.message = message; }
-+    public String getCode() { return code; }
-```
-
-### 79dec4c [Coupon-service]First commit
-- 변경 요약: [Coupon-service]First commit
-- 핵심 로직: 모듈/의존성 구성 변경
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `coupon-service/build.gradle`, `coupon-service/src/main/java/com/example/couponservice/CouponServiceApplication.java`
-- 코드 발췌: `coupon-service/build.gradle`
-```diff
-+plugins {
-+    id 'org.springframework.boot'
-+    id 'io.spring.dependency-management' version '1.1.5'
-+    id 'java'
-+}
-+
-+dependencies {
-+    // Web API (기존 ver08과 동일하게 MVC 기반으로 시작)
-```
-- 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/CouponServiceApplication.java`
-```diff
-+package com.example.couponservice;
-+
-+import org.springframework.boot.SpringApplication;
-+import org.springframework.boot.autoconfigure.SpringBootApplication;
-+
-+
-+@SpringBootApplication
-+public class CouponServiceApplication {
-```
-
-### 193e5e2 First commit for Point MSA
-- 변경 요약: First commit for Point MSA
-- 핵심 로직: 모듈/의존성 구성 변경
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `order-orchestrator/build.gradle`, `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
-- 코드 발췌: `order-orchestrator/build.gradle`
-```diff
-+    testImplementation project(':point-service')
-```
-- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
-```diff
-+import com.example.orderorchestrator.adapter.out.webclient.PointServiceClient;
-+    private final PointServiceClient pointServiceClient;
-+        return Mono.when(
-+                        couponServiceClient.reserveCoupon(request.couponNumber(), result.orderId()),
-+                        pointServiceClient.reservePoint(request.pointNumber(), result.orderId())
-+                )
-```
-
-### a080f1d order start
-- 변경 요약: order start
-- 핵심 로직: 모듈/의존성 구성 변경
-- 구조 변화: 오케스트레이터 책임/상태 관리 강화
-- 주요 파일: `build.gradle`, `order-orchestrator/build.gradle`
-- 코드 발췌: `build.gradle`
-```diff
-+plugins {
-+    id 'org.springframework.boot' version '3.3.2' apply false
-+    id 'io.spring.dependency-management' version '1.1.5' apply false
-+    id 'java'
-+}
-+
-+allprojects {
-+    group = 'com.example.order'
-```
+- 주요 파일: `order-orchestrator/build.gradle`, `order-orchestrator/src/main/java/com/example/orderorchestrator/OrderOrchestratorApplication.java`
 - 코드 발췌: `order-orchestrator/build.gradle`
 ```diff
 +plugins {
@@ -202,26 +95,16 @@ include 'point-service'
 +dependencies {
 +    // Web API (기존 ver08과 동일하게 MVC 기반으로 시작)
 ```
-
-### 82e897a 주문 오케스트레이터의 기본 골격만 완성. Persistent 개발 안됨
-- 변경 요약: 주문 오케스트레이터의 기본 골격만 완성. Persistent 개발 안됨
-- 핵심 로직: 모듈/의존성 구성 변경
-- 구조 변화: 오케스트레이터 책임/상태 관리 강화
-- 주요 파일: `account/build.gradle`, `account/settings.gradle`
-- 코드 발췌: `account/build.gradle`
+- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/OrderOrchestratorApplication.java`
 ```diff
-+plugins {
-+    id 'java'
-+    id 'org.springframework.boot' version '3.3.2'
-+    id 'io.spring.dependency-management' version '1.1.5'
-+}
++package com.example.orderorchestrator;
 +
-+group = 'com.example'
-+version = '1.0.0'
-```
-- 코드 발췌: `account/settings.gradle`
-```diff
-+rootProject.name = 'account'
++import org.springframework.boot.SpringApplication;
++import org.springframework.boot.autoconfigure.SpringBootApplication;
++
++
++@SpringBootApplication
++public class OrderOrchestratorApplication {
 ```
 
 ### e37883c ### Common 모듈 추가 ######################
@@ -284,6 +167,18 @@ include 'point-service'
 - 핵심 로직: 모듈/의존성 구성 변경
 - 구조 변화: 모듈/기능 추가로 책임 분리
 - 주요 파일: `order-orchestrator/build.gradle`, `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
+- 변경 전/후 비교: `order-orchestrator/build.gradle`
+- diff 스타일
+```diff
+@@ -29,6 +29,7 @@ dependencies {
+     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+     testImplementation testFixtures(project(':common'))
+     testImplementation project(':coupon-service')
++    testImplementation project(':point-service')
+ 
+     compileOnly 'org.projectlombok:lombok'
+     annotationProcessor 'org.projectlombok:lombok'
+```
 - 코드 발췌: `order-orchestrator/build.gradle`
 ```diff
 +    testImplementation project(':point-service')

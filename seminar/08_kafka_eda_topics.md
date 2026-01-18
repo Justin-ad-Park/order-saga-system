@@ -91,6 +91,26 @@
 - 핵심 로직: Kafka 토픽/이벤트 설정
 - 구조 변화: 모듈/기능 추가로 책임 분리
 - 주요 파일: `bin_k8s/06_deploy_kafka.sh`
+- 변경 전/후 비교: `bin_k8s/06_deploy_kafka.sh`
+- diff 스타일
+```diff
+@@ -6,10 +6,16 @@
+ set -euo pipefail
+ 
+ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
++PID_FILE="${ROOT_DIR}/kafka-port-forward.pid"
+ 
+ kubectl -n msa apply -f "${ROOT_DIR}/kafka.yaml"
+ kubectl -n msa rollout status deployment/kafka
+ 
++if [[ -f "${PID_FILE}" ]]; then
++  kill "$(cat "${PID_FILE}")" || true
++  rm -f "${PID_FILE}"
++fi
++
+ kubectl -n msa port-forward svc/kafka 9094:9094 > "${ROOT_DIR}/kafka-port-forward.log" 2>&1 &
+-echo $! > "${ROOT_DIR}/kafka-port-forward.pid"
+```
 - 코드 발췌: `bin_k8s/06_deploy_kafka.sh`
 ```diff
 +PID_FILE="${ROOT_DIR}/kafka-port-forward.pid"
@@ -107,6 +127,26 @@
 - 핵심 로직: Kafka 토픽/이벤트 설정
 - 구조 변화: 모듈/기능 추가로 책임 분리
 - 주요 파일: `bin_k8s/06_deploy_kafka.sh`
+- 변경 전/후 비교: `bin_k8s/06_deploy_kafka.sh`
+- diff 스타일
+```diff
+@@ -6,10 +6,16 @@
+ set -euo pipefail
+ 
+ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
++PID_FILE="${ROOT_DIR}/kafka-port-forward.pid"
+ 
+ kubectl -n msa apply -f "${ROOT_DIR}/kafka.yaml"
+ kubectl -n msa rollout status deployment/kafka
+ 
++if [[ -f "${PID_FILE}" ]]; then
++  kill "$(cat "${PID_FILE}")" || true
++  rm -f "${PID_FILE}"
++fi
++
+ kubectl -n msa port-forward svc/kafka 9094:9094 > "${ROOT_DIR}/kafka-port-forward.log" 2>&1 &
+-echo $! > "${ROOT_DIR}/kafka-port-forward.pid"
+```
 - 코드 발췌: `bin_k8s/06_deploy_kafka.sh`
 ```diff
 +PID_FILE="${ROOT_DIR}/kafka-port-forward.pid"
@@ -151,111 +191,26 @@
 - 핵심 로직: Kafka 토픽/이벤트 설정
 - 구조 변화: 모듈/기능 추가로 책임 분리
 - 주요 파일: `order-orchestrator/src/test/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationIntegrationTest.java`
-- 코드 발췌: `order-orchestrator/src/test/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationIntegrationTest.java`
+- 변경 전/후 비교: `order-orchestrator/src/test/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationIntegrationTest.java`
+- diff 스타일
 ```diff
+@@ -10,8 +10,14 @@ import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OrderSag
+ import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OutboxMessageJpaEntity;
+ import com.example.orderorchestrator.domain.model.status.MSAStatus;
+ import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
 +import org.apache.kafka.clients.admin.AdminClient;
 +import org.apache.kafka.clients.admin.AdminClientConfig;
 +import org.apache.kafka.clients.consumer.ConsumerConfig;
 +import org.apache.kafka.clients.consumer.KafkaConsumer;
 +import org.apache.kafka.common.serialization.StringDeserializer;
+ import org.junit.jupiter.api.AfterAll;
+ import org.junit.jupiter.api.Test;
 +import org.junit.jupiter.api.TestInstance;
-+import org.springframework.beans.factory.annotation.Value;
-+import java.util.Set;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.boot.test.web.client.TestRestTemplate;
+@@ -25,11 +31,16 @@ import org.springframework.context.ConfigurableApplicationContext;
 ```
-
-### 499aff6 Kafka 브로커 구성 및 포트 포워드
-- 변경 요약: Kafka 브로커 구성 및 포트 포워드
-- 핵심 로직: Kafka 토픽/이벤트 설정
-- 구조 변화: 운영/실행 스크립트 표준화
-- 주요 파일: `bin_k8s/06_deploy_kafka.sh`, `bin_k8s/_06_kill_kafka.sh`
-- 코드 발췌: `bin_k8s/06_deploy_kafka.sh`
-```diff
-+#!/usr/bin/env bash
-+# bash를 엄격한 모드로 실행하는 옵션 설정
-+#  -e: 어떤 명령이 실패(비정상 종료)하면 즉시 스크립트 종료
-+#  -u: 선언되지 않은 변수를 사용하면 에러로 처리
-+#  -o pipefail: 파이프라인에서 앞 단계가 실패해도 전체 실패로 인식 (기본은 마지막 명령만 체크)
-+set -euo pipefail
-+
-+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-```
-- 코드 발췌: `bin_k8s/_06_kill_kafka.sh`
-```diff
-+#!/usr/bin/env bash
-+# bash를 엄격한 모드로 실행하는 옵션 설정
-+#  -e: 어떤 명령이 실패(비정상 종료)하면 즉시 스크립트 종료
-+#  -u: 선언되지 않은 변수를 사용하면 에러로 처리
-+#  -o pipefail: 파이프라인에서 앞 단계가 실패해도 전체 실패로 인식 (기본은 마지막 명령만 체크)
-+set -euo pipefail
-+
-+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-```
-
-### 10270ba 토픽 생성, 기존 토픽 삭제, 이벤트(토픽) 발행, 브로커 접속 테스트, 이벤트 소비 테스트 추가
-- 변경 요약: 토픽 생성, 기존 토픽 삭제, 이벤트(토픽) 발행, 브로커 접속 테스트, 이벤트 소비 테스트 추가
-- 핵심 로직: Kafka 토픽/이벤트 설정
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `bin_k8s/06_deploy_kafka.sh`
-- 코드 발췌: `bin_k8s/06_deploy_kafka.sh`
-```diff
-+PID_FILE="${ROOT_DIR}/kafka-port-forward.pid"
-+if [[ -f "${PID_FILE}" ]]; then
-+  kill "$(cat "${PID_FILE}")" || true
-+  rm -f "${PID_FILE}"
-+fi
-+
-+echo $! > "${PID_FILE}"
-```
-
-### 9a613a8 토픽 생성, 기존 토픽 삭제, 이벤트(토픽) 발행, 브로커 접속 테스트, 이벤트 소비 테스트 추가
-- 변경 요약: 토픽 생성, 기존 토픽 삭제, 이벤트(토픽) 발행, 브로커 접속 테스트, 이벤트 소비 테스트 추가
-- 핵심 로직: Kafka 토픽/이벤트 설정
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `bin_k8s/06_deploy_kafka.sh`
-- 코드 발췌: `bin_k8s/06_deploy_kafka.sh`
-```diff
-+PID_FILE="${ROOT_DIR}/kafka-port-forward.pid"
-+if [[ -f "${PID_FILE}" ]]; then
-+  kill "$(cat "${PID_FILE}")" || true
-+  rm -f "${PID_FILE}"
-+fi
-+
-+echo $! > "${PID_FILE}"
-```
-
-### aeceecc 테스트 토픽 분리 & 토픽 발행 테스트 OrderSagaEventPublishIntegrationTest
-- 변경 요약: 테스트 토픽 분리 & 토픽 발행 테스트 OrderSagaEventPublishIntegrationTest
-- 핵심 로직: Kafka 토픽/이벤트 설정
-- 구조 변화: 오케스트레이터 책임/상태 관리 강화
-- 주요 파일: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/kafka/OrderSagaEventKafkaPublisher.java`, `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/kafka/OrderSagaTopicConfig.java`
-- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/kafka/OrderSagaEventKafkaPublisher.java`
-```diff
-+package com.example.orderorchestrator.adapter.out.kafka;
-+
-+import com.example.orderorchestrator.application.port.out.OrderSagaEventPublisher;
-+import com.example.orderorchestrator.domain.event.OrderSagaEvent;
-+import com.fasterxml.jackson.core.JsonProcessingException;
-+import com.fasterxml.jackson.databind.ObjectMapper;
-+import org.slf4j.Logger;
-+import org.slf4j.LoggerFactory;
-```
-- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/kafka/OrderSagaTopicConfig.java`
-```diff
-+package com.example.orderorchestrator.adapter.out.kafka;
-+
-+import org.apache.kafka.common.config.TopicConfig;
-+import org.springframework.beans.factory.annotation.Value;
-+import org.springframework.context.annotation.Bean;
-+import org.springframework.context.annotation.Configuration;
-+import org.springframework.context.annotation.Profile;
-+import org.springframework.kafka.config.TopicBuilder;
-```
-
-### 9aa633c 통합 테스트 카프카 토픽 로그 추가
-- 변경 요약: 통합 테스트 카프카 토픽 로그 추가
-- 핵심 로직: Kafka 토픽/이벤트 설정
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `order-orchestrator/src/test/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationIntegrationTest.java`
 - 코드 발췌: `order-orchestrator/src/test/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationIntegrationTest.java`
 ```diff
 +import org.apache.kafka.clients.admin.AdminClient;

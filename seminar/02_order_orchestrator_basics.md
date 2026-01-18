@@ -67,6 +67,21 @@
 - 핵심 로직: 모듈/의존성 구성 변경
 - 구조 변화: 오케스트레이터 책임/상태 관리 강화
 - 주요 파일: `order-orchestrator/build.gradle`, `order-orchestrator/src/main/java/com/example/orderorchestrator/OrderOrchestratorApplication.java`
+- 변경 전/후 비교: `order-orchestrator/build.gradle`
+- diff 스타일
+```diff
+@@ -26,4 +26,10 @@ dependencies {
+     testImplementation 'com.fasterxml.uuid:java-uuid-generator:5.0.0'   // UUIDv7
+     testImplementation 'com.github.f4b6a3:ulid-creator:5.2.0'           // ULID
+     testImplementation 'com.github.ksuid:ksuid:1.1.2'                   // KSUID
++
++    compileOnly 'org.projectlombok:lombok'
++    annotationProcessor 'org.projectlombok:lombok'
++
++    testCompileOnly 'org.projectlombok:lombok'
++    testAnnotationProcessor 'org.projectlombok:lombok'
+ }
+```
 - 코드 발췌: `order-orchestrator/build.gradle`
 ```diff
 +
@@ -93,6 +108,26 @@
 - 핵심 로직: 식별자 생성 로직 분리
 - 구조 변화: 오케스트레이터 책임/상태 관리 강화
 - 주요 파일: `order-orchestrator/src/main/java/com/example/orderorchestrator/application/service/CreateOrderService.java`, `order-orchestrator/src/main/java/com/example/orderorchestrator/application/service/uuid/UUIDGenerator.java`
+- 변경 전/후 비교: `order-orchestrator/src/main/java/com/example/orderorchestrator/application/service/CreateOrderService.java`
+- diff 스타일
+```diff
+@@ -16,6 +16,8 @@ import java.util.List;
+ import java.util.UUID;
+ import java.util.stream.Collectors;
+ 
++import static com.example.orderorchestrator.application.service.uuid.UUIDGenerator.createUuid;
++
+ @Service
+ @Transactional
+ public class CreateOrderService implements CreateOrderUseCase {
+@@ -34,8 +36,8 @@ public class CreateOrderService implements CreateOrderUseCase {
+     @Override
+     public CreateOrderResult createOrder(CreateOrderCommand command) {
+         // 1) 주문ID / SagaID 생성 (임시: UUID 기반)
+-        String orderId = "ORD-" + UUID.randomUUID();
+-        String sagaId = "SAGA-" + UUID.randomUUID();
++        String orderId = "ORD-" + createUuid();
+```
 - 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/application/service/CreateOrderService.java`
 ```diff
 +import static com.example.orderorchestrator.application.service.uuid.UUIDGenerator.createUuid;
@@ -118,6 +153,18 @@
 - 핵심 로직: 모듈/의존성 구성 변경
 - 구조 변화: 오케스트레이터 책임/상태 관리 강화
 - 주요 파일: `order-orchestrator/build.gradle`, `order-orchestrator/src/main/resources/application.yaml`
+- 변경 전/후 비교: `order-orchestrator/build.gradle`
+- diff 스타일
+```diff
+@@ -15,6 +15,7 @@ dependencies {
+ 
+     // mybatis
+     implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
++    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+ 
+     // 헥사고날 구조 검증용 ArchUnit
+     testImplementation 'com.tngtech.archunit:archunit-junit5:1.3.0'
+```
 - 코드 발췌: `order-orchestrator/build.gradle`
 ```diff
 +    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -139,6 +186,26 @@
 - 핵심 로직: 모듈/의존성 구성 변경
 - 구조 변화: 오케스트레이터 책임/상태 관리 강화
 - 주요 파일: `order-orchestrator/build.gradle`, `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/persistence/OrderSagaPersistenceAdapter.java`
+- 변경 전/후 비교: `order-orchestrator/build.gradle`
+- diff 스타일
+```diff
+@@ -1,6 +1,6 @@
+ plugins {
+     id 'org.springframework.boot'
+-    id 'io.spring.dependency-management'
++    id 'io.spring.dependency-management' version '1.1.5'
+     id 'java'
+ }
+ 
+@@ -9,13 +9,14 @@ dependencies {
+     implementation 'org.springframework.boot:spring-boot-starter-web'
+     implementation 'org.springframework.boot:spring-boot-starter-validation'
+ 
+-    // 오케스트레이터용 H2 DB
++    // 오케스트레이터용 DB
++    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+```
 - 코드 발췌: `order-orchestrator/build.gradle`
 ```diff
 +    id 'io.spring.dependency-management' version '1.1.5'
@@ -162,118 +229,26 @@
 - 핵심 로직: 테스트 케이스 확장
 - 구조 변화: 오케스트레이터 책임/상태 관리 강화
 - 주요 파일: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
-- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
+- 변경 전/후 비교: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
+- diff 스타일
 ```diff
-+        return reserveExternalResources(request, result)
-+                .thenReturn(ResponseEntity.ok(mapToResponse(result)));
-+
-+    private CreateOrderResponse mapToResponse(CreateOrderResult result) {
-+        return CreateOrderResponse.of(
-+                result.orderId(),
-+                result.sagaId(),
-+                result.status()
+@@ -28,21 +28,11 @@ public class OrderOrchestrationController {
+     public Mono<ResponseEntity<CreateOrderResponse>> createOrder(
+             @Valid @RequestBody CreateOrderRequest request
+     ) {
+-
+         CreateOrderCommand command = mapToCommand(request);
+         CreateOrderResult result = createOrderUseCase.createOrder(command);
+ 
+-        CreateOrderResponse response = CreateOrderResponse.of(
+-                result.orderId(),
+-                result.sagaId(),
+-                result.status()
+-        );
+-
+-        return Mono.when(
+-                        couponServiceClient.reserveCoupon(request.couponNumber(), result.orderId()),
 ```
-
-### 82e897a 주문 오케스트레이터의 기본 골격만 완성. Persistent 개발 안됨
-- 변경 요약: 주문 오케스트레이터의 기본 골격만 완성. Persistent 개발 안됨
-- 핵심 로직: 모듈/의존성 구성 변경
-- 구조 변화: 오케스트레이터 책임/상태 관리 강화
-- 주요 파일: `order-orchestrator/build.gradle`, `order-orchestrator/src/main/java/com/example/orderorchestrator/OrderOrchestratorApplication.java`
-- 코드 발췌: `order-orchestrator/build.gradle`
-```diff
-+
-+    compileOnly 'org.projectlombok:lombok'
-+    annotationProcessor 'org.projectlombok:lombok'
-+
-+    testCompileOnly 'org.projectlombok:lombok'
-+    testAnnotationProcessor 'org.projectlombok:lombok'
-```
-- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/OrderOrchestratorApplication.java`
-```diff
-+package com.example.orderorchestrator;
-+
-+import org.springframework.boot.SpringApplication;
-+import org.springframework.boot.autoconfigure.SpringBootApplication;
-+
-+
-+@SpringBootApplication
-+public class OrderOrchestratorApplication {
-```
-
-### 478c995 UUID Generator 분리
-- 변경 요약: UUID Generator 분리
-- 핵심 로직: 식별자 생성 로직 분리
-- 구조 변화: 오케스트레이터 책임/상태 관리 강화
-- 주요 파일: `order-orchestrator/src/main/java/com/example/orderorchestrator/application/service/CreateOrderService.java`, `order-orchestrator/src/main/java/com/example/orderorchestrator/application/service/uuid/UUIDGenerator.java`
-- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/application/service/CreateOrderService.java`
-```diff
-+import static com.example.orderorchestrator.application.service.uuid.UUIDGenerator.createUuid;
-+
-+        String orderId = "ORD-" + createUuid();
-+        String sagaId = "SAGA-" + createUuid();
-+
-```
-- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/application/service/uuid/UUIDGenerator.java`
-```diff
-+package com.example.orderorchestrator.application.service.uuid;
-+
-+import java.util.UUID;
-+public class UUIDGenerator {
-+    public static UUID createUuid() {
-+        return UUID.randomUUID();
-+    }
-+}
-```
-
-### 73b1f75 add JPA Library and application.yaml setting
-- 변경 요약: add JPA Library and application.yaml setting
-- 핵심 로직: 모듈/의존성 구성 변경
-- 구조 변화: 오케스트레이터 책임/상태 관리 강화
-- 주요 파일: `order-orchestrator/build.gradle`, `order-orchestrator/src/main/resources/application.yaml`
-- 코드 발췌: `order-orchestrator/build.gradle`
-```diff
-+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-```
-- 코드 발췌: `order-orchestrator/src/main/resources/application.yaml`
-```diff
-+    url: jdbc:h2:mem:orderorchestrator;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL
-+    hibernate:
-+      ddl-auto: update
-+    show-sql: true
-+#    init:
-+#      mode: embedded  #always | never | embedded
-+#mybatis:
-+#  mapper-locations: classpath*:mappers/**/*.xml     # ★ XML 위치
-```
-
-### b304524 JPA 기본 구조 완성
-- 변경 요약: JPA 기본 구조 완성
-- 핵심 로직: 모듈/의존성 구성 변경
-- 구조 변화: 오케스트레이터 책임/상태 관리 강화
-- 주요 파일: `order-orchestrator/build.gradle`, `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/persistence/OrderSagaPersistenceAdapter.java`
-- 코드 발췌: `order-orchestrator/build.gradle`
-```diff
-+    id 'io.spring.dependency-management' version '1.1.5'
-+    // 오케스트레이터용 DB
-+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-```
-- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/persistence/OrderSagaPersistenceAdapter.java`
-```diff
-+// src/main/java/com/example/orderorchestrator/adapter/out/persistence/OrderSagaPersistenceAdapter.java
-+package com.example.orderorchestrator.adapter.out.persistence;
-+
-+import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OrderItemJpaEntity;
-+import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OrderSagaJpaEntity;
-+import com.example.orderorchestrator.application.port.out.SaveOrderSagaPort;
-+import com.example.orderorchestrator.adapter.out.persistence.jpa.OrderSagaJpaRepository;
-+import com.example.orderorchestrator.domain.model.OrderItem;
-```
-
-### 3eb2580 OrderOrchestrationController.java에서 createOrder가 “커맨드 생성 + 유즈케이스 호출 + 외부 호출”을 한 메서드에 모두 포함. 책임 분리를 통해 테스트/가독성 개선
-- 변경 요약: OrderOrchestrationController.java에서 createOrder가 “커맨드 생성 + 유즈케이스 호출 + 외부 호출”을 한 메서드에 모두 포함. 책임 분리를 통해 테스트/가독성 개선
-- 핵심 로직: 테스트 케이스 확장
-- 구조 변화: 오케스트레이터 책임/상태 관리 강화
-- 주요 파일: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
 - 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
 ```diff
 +        return reserveExternalResources(request, result)
