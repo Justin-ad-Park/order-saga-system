@@ -1943,13 +1943,62 @@ OFF도 최초 성공과 실패(아직 서킷 연결전), circuit재연결 후 �
 - Codex 응답 :
   seminar/01_overview_architecture.md에서 account 모듈 언급과 관련 코드 발췌를 제거하고 오케스트레이터 골격 예시로 대체함.
 
-## 96) 세미나 diff 표현 정리
-- 사용자 :
-  변경 전/후 제거, diff만 유지, ---/+++ 제거 요청
-- Codex 응답 :
-  seminar 문서 전부에서 전/후 블록과 요약을 제거하고 diff 스타일만 유지하며 diff 헤더/파일표시/No newline 문구를 정리함.
+
+### 96) diff 중복 설명 제거
+[참고 코드]
+- 변경 전
+```gradle
+    // Spring Boot 테스트 (TDD)
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation testFixtures(project(':common'))
+    testImplementation project(':coupon-service')
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+```
+- 변경 후
+```gradle
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation testFixtures(project(':common'))
+    testImplementation project(':coupon-service')
+    testImplementation project(':point-service')
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+```
+- 요약: 변경된 코드가 핵심 로직 흐름에 어떤 영향을 주는지 비교해 보여준다.
+- diff 스타일
+```diff
+diff --git a/order-orchestrator/build.gradle b/order-orchestrator/build.gradle
+index ab64391..ee0432c 100644
+--- a/order-orchestrator/build.gradle
++++ b/order-orchestrator/build.gradle
+@@ -29,6 +29,7 @@ dependencies {
+     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+     testImplementation testFixtures(project(':common'))
+     testImplementation project(':coupon-service')
++    testImplementation project(':point-service')
+ 
+     compileOnly 'org.projectlombok:lombok'
+     annotationProcessor 'org.projectlombok:lombok'
+```
+- 코드 발췌: `order-orchestrator/build.gradle`
+```diff
++    testImplementation project(':point-service')
+```
+
+[작업 지시]
+1. 이 부분에서 변경 전, 변경 후와 - 요약 아래의 diff 부분이 반복되는데 이렇게 다른 두 가지 방식으로 반복하지 말고, 
+이렇게 두 가지 방식으로 표현한 경우에는 diff 방식만 보여줘.
+
+2. 아래와 같이 ---, +++는 어떤 변화가 있다는지 이해가 어려워. 단순히 코드 내용이 변경된 거라면 ---, +++ 두 줄을 모두 없애서, 헷갈리지 않도록 해
+--- a/order-orchestrator/build.gradle
++++ b/order-orchestrator/build.gradle
+
+3. seminar 폴더의 전체 *.md에 위의 작업을 해
 
 
+### 97) diff 개선
 [참고 코드]
 - 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
 ```diff
@@ -1962,11 +2011,19 @@ OFF도 최초 성공과 실패(아직 서킷 연결전), circuit재연결 후 �
 ```
 
 [작업 지시]
-위와 같은 코드에서 클래스, 메서드가 표시가 안되니까 추가, 삭제된 코드가 어디에 작업된 건지 알수가 없어. 
+위와 같은 코드에서 클래스, 메서드가 표시가 안되니까 추가, 삭제된 코드가 어디에 작업된 건지 알수가 없어.
 변경이 없는 코드라도 클래스 선언부, 메소드 선언부와 클래스, 메서드의 시작과 끝에 해당하는 {}는 넣어주고,  
 중간에 생략된 코드는 아래와 같은 주석을 달아줘.
 
-// ... 생략  
+// ... 생략
 
 seminar의 전체 코드를 대상으로 작업하고, diff 당시의 클래스, 메서드 코드로 내용이 정리가 되어야 하니까
 git 명령어를 적절히 활용해서 문서를 업데이트 해.
+
+
+
+## 96) 세미나 코드 발췌/변경 표기 보강
+- 사용자 :
+  변경된 코드에 +/-, 클래스/메서드 선언과 중괄호를 보존하고 생략 표기를 넣으라는 요청
+- Codex 응답 :
+  seminar 문서의 커밋 상세를 재생성해 diff는 +/− 유지, 클래스/메서드 선언부와 중괄호를 포함하고 생략 구간을 //--- 생략 ...으로 표기하도록 정리함.

@@ -37,158 +37,158 @@
 ## 데이터셋
 - `seminar/support/datasets.md` 참고
 
-## 코드 발췌 및 설명
-- `settings.gradle`: MSA 모듈 구성을 한눈에 보여주는 설정 파일
-```gradle
-rootProject.name = 'order-saga-system'
-
-include 'order-orchestrator'
-include 'order-saga-consumer'
-include 'common'
-include 'coupon-service'
-include 'point-service'
-```
-- 왜 필요한가: MSA 경계를 명확히 보여줘 전체 구성(오케스트레이터/쿠폰/포인트/컨슈머)이 어떻게 분리되는지 한눈에 설명할 수 있다.
-
 ## 커밋 상세
 ### a080f1d order start
-- 변경 요약: order start
-- 핵심 로직: 모듈/의존성 구성 변경
-- 구조 변화: 오케스트레이터 책임/상태 관리 강화
-- 주요 파일: `build.gradle`, `order-orchestrator/build.gradle`
-- 코드 발췌: `build.gradle`
-```diff
-+plugins {
-+    id 'org.springframework.boot' version '3.3.2' apply false
-+    id 'io.spring.dependency-management' version '1.1.5' apply false
-+    id 'java'
-+}
-+
-+allprojects {
-+    group = 'com.example.order'
+- 주요 변경: order start
+- 핵심 코드: `order-orchestrator/src/test/java/temptest/UUIDTest.java`
+```java
+public class UUIDTest {
+//--- 생략 ...
+    void generateUUIDv7_and_compareSortOrder() {
+        compareID(() -> Generators.timeBasedGenerator().generate().toString());
+    }
+//--- 생략 ...
+}
 ```
-- 코드 발췌: `order-orchestrator/build.gradle`
-```diff
-+plugins {
-+    id 'org.springframework.boot'
-+    id 'io.spring.dependency-management'
-+    id 'java'
-+}
-+
-+dependencies {
-+    // Web API (기존 ver08과 동일하게 MVC 기반으로 시작)
-```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
 
 ### 82e897a 주문 오케스트레이터의 기본 골격만 완성. Persistent 개발 안됨
-- 변경 요약: 주문 오케스트레이터의 기본 골격만 완성. Persistent 개발 안됨
-- 핵심 로직: 모듈/의존성 구성 변경
-- 구조 변화: 오케스트레이터 책임/상태 관리 강화
-- 주요 파일: `order-orchestrator/build.gradle`, `order-orchestrator/src/main/java/com/example/orderorchestrator/OrderOrchestratorApplication.java`
-- 코드 발췌: `order-orchestrator/build.gradle`
-```diff
-+plugins {
-+    id 'org.springframework.boot'
-+    id 'io.spring.dependency-management'
-+    id 'java'
-+}
-+
-+dependencies {
-+    // Web API (기존 ver08과 동일하게 MVC 기반으로 시작)
+- 주요 변경: 주문 오케스트레이터의 기본 골격만 완성. Persistent 개발 안됨
+- 핵심 코드: `order-orchestrator/src/main/java/com/example/orderorchestrator/domain/outbox/OutboxMessage.java`
+```java
+public class OutboxMessage {
+//--- 생략 ...
+    private final String payload;               // 메시지 payload(JSON)
+
+    private MSAStatus couponStatus;
+    private MSAStatus orderStatus;
+    private MSAStatus paymentStatus;
+
+    private OrderSagaStatus sagaStatus;
+
+    private final LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    public OutboxMessage(
+            String orderId,
+            String payload,
+            MSAStatus couponStatus,
+            MSAStatus orderStatus,
+            MSAStatus paymentStatus,
+            OrderSagaStatus sagaStatus,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt
+    ) {
+        this.orderId = orderId;
+        this.payload = payload;
+        this.couponStatus = couponStatus;
+        this.orderStatus = orderStatus;
+        this.paymentStatus = paymentStatus;
+        this.sagaStatus = sagaStatus;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+//--- 생략 ...
+}
 ```
-- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/OrderOrchestratorApplication.java`
-```diff
-+package com.example.orderorchestrator;
-+
-+import org.springframework.boot.SpringApplication;
-+import org.springframework.boot.autoconfigure.SpringBootApplication;
-+
-+
-+@SpringBootApplication
-+public class OrderOrchestratorApplication {
-```
+- 설명: Outbox에 이벤트를 적재해 DB 트랜잭션과 이벤트 발행을 분리한다.
 
 ### e37883c ### Common 모듈 추가 ######################
-- 변경 요약: ### Common 모듈 추가 ######################
-- 핵심 로직: 모듈/의존성 구성 변경
-- 구조 변화: 공통 모듈 추가 및 의존성 정리
-- 주요 파일: `common/build.gradle`, `common/src/main/java/com/example/common/api/ApiError.java`
-- 코드 발췌: `common/build.gradle`
-```diff
-+// org.springframework.boot 플러그인 절대 적용하지 않기
-+plugins {
-+    id 'java-library'
-+}
-+
-+group = 'com.example'
-+version = '0.0.1-SNAPSHOT'
+- 주요 변경: ### Common 모듈 추가 ######################
+- 핵심 코드: `order-orchestrator/src/test/java/com/example/orderorchestrator/archunit/ArchitectureTest.java`
+```java
+public class ArchitectureTest {
+//--- 생략 ...
+                            PORT_OUT,                 // port.out (반드시 이를 통해 도메인/외부와 연결)
+                            DOMAIN,                   // 도메인 모델/상태
+                            "java..",
+                            "jakarta..",
+                            "javax..",
+                            "org.springframework..",
+                            "lombok.."                // 필요하다면
+                    );
+
+    private static final String DOMAIN_MODEL    = "..domain..model..";
+    private static final String DOMAIN_STATUS   = "..domain..model..status..";
+
+    // =====================================================
+    // 6. JPA 엔티티는 도메인 엔티티를 참조하면 안 된다
+    // =====================================================
+    /**
+     * JPA 엔티티가 Domain Model(엔터티/값객체 등) 에 직접 의존하지 않도록 강제하는 규칙.
+     *
+     * 헥사고날 아키텍처(Ports & Adapters)에서는 Persistence Layer(JPA)가
+     * 도메인의 내부 모델(domain.model.*)을 직접 참조하는 것이 금지된다.
+     * 그래야 도메인 로직이 인프라(JPA)에 오염되지 않고,
+     * 또한 persistence 구현체 교체 시(예: JPA → R2DBC → Mongo) 도메인이 안전하게 유지된다.
+     *
+     * 단, domain.model.status.* 패키지의 Enum(MSAStatus, OrderSagaStatus)은 예외로 허용한다.
+     * 이 상태 값들은 도메인의 공통 언어(Ubiquitous Language)이자 스키마와 1:1 매핑되는 값으로서,
+     * JPA 엔티티에서 상태 필드로 참조하는 것이 구조적으로 자연스럽기 때문이다.
+     *
+     * 요약:
+     *   - 금지: JPA → domain.model.*, domain.model.saga.*, domain.model.order.* 등
+     *   - 허용: JPA → domain.model.status.* (MSAStatus, OrderSagaStatus)
+     *
+//--- 생략 ...
+}
 ```
-- 코드 발췌: `common/src/main/java/com/example/common/api/ApiError.java`
-```diff
-+package com.example.common.api;
-+
-+// 공통 에러 DTO (web 계층)
-+public class ApiError {
-+    private final String code;
-+    private final String message;
-+    private ApiError(String code, String message) { this.code = code; this.message = message; }
-+    public String getCode() { return code; }
-```
+- 설명: Saga 상태 전이를 명시해 흐름의 단계가 코드로 드러나게 한다.
 
 ### 79dec4c [Coupon-service]First commit
-- 변경 요약: [Coupon-service]First commit
-- 핵심 로직: 모듈/의존성 구성 변경
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `coupon-service/build.gradle`, `coupon-service/src/main/java/com/example/couponservice/CouponServiceApplication.java`
-- 코드 발췌: `coupon-service/build.gradle`
-```diff
-+plugins {
-+    id 'org.springframework.boot'
-+    id 'io.spring.dependency-management' version '1.1.5'
-+    id 'java'
-+}
-+
-+dependencies {
-+    // Web API (기존 ver08과 동일하게 MVC 기반으로 시작)
+- 주요 변경: [Coupon-service]First commit
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/application/service/ReserveCouponService.java`
+```java
+public class ReserveCouponService implements ReserveCouponUseCase {
+//--- 생략 ...
+    public void reserve(String couponNumber, String orderId) {
+        Coupon coupon = loadCouponPort.loadCoupon(couponNumber)
+                .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다: " + couponNumber));
+
+        if (!coupon.isAvailable()) {
+            throw new IllegalStateException("예약 불가능한 쿠폰입니다: " + couponNumber);
+        }
+
+        // 지금은 간단히 status만 RESERVED로 변경한 새 인스턴스를 만든다고 가정
+        Coupon reserved = new Coupon(
+                coupon.couponNumber(),
+                CouponStatus.RESERVED,
+                coupon.issuedAt(),
+                coupon.expiredAt()
+        );
+
+        saveCouponPort.save(reserved);
+    }
+//--- 생략 ...
+}
 ```
-- 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/CouponServiceApplication.java`
-```diff
-+package com.example.couponservice;
-+
-+import org.springframework.boot.SpringApplication;
-+import org.springframework.boot.autoconfigure.SpringBootApplication;
-+
-+
-+@SpringBootApplication
-+public class CouponServiceApplication {
-```
+- 설명: 오케스트레이터가 쿠폰/포인트 예약을 병렬 호출해 분산 트랜잭션의 시작점을 만든다.
 
 ### 193e5e2 First commit for Point MSA
-- 변경 요약: First commit for Point MSA
-- 핵심 로직: 모듈/의존성 구성 변경
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `order-orchestrator/build.gradle`, `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
-- 변경 전/후 비교: `order-orchestrator/build.gradle`
-- diff 스타일
-```diff
-@@ -29,6 +29,7 @@ dependencies {
-     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-     testImplementation testFixtures(project(':common'))
-     testImplementation project(':coupon-service')
-+    testImplementation project(':point-service')
- 
-     compileOnly 'org.projectlombok:lombok'
-     annotationProcessor 'org.projectlombok:lombok'
+- 주요 변경: First commit for Point MSA
+- 핵심 코드: `point-service/src/test/java/com/example/pointservice/application/service/ReservePointServiceTest.java`
+```java
+class ReservePointServiceTest {
+//--- 생략 ...
+    void reserve_shouldChangeStatusToReserved_andSave() {
+        // given
+        String pointNumber = "PNT-001";
+        LocalDateTime now = LocalDateTime.now();
+        Point availablePoint = new Point(pointNumber, PointStatus.AVAILABLE, now.minusDays(1), now.plusDays(1));
+
+        when(loadPointPort.loadPoint(pointNumber)).thenReturn(Optional.of(availablePoint));
+
+        // when
+        reservePointService.reserve(pointNumber, "ORD-001");
+
+        // then
+        verify(loadPointPort, times(1)).loadPoint(pointNumber);
+        verify(savePointPort, times(1)).save(argThat(saved ->
+                saved.pointNumber().equals(pointNumber)
+                        && saved.status() == PointStatus.RESERVED
+        ));
+    }
+//--- 생략 ...
+}
 ```
-- 코드 발췌: `order-orchestrator/build.gradle`
-```diff
-+    testImplementation project(':point-service')
-```
-- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
-```diff
-+import com.example.orderorchestrator.adapter.out.webclient.PointServiceClient;
-+    private final PointServiceClient pointServiceClient;
-+        return Mono.when(
-+                        couponServiceClient.reserveCoupon(request.couponNumber(), result.orderId()),
-+                        pointServiceClient.reservePoint(request.pointNumber(), result.orderId())
-+                )
-```
+- 설명: 오케스트레이터가 쿠폰/포인트 예약을 병렬 호출해 분산 트랜잭션의 시작점을 만든다.

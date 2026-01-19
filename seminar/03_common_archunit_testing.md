@@ -29,145 +29,143 @@
 ## 데모/실습
 - ArchUnit 테스트 확인: `order-orchestrator/src/test/java/.../ArchitectureTest4OrderOrchestrator.java`
 
-## 코드 발췌 및 설명
-- `order-orchestrator/src/test/java/com/example/orderorchestrator/archunit/ArchitectureTest4OrderOrchestrator.java`: ArchUnit으로 헥사고날 규칙을 통과시키는 테스트
-```java
-@AnalyzeClasses(
-        packages = ArchitectureTest4OrderOrchestrator.BASE_PACKAGE,
-        importOptions = { ImportOption.DoNotIncludeTests.class }
-)
-public class ArchitectureTest4OrderOrchestrator extends HexagonalArchitectureTestTemplate {
-
-    static final String BASE_PACKAGE = "com.example.orderorchestrator";
-
-    @Override
-    protected String basePackage() {
-        return BASE_PACKAGE;
-    }
-}
-```
-- 왜 필요한가: 아키텍처 규칙을 자동으로 검증하는 장치를 보여줘, 구조가 무너지지 않도록 하는 이유를 설명할 수 있다.
-
 ## 커밋 상세
 ### e37883c ### Common 모듈 추가 ######################
-- 변경 요약: ### Common 모듈 추가 ######################
-- 핵심 로직: 모듈/의존성 구성 변경
-- 구조 변화: 공통 모듈 추가 및 의존성 정리
-- 주요 파일: `common/build.gradle`, `common/src/main/java/com/example/common/api/ApiError.java`
-- 코드 발췌: `common/build.gradle`
-```diff
-+// org.springframework.boot 플러그인 절대 적용하지 않기
-+plugins {
-+    id 'java-library'
-+}
-+
-+group = 'com.example'
-+version = '0.0.1-SNAPSHOT'
+- 주요 변경: ### Common 모듈 추가 ######################
+- 핵심 코드: `order-orchestrator/src/test/java/com/example/orderorchestrator/archunit/ArchitectureTest.java`
+```java
+public class ArchitectureTest {
+//--- 생략 ...
+                            PORT_OUT,                 // port.out (반드시 이를 통해 도메인/외부와 연결)
+                            DOMAIN,                   // 도메인 모델/상태
+                            "java..",
+                            "jakarta..",
+                            "javax..",
+                            "org.springframework..",
+                            "lombok.."                // 필요하다면
+                    );
+
+    private static final String DOMAIN_MODEL    = "..domain..model..";
+    private static final String DOMAIN_STATUS   = "..domain..model..status..";
+
+    // =====================================================
+    // 6. JPA 엔티티는 도메인 엔티티를 참조하면 안 된다
+    // =====================================================
+    /**
+     * JPA 엔티티가 Domain Model(엔터티/값객체 등) 에 직접 의존하지 않도록 강제하는 규칙.
+     *
+     * 헥사고날 아키텍처(Ports & Adapters)에서는 Persistence Layer(JPA)가
+     * 도메인의 내부 모델(domain.model.*)을 직접 참조하는 것이 금지된다.
+     * 그래야 도메인 로직이 인프라(JPA)에 오염되지 않고,
+     * 또한 persistence 구현체 교체 시(예: JPA → R2DBC → Mongo) 도메인이 안전하게 유지된다.
+     *
+     * 단, domain.model.status.* 패키지의 Enum(MSAStatus, OrderSagaStatus)은 예외로 허용한다.
+     * 이 상태 값들은 도메인의 공통 언어(Ubiquitous Language)이자 스키마와 1:1 매핑되는 값으로서,
+     * JPA 엔티티에서 상태 필드로 참조하는 것이 구조적으로 자연스럽기 때문이다.
+     *
+     * 요약:
+     *   - 금지: JPA → domain.model.*, domain.model.saga.*, domain.model.order.* 등
+     *   - 허용: JPA → domain.model.status.* (MSAStatus, OrderSagaStatus)
+     *
+//--- 생략 ...
+}
 ```
-- 코드 발췌: `common/src/main/java/com/example/common/api/ApiError.java`
-```diff
-+package com.example.common.api;
-+
-+// 공통 에러 DTO (web 계층)
-+public class ApiError {
-+    private final String code;
-+    private final String message;
-+    private ApiError(String code, String message) { this.code = code; this.message = message; }
-+    public String getCode() { return code; }
-```
+- 설명: Saga 상태 전이를 명시해 흐름의 단계가 코드로 드러나게 한다.
 
 ### 868aa6f Archunit 검증 테스트 추가
-- 변경 요약: Archunit 검증 테스트 추가
-- 핵심 로직: 아키텍처 규칙 테스트
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `order-orchestrator/src/test/java/com/example/orderorchestrator/archunit/ArchitectureTest.java`
-- 변경 전/후 비교: `order-orchestrator/src/test/java/com/example/orderorchestrator/archunit/ArchitectureTest.java`
-- diff 스타일
-```diff
-@@ -1,235 +1,161 @@
- package com.example.orderorchestrator.archunit;
- 
--import com.tngtech.archunit.core.domain.JavaClasses;
--import com.tngtech.archunit.core.importer.ClassFileImporter;
- import com.tngtech.archunit.core.importer.ImportOption;
- import com.tngtech.archunit.junit.AnalyzeClasses;
- import com.tngtech.archunit.junit.ArchTest;
- import com.tngtech.archunit.lang.ArchRule;
--import org.apache.ibatis.annotations.Mapper;
--import org.springframework.context.annotation.Configuration;
- 
- import static com.tngtech.archunit.base.DescribedPredicate.not;
- import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
- import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
- import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
+- 주요 변경: Archunit 검증 테스트 추가
+- 핵심 코드: `order-orchestrator/src/test/java/com/example/orderorchestrator/archunit/ArchitectureTest.java`
+```java
+public class ArchitectureTest {
+//--- 생략 ...
+                            PORT_OUT,                 // port.out (반드시 이를 통해 도메인/외부와 연결)
+                            DOMAIN,                   // 도메인 모델/상태
+                            "java..",
+                            "jakarta..",
+                            "javax..",
+                            "org.springframework..",
+                            "lombok.."                // 필요하다면
+                    );
+
+    private static final String DOMAIN_MODEL    = "..domain..model..";
+    private static final String DOMAIN_STATUS   = "..domain..model..status..";
+
+    // =====================================================
+    // 6. JPA 엔티티는 도메인 엔티티를 참조하면 안 된다
+    // =====================================================
+    /**
+     * JPA 엔티티가 Domain Model(엔터티/값객체 등) 에 직접 의존하지 않도록 강제하는 규칙.
+     *
+     * 헥사고날 아키텍처(Ports & Adapters)에서는 Persistence Layer(JPA)가
+     * 도메인의 내부 모델(domain.model.*)을 직접 참조하는 것이 금지된다.
+     * 그래야 도메인 로직이 인프라(JPA)에 오염되지 않고,
+     * 또한 persistence 구현체 교체 시(예: JPA → R2DBC → Mongo) 도메인이 안전하게 유지된다.
+     *
+     * 단, domain.model.status.* 패키지의 Enum(MSAStatus, OrderSagaStatus)은 예외로 허용한다.
+     * 이 상태 값들은 도메인의 공통 언어(Ubiquitous Language)이자 스키마와 1:1 매핑되는 값으로서,
+     * JPA 엔티티에서 상태 필드로 참조하는 것이 구조적으로 자연스럽기 때문이다.
+     *
+     * 요약:
+     *   - 금지: JPA → domain.model.*, domain.model.saga.*, domain.model.order.* 등
+     *   - 허용: JPA → domain.model.status.* (MSAStatus, OrderSagaStatus)
+     *
+//--- 생략 ...
+}
 ```
-- 코드 발췌: `order-orchestrator/src/test/java/com/example/orderorchestrator/archunit/ArchitectureTest.java`
-```diff
-+        packages = "com.example.orderorchestrator",
-+        importOptions = { ImportOption.DoNotIncludeTests.class }
-+    private static final String PORT_IN = "..application..port..in..";
-+    private static final String PORT_OUT = "..application..port..out..";
-+    private static final String SERVICE = "..application..service..";
-+    private static final String ADAPTER_IN = "..adapter..in..";
-+    private static final String ADAPTER_OUT = "..adapter..out..";
-+    private static final String ADAPTER_OUT_JPA = "..adapter..out.persistence.jpa..";
-```
+- 설명: Saga 상태 전이를 명시해 흐름의 단계가 코드로 드러나게 한다.
 
 ### 1475eba ArchitectureUnit 테스트 추가
-- 변경 요약: ArchitectureUnit 테스트 추가
-- 핵심 로직: 테스트 케이스 확장
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `coupon-service/src/test/java/com/example/couponservice/archunit/ArchitectureTest4CouponSercice.java`
-- 코드 발췌: `coupon-service/src/test/java/com/example/couponservice/archunit/ArchitectureTest4CouponSercice.java`
-```diff
-+package com.example.couponservice.archunit;
-+
-+import com.tngtech.archunit.core.importer.ImportOption;
-+import com.tngtech.archunit.junit.AnalyzeClasses;
-+import com.tngtech.archunit.junit.ArchTest;
-+import com.tngtech.archunit.lang.ArchRule;
-+
-+import static com.tngtech.archunit.base.DescribedPredicate.not;
+- 주요 변경: ArchitectureUnit 테스트 추가
+- 핵심 코드: `coupon-service/src/test/java/com/example/couponservice/archunit/ArchitectureTest4CouponSercice.java`
+```java
+public class ArchitectureTest4CouponSercice {
+//--- 생략 ...
+                            PORT_OUT,                 // port.out (반드시 이를 통해 도메인/외부와 연결)
+                            DOMAIN,                   // 도메인 모델/상태
+                            "java..",
+                            "jakarta..",
+                            "javax..",
+                            "org.springframework..",
+                            "lombok.."                // 필요하다면
+                    );
+
+    private static final String DOMAIN_MODEL    = "..domain..model..";
+    private static final String DOMAIN_STATUS   = "..domain..model..status..";
+
+    // =====================================================
+    // 6. JPA 엔티티는 도메인 엔티티를 참조하면 안 된다
+    // =====================================================
+    /**
+     * JPA 엔티티가 Domain Model(엔터티/값객체 등) 에 직접 의존하지 않도록 강제하는 규칙.
+     *
+     * 헥사고날 아키텍처(Ports & Adapters)에서는 Persistence Layer(JPA)가
+     * 도메인의 내부 모델(domain.model.*)을 직접 참조하는 것이 금지된다.
+     * 그래야 도메인 로직이 인프라(JPA)에 오염되지 않고,
+     * 또한 persistence 구현체 교체 시(예: JPA → R2DBC → Mongo) 도메인이 안전하게 유지된다.
+     *
+     * 단, domain.model.status.* 패키지의 Enum(MSAStatus, OrderSagaStatus)은 예외로 허용한다.
+     * 이 상태 값들은 도메인의 공통 언어(Ubiquitous Language)이자 스키마와 1:1 매핑되는 값으로서,
+     * JPA 엔티티에서 상태 필드로 참조하는 것이 구조적으로 자연스럽기 때문이다.
+     *
+     * 요약:
+     *   - 금지: JPA → domain.model.*, domain.model.saga.*, domain.model.order.* 등
+     *   - 허용: JPA → domain.model.status.* (MSAStatus, OrderSagaStatus)
+     *
+//--- 생략 ...
+}
 ```
+- 설명: Saga 상태 전이를 명시해 흐름의 단계가 코드로 드러나게 한다.
 
 ### 6e8df39 Archunit 중복제거 리팩토링
-- 변경 요약: Archunit 중복제거 리팩토링
-- 핵심 로직: 아키텍처 규칙 테스트
-- 구조 변화: 오케스트레이터 책임/상태 관리 강화
-- 주요 파일: `common/build.gradle`, `common/src/testFixtures/java/com/example/common/archunit/HexagonalArchitectureRules.java`
-- 변경 전/후 비교: `common/build.gradle`
-- diff 스타일
-```diff
-@@ -1,6 +1,7 @@
- // org.springframework.boot 플러그인 절대 적용하지 않기
- plugins {
-     id 'java-library'
-+    id 'java-test-fixtures'
- }
- 
- group = 'com.example'
-@@ -18,9 +19,10 @@ dependencies {
- 
-     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
-     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
-+
-+    testFixturesImplementation 'com.tngtech.archunit:archunit-junit5:1.3.0'
- }
+- 주요 변경: Archunit 중복제거 리팩토링
+- 핵심 코드: `common/src/testFixtures/java/com/example/common/archunit/HexagonalArchitectureTestTemplate.java`
+```java
+public abstract class HexagonalArchitectureTestTemplate {
+//--- 생략 ...
+    private HexagonalArchitectureRules rules() {
+        return HexagonalArchitectureRules.getInstance(basePackage());
+    }
+//--- 생략 ...
+}
 ```
-- 코드 발췌: `common/build.gradle`
-```diff
-+    id 'java-test-fixtures'
-+
-+    testFixturesImplementation 'com.tngtech.archunit:archunit-junit5:1.3.0'
-```
-- 코드 발췌: `common/src/testFixtures/java/com/example/common/archunit/HexagonalArchitectureRules.java`
-```diff
-+package com.example.common.archunit;
-+
-+import com.tngtech.archunit.lang.ArchRule;
-+
-+import static com.tngtech.archunit.base.DescribedPredicate.not;
-+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
-+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
-+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
-```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.

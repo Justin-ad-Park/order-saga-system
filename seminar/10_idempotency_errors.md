@@ -31,268 +31,616 @@
 ## 데모/실습
 - HTTP 테스트 파일 확인: `coupon-service/src/test/resources/01_couponServiceTest.http`, `point-service/src/test/resources/01_pointServiceTest.http`
 
-## 코드 발췌 및 설명
-- `coupon-service/src/main/java/com/example/couponservice/application/service/ReserveCouponService.java`: confirm 멱등성 처리(이미 USED면 no-op)
-```java
-    @Override
-    public void confirm(String couponNumber, String orderId) {
-        Coupon coupon = loadCouponPort.loadCoupon(couponNumber)
-                .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다: " + couponNumber));
-        if (coupon.status() == CouponStatus.USED) {
-            return;
-        }
-        validateConfirmable(coupon);
-
-        Coupon updated = new Coupon(
-                coupon.couponNumber(),
-                CouponStatus.USED,
-                coupon.issuedAt(),
-                coupon.expiredAt()
-        );
-        saveCouponPort.save(updated);
-    }
-```
-- 왜 필요한가: 멱등 처리 지점을 보여줘, 중복 호출에서 안정적인 동작 이유를 설명할 수 있다.
-
 ## 커밋 상세
 ### 542ed97 ### Coupon-service confirm API 추가 ###
-- 변경 요약: ### Coupon-service confirm API 추가 ###
-- 핵심 로직: 예약/확정/보상 API
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`, `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/dto/request/ConfirmCouponRequest.java`
-- 변경 전/후 비교: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
-- diff 스타일
-```diff
-@@ -1,8 +1,11 @@
- package com.example.couponservice.adapter.in.web;
- 
- import com.example.common.api.ApiResponse;
-+import com.example.couponservice.adapter.in.web.dto.request.ConfirmCouponRequest;
- import com.example.couponservice.adapter.in.web.dto.request.ReserveCouponRequest;
-+import com.example.couponservice.adapter.in.web.dto.response.ConfirmCouponResponse;
- import com.example.couponservice.adapter.in.web.dto.response.ReserveCouponResponse;
-+import com.example.couponservice.application.port.in.ConfirmCouponUseCase;
- import com.example.couponservice.application.port.in.ReserveCouponUseCase;
- import com.example.couponservice.domain.model.status.CouponStatus;
- import lombok.RequiredArgsConstructor;
-@@ -14,16 +17,32 @@ import org.springframework.web.bind.annotation.*;
- public class CouponController {
- 
-     private final ReserveCouponUseCase reserveCouponUseCase;
+- 주요 변경: ### Coupon-service confirm API 추가 ###
+- 핵심 코드: `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/config/KafkaConsumerConfig.java`
+```java
+//--- 생략 ...
 ```
-- 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
-```diff
-+import com.example.couponservice.adapter.in.web.dto.request.ConfirmCouponRequest;
-+import com.example.couponservice.adapter.in.web.dto.response.ConfirmCouponResponse;
-+import com.example.couponservice.application.port.in.ConfirmCouponUseCase;
-+    private final ConfirmCouponUseCase confirmCouponUseCase;
-+        return ApiResponse.success(buildReserveResponse(request.couponNumber(), CouponStatus.RESERVED));
-+    }
-+
-+    @PostMapping("/confirm")
-```
-- 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/dto/request/ConfirmCouponRequest.java`
-```diff
-+package com.example.couponservice.adapter.in.web.dto.request;
-+
-+public record ConfirmCouponRequest(
-+        String couponNumber,
-+        String orderId
-+) {
-+}
-```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
 
 ### 091c2a7 coupon-service에 보상(compensateCoupon) API 추가
-- 변경 요약: coupon-service에 보상(compensateCoupon) API 추가
-- 핵심 로직: 예약/확정/보상 API
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`, `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/dto/request/CompensateCouponRequest.java`
-- 변경 전/후 비교: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
-- diff 스타일
-```diff
-@@ -1,10 +1,13 @@
- package com.example.couponservice.adapter.in.web;
- 
- import com.example.common.api.ApiResponse;
-+import com.example.couponservice.adapter.in.web.dto.request.CompensateCouponRequest;
- import com.example.couponservice.adapter.in.web.dto.request.ConfirmCouponRequest;
- import com.example.couponservice.adapter.in.web.dto.request.ReserveCouponRequest;
-+import com.example.couponservice.adapter.in.web.dto.response.CompensateCouponResponse;
- import com.example.couponservice.adapter.in.web.dto.response.ConfirmCouponResponse;
- import com.example.couponservice.adapter.in.web.dto.response.ReserveCouponResponse;
-+import com.example.couponservice.application.port.in.CompensateCouponUseCase;
- import com.example.couponservice.application.port.in.ConfirmCouponUseCase;
- import com.example.couponservice.application.port.in.ReserveCouponUseCase;
- import com.example.couponservice.domain.model.status.CouponStatus;
-@@ -18,6 +21,7 @@ public class CouponController {
+- 주요 변경: coupon-service에 보상(compensateCoupon) API 추가
+- 핵심 코드: `coupon-service/src/test/java/com/example/couponservice/application/service/ReserveCouponServiceTest.java`
+```java
+class ReserveCouponServiceTest {
+//--- 생략 ...
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("확정 불가능한 쿠폰");
+
+        verify(saveCouponPort, never()).save(any());
+    }
+
+    @Test
+    void compensate_shouldChangeStatusToCompensated_andSave() {
+//--- 생략 ...
+}
 ```
-- 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
-```diff
-+import com.example.couponservice.adapter.in.web.dto.request.CompensateCouponRequest;
-+import com.example.couponservice.adapter.in.web.dto.response.CompensateCouponResponse;
-+import com.example.couponservice.application.port.in.CompensateCouponUseCase;
-+    private final CompensateCouponUseCase compensateCouponUseCase;
-+    @PostMapping("/compensate")
-+    public ApiResponse<CompensateCouponResponse> compensateCoupon(@RequestBody CompensateCouponRequest request) {
-+        compensateCouponUseCase.compensateCoupon(request.couponNumber(), request.orderId());
-+        return ApiResponse.success(buildCompensateResponse(request.couponNumber(), CouponStatus.COMPENSATED));
-```
-- 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/dto/request/CompensateCouponRequest.java`
-```diff
-+package com.example.couponservice.adapter.in.web.dto.request;
-+
-+public record CompensateCouponRequest(
-+        String couponNumber,
-+        String orderId
-+) {
-+}
-```
+- 설명: 오케스트레이터가 쿠폰/포인트 예약을 병렬 호출해 분산 트랜잭션의 시작점을 만든다.
 
 ### 66c93ca confirm, compansate API를 point-service에도 동일한 방식으로 추가
-- 변경 요약: confirm, compansate API를 point-service에도 동일한 방식으로 추가
-- 핵심 로직: 예약/확정/보상 API
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `point-service/src/main/java/com/example/pointservice/adapter/in/web/PointController.java`, `point-service/src/main/java/com/example/pointservice/adapter/in/web/dto/request/CompensatePointRequest.java`
-- 변경 전/후 비교: `point-service/src/main/java/com/example/pointservice/adapter/in/web/PointController.java`
-- diff 스타일
-```diff
-@@ -1,8 +1,14 @@
- package com.example.pointservice.adapter.in.web;
- 
- import com.example.common.api.ApiResponse;
-+import com.example.pointservice.adapter.in.web.dto.request.CompensatePointRequest;
-+import com.example.pointservice.adapter.in.web.dto.request.ConfirmPointRequest;
- import com.example.pointservice.adapter.in.web.dto.request.ReservePointRequest;
-+import com.example.pointservice.adapter.in.web.dto.response.CompensatePointResponse;
-+import com.example.pointservice.adapter.in.web.dto.response.ConfirmPointResponse;
- import com.example.pointservice.adapter.in.web.dto.response.ReservePointResponse;
-+import com.example.pointservice.application.port.in.CompensatePointUseCase;
-+import com.example.pointservice.application.port.in.ConfirmPointUseCase;
- import com.example.pointservice.application.port.in.ReservePointUseCase;
- import com.example.pointservice.domain.model.status.PointStatus;
- import lombok.RequiredArgsConstructor;
-@@ -14,16 +20,46 @@ import org.springframework.web.bind.annotation.*;
+- 주요 변경: confirm, compansate API를 point-service에도 동일한 방식으로 추가
+- 핵심 코드: `point-service/src/test/java/com/example/pointservice/application/service/ReservePointServiceTest.java`
+```java
+class ReservePointServiceTest {
+//--- 생략 ...
+        verify(savePointPort, times(1)).save(argThat(saved ->
+                saved.pointNumber().equals(pointNumber)
+                        && saved.status() == PointStatus.RESERVED
+        ));
+    }
+
+    @Test
+    void confirm_shouldChangeStatusToUsed_andSave() {
+//--- 생략 ...
+}
 ```
-- 코드 발췌: `point-service/src/main/java/com/example/pointservice/adapter/in/web/PointController.java`
-```diff
-+import com.example.pointservice.adapter.in.web.dto.request.CompensatePointRequest;
-+import com.example.pointservice.adapter.in.web.dto.request.ConfirmPointRequest;
-+import com.example.pointservice.adapter.in.web.dto.response.CompensatePointResponse;
-+import com.example.pointservice.adapter.in.web.dto.response.ConfirmPointResponse;
-+import com.example.pointservice.application.port.in.CompensatePointUseCase;
-+import com.example.pointservice.application.port.in.ConfirmPointUseCase;
-+    private final ConfirmPointUseCase confirmPointUseCase;
-+    private final CompensatePointUseCase compensatePointUseCase;
-```
-- 코드 발췌: `point-service/src/main/java/com/example/pointservice/adapter/in/web/dto/request/CompensatePointRequest.java`
-```diff
-+package com.example.pointservice.adapter.in.web.dto.request;
-+
-+public record CompensatePointRequest(
-+        String pointNumber,
-+        String orderId
-+) {
-+}
-```
+- 설명: 오케스트레이터가 쿠폰/포인트 예약을 병렬 호출해 분산 트랜잭션의 시작점을 만든다.
 
 ### 35b85e3 API 응답 에러 명시적으로 변경 중
-- 변경 요약: API 응답 에러 명시적으로 변경 중
-- 핵심 로직: API 엔드포인트 처리 흐름
-- 구조 변화: 쿠폰/포인트 서비스의 계약 또는 테스트 동시 확장
-- 주요 파일: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`, `coupon-service/src/main/java/com/example/couponservice/application/service/ReserveCouponService.java`
-- 변경 전/후 비교: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
-- diff 스타일
-```diff
-@@ -39,7 +39,7 @@ public class CouponController {
-     @PostMapping("/compensate")
-     public ApiResponse<CompensateCouponResponse> compensateCoupon(@RequestBody CompensateCouponRequest request) {
-         compensateCouponUseCase.compensateCoupon(request.couponNumber(), request.orderId());
--        return ApiResponse.success(buildCompensateResponse(request.couponNumber(), CouponStatus.COMPENSATED));
-+        return ApiResponse.success(buildCompensateResponse(request.couponNumber(), CouponStatus.AVAILABLE));
-     }
- 
-     private ReserveCouponResponse buildReserveResponse(String couponNumber, CouponStatus status) {
+- 주요 변경: API 응답 에러 명시적으로 변경 중
+- 핵심 코드: `point-service/src/test/java/com/example/pointservice/application/service/ReservePointServiceTest.java`
+```java
+class ReservePointServiceTest {
+//--- 생략 ...
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("확정 불가능한 포인트");
+
+        verify(savePointPort, never()).save(any());
+    }
+
+    @Test
+    void compensate_shouldChangeStatusToAvailable_andSave() {
+//--- 생략 ...
+}
 ```
-- 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
-```diff
-+        return ApiResponse.success(buildCompensateResponse(request.couponNumber(), CouponStatus.AVAILABLE));
-```
-- 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/application/service/ReserveCouponService.java`
-```diff
-+        if (coupon == null) {
-+            return;
-+        }
-+        if (coupon.status() == CouponStatus.USED) {
-+            throw new IllegalStateException("보상 불가능한 쿠폰입니다: " + coupon.couponNumber());
-+        }
-+        if (coupon.status() != CouponStatus.RESERVED) {
-+                CouponStatus.AVAILABLE,
-```
+- 설명: 오케스트레이터가 쿠폰/포인트 예약을 병렬 호출해 분산 트랜잭션의 시작점을 만든다.
 
 ### 605354d coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
-- 변경 요약: coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
-- 핵심 로직: API 엔드포인트 처리 흐름
-- 구조 변화: 모듈 또는 테스트 구조 변경
-- 주요 파일: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/GlobalExceptionHandler.java`, `coupon-service/src/test/java/com/example/couponservice/adapter/in/web/CouponControllerIntegrationTest.java`
-- 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/GlobalExceptionHandler.java`
-```diff
-+package com.example.couponservice.adapter.in.web;
-+
-+import com.example.common.api.ApiError;
-+import com.example.common.api.ApiResponse;
-+import org.springframework.http.HttpStatus;
-+import org.springframework.http.ResponseEntity;
-+import org.springframework.web.bind.annotation.ExceptionHandler;
-+import org.springframework.web.bind.annotation.RestControllerAdvice;
+- 주요 변경: coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 핵심 코드: `coupon-service/src/test/java/com/example/couponservice/adapter/in/web/CouponControllerIntegrationTest.java`
+```java
+class CouponControllerIntegrationTest {
+//--- 생략 ...
+    void confirmCoupon_shouldChangeStatusToUsed_whenReserved() {
+        String couponNumber = "CPN-INT-CONFIRM-001";
+        makeTestCoupon(couponNumber);
+
+        String reserveUrl = "http://localhost:" + port + "/api/v1/coupons/reserve";
+        String confirmUrl = "http://localhost:" + port + "/api/v1/coupons/confirm";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        ReserveCouponRequest reserveRequest =
+                new ReserveCouponRequest(couponNumber, "ORD-12345");
+        ResponseEntity<String> reserveResponse =
+                restTemplate.postForEntity(
+                        reserveUrl,
+                        new HttpEntity<>(reserveRequest, headers),
+                        String.class
+                );
+        assertThat(reserveResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        ConfirmCouponRequest confirmRequest =
+                new ConfirmCouponRequest(couponNumber, "ORD-12345");
+        ResponseEntity<String> confirmResponse =
+                restTemplate.postForEntity(
+                        confirmUrl,
+                        new HttpEntity<>(confirmRequest, headers),
+                        String.class
+                );
+
+        assertThat(confirmResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        CouponJpaEntity updated =
+                couponJpaRepository.findById(couponNumber).orElseThrow();
+        assertThat(updated.getStatus()).isEqualTo(CouponStatus.USED);
+    }
+//--- 생략 ...
+}
 ```
-- 코드 발췌: `coupon-service/src/test/java/com/example/couponservice/adapter/in/web/CouponControllerIntegrationTest.java`
-```diff
-+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-```
+- 설명: 오케스트레이터가 쿠폰/포인트 예약을 병렬 호출해 분산 트랜잭션의 시작점을 만든다.
 
 ### 7d9e662 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
-- 변경 요약: 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
-- 핵심 로직: 비즈니스 서비스 로직(예약/확정/보상)
-- 구조 변화: 소비자 모듈 또는 이벤트 처리 흐름 확장
-- 주요 파일: `coupon-service/src/main/java/com/example/couponservice/application/service/ReserveCouponService.java`, `coupon-service/src/test/java/com/example/couponservice/application/service/ReserveCouponServiceMockTest.java`
-- 변경 전/후 비교: `coupon-service/src/main/java/com/example/couponservice/application/service/ReserveCouponService.java`
-- diff 스타일
-```diff
-@@ -27,7 +27,20 @@ public class ReserveCouponService implements ReserveCouponUseCase, ConfirmCoupon
- 
-     @Override
-     public void confirm(String couponNumber, String orderId) {
--        updateStatus(couponNumber, CouponStatus.USED, this::validateConfirmable);
-+        Coupon coupon = loadCouponPort.loadCoupon(couponNumber)
-+                .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다: " + couponNumber));
-+        if (coupon.status() == CouponStatus.USED) {
-+            return;
-+        }
-+        validateConfirmable(coupon);
-+
-+        Coupon updated = new Coupon(
-+                coupon.couponNumber(),
-+                CouponStatus.USED,
-+                coupon.issuedAt(),
+- 주요 변경: 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 핵심 코드: `order-saga-consumer/src/main/resources/OSC_application.yaml`
+```yaml
+//--- 생략 ...
+  saga:
+    events:
+      topic: order-saga-events-test
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+//--- 생략 ...
 ```
-- 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/application/service/ReserveCouponService.java`
-```diff
-+        Coupon coupon = loadCouponPort.loadCoupon(couponNumber)
-+                .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다: " + couponNumber));
-+        if (coupon.status() == CouponStatus.USED) {
-+            return;
-+        }
-+        validateConfirmable(coupon);
-+
-+        Coupon updated = new Coupon(
+- 설명: Kafka/Consumer 배포 설정을 추가해 실행 환경을 고정한다.
+## 1) OrderSagaConsumer 모듈 추가 및 기본 컨슈머 구성
+- 새 모듈 `order-saga-consumer` 추가(기존 `OrderSagaConsumer`에서 이름 변경).
+//--- 생략 ...
 ```
-- 코드 발췌: `coupon-service/src/test/java/com/example/couponservice/application/service/ReserveCouponServiceMockTest.java`
-```diff
-+    @Test
-+    void confirm_shouldNoOp_ifCouponAlreadyUsed() {
-+        String couponNumber = "CPN-UNIT-USED-001";
-+        LocalDateTime now = LocalDateTime.now();
-+        Coupon used = new Coupon(couponNumber, CouponStatus.USED, now.minusDays(1), now.plusDays(1));
-+
-+        when(loadCouponPort.loadCoupon(couponNumber)).thenReturn(Optional.of(used));
+- 설명: Kafka 컨슈머가 이벤트를 수신해 confirm/compensate 흐름을 이어간다.
+
+### 35b85e3 API 응답 에러 명시적으로 변경 중
+- 주요 변경: API 응답 에러 명시적으로 변경 중
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
+```java
+public class CouponController {
+//--- 생략 ...
+    public ApiResponse<ConfirmCouponResponse> confirmCoupon(@RequestBody ConfirmCouponRequest request) {
+        confirmCouponUseCase.confirm(request.couponNumber(), request.orderId());
+        return ApiResponse.success(buildConfirmResponse(request.couponNumber(), CouponStatus.USED));
+    }
+//--- 생략 ...
+}
 ```
+- 설명: 성공 시 confirm 트랜잭션으로 예약을 확정한다.
+
+### 605354d coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 주요 변경: coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/GlobalExceptionHandler.java`
+```java
+public class GlobalExceptionHandler {
+//--- 생략 ...
+    public ResponseEntity<ApiResponse<Object>> handleBadRequest(IllegalArgumentException ex) {
+        return responseEntityWithHttpStatus(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage());
+    }
+//--- 생략 ...
+}
+```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
+
+### 7d9e662 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 주요 변경: 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 핵심 코드: `bin_k8s/07_run_local_consumer.sh`
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+//--- 생략 ...
+```
+- 설명: 실행/테스트 스크립트를 통해 분산 시나리오를 재현한다.
+## 1) OrderSagaConsumer 모듈 추가 및 기본 컨슈머 구성
+- 새 모듈 `order-saga-consumer` 추가(기존 `OrderSagaConsumer`에서 이름 변경).
+//--- 생략 ...
+```
+- 설명: Kafka 컨슈머가 이벤트를 수신해 confirm/compensate 흐름을 이어간다.
+
+### 35b85e3 API 응답 에러 명시적으로 변경 중
+- 주요 변경: API 응답 에러 명시적으로 변경 중
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
+```java
+public class CouponController {
+//--- 생략 ...
+    public ApiResponse<ConfirmCouponResponse> confirmCoupon(@RequestBody ConfirmCouponRequest request) {
+        confirmCouponUseCase.confirm(request.couponNumber(), request.orderId());
+        return ApiResponse.success(buildConfirmResponse(request.couponNumber(), CouponStatus.USED));
+    }
+//--- 생략 ...
+}
+```
+- 설명: 성공 시 confirm 트랜잭션으로 예약을 확정한다.
+
+### 605354d coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 주요 변경: coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/GlobalExceptionHandler.java`
+```java
+public class GlobalExceptionHandler {
+//--- 생략 ...
+    public ResponseEntity<ApiResponse<Object>> handleBadRequest(IllegalArgumentException ex) {
+        return responseEntityWithHttpStatus(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage());
+    }
+//--- 생략 ...
+}
+```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
+
+### 7d9e662 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 주요 변경: 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 핵심 코드: `bin_k8s/07_run_local_consumer.sh`
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+//--- 생략 ...
+```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
+## 1) OrderSagaConsumer 모듈 추가 및 기본 컨슈머 구성
+- 새 모듈 `order-saga-consumer` 추가(기존 `OrderSagaConsumer`에서 이름 변경).
+//--- 생략 ...
+```
+- 설명: Kafka 컨슈머가 이벤트를 수신해 confirm/compensate 흐름을 이어간다.
+
+### 35b85e3 API 응답 에러 명시적으로 변경 중
+- 주요 변경: API 응답 에러 명시적으로 변경 중
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
+```java
+public class CouponController {
+//--- 생략 ...
+    public ApiResponse<CompensateCouponResponse> compensateCoupon(@RequestBody CompensateCouponRequest request) {
+        compensateCouponUseCase.compensateCoupon(request.couponNumber(), request.orderId());
+        return ApiResponse.success(buildCompensateResponse(request.couponNumber(), CouponStatus.AVAILABLE));
+    }
+//--- 생략 ...
+}
+```
+- 설명: 실패 시 보상 트랜잭션을 수행해 상태를 원복한다.
+
+### 605354d coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 주요 변경: coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/GlobalExceptionHandler.java`
+```java
+public class GlobalExceptionHandler {
+//--- 생략 ...
+    public ResponseEntity<ApiResponse<Object>> handleBadRequest(IllegalArgumentException ex) {
+        return responseEntityWithHttpStatus(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage());
+    }
+//--- 생략 ...
+}
+```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
+
+### 7d9e662 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 주요 변경: 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 핵심 코드: `bin_k8s/07_run_local_consumer.sh`
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+//--- 생략 ...
+```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
+## 1) OrderSagaConsumer 모듈 추가 및 기본 컨슈머 구성
+- 새 모듈 `order-saga-consumer` 추가(기존 `OrderSagaConsumer`에서 이름 변경).
+//--- 생략 ...
+```
+- 설명: Kafka 컨슈머가 이벤트를 수신해 confirm/compensate 흐름을 이어간다.
+
+### 35b85e3 API 응답 에러 명시적으로 변경 중
+- 주요 변경: API 응답 에러 명시적으로 변경 중
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
+```java
+public class CouponController {
+//--- 생략 ...
+    public ApiResponse<CompensateCouponResponse> compensateCoupon(@RequestBody CompensateCouponRequest request) {
+        compensateCouponUseCase.compensateCoupon(request.couponNumber(), request.orderId());
+        return ApiResponse.success(buildCompensateResponse(request.couponNumber(), CouponStatus.AVAILABLE));
+    }
+//--- 생략 ...
+}
+```
+- 설명: 실패 시 보상 트랜잭션을 수행해 상태를 원복한다.
+
+### 605354d coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 주요 변경: coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/GlobalExceptionHandler.java`
+```java
+public class GlobalExceptionHandler {
+//--- 생략 ...
+    public ResponseEntity<ApiResponse<Object>> handleBadRequest(IllegalArgumentException ex) {
+        return responseEntityWithHttpStatus(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage());
+    }
+//--- 생략 ...
+}
+```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
+
+### 7d9e662 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 주요 변경: 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 핵심 코드: `bin_k8s/07_run_local_consumer.sh`
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+//--- 생략 ...
+```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
+## 1) OrderSagaConsumer 모듈 추가 및 기본 컨슈머 구성
+- 새 모듈 `order-saga-consumer` 추가(기존 `OrderSagaConsumer`에서 이름 변경).
+//--- 생략 ...
+```
+- 설명: Kafka 컨슈머가 이벤트를 수신해 confirm/compensate 흐름을 이어간다.
+
+### 35b85e3 API 응답 에러 명시적으로 변경 중
+- 주요 변경: API 응답 에러 명시적으로 변경 중
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
+```java
+public class CouponController {
+//--- 생략 ...
+    public ApiResponse<CompensateCouponResponse> compensateCoupon(@RequestBody CompensateCouponRequest request) {
+        compensateCouponUseCase.compensateCoupon(request.couponNumber(), request.orderId());
+        return ApiResponse.success(buildCompensateResponse(request.couponNumber(), CouponStatus.AVAILABLE));
+    }
+//--- 생략 ...
+}
+```
+- 설명: 실패 시 보상 트랜잭션을 수행해 상태를 원복한다.
+
+### 605354d coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 주요 변경: coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/GlobalExceptionHandler.java`
+```java
+public class GlobalExceptionHandler {
+//--- 생략 ...
+    public ResponseEntity<ApiResponse<Object>> handleBadRequest(IllegalArgumentException ex) {
+        return responseEntityWithHttpStatus(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage());
+    }
+//--- 생략 ...
+}
+```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
+
+### 7d9e662 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 주요 변경: 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 핵심 코드: `bin_k8s/07_run_local_consumer.sh`
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+//--- 생략 ...
+```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
+## 1) OrderSagaConsumer 모듈 추가 및 기본 컨슈머 구성
+- 새 모듈 `order-saga-consumer` 추가(기존 `OrderSagaConsumer`에서 이름 변경).
+//--- 생략 ...
+```
+- 설명: Kafka 컨슈머가 이벤트를 수신해 confirm/compensate 흐름을 이어간다.
+
+### 35b85e3 API 응답 에러 명시적으로 변경 중
+- 주요 변경: API 응답 에러 명시적으로 변경 중
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
+```java
+public class CouponController {
+//--- 생략 ...
+    public ApiResponse<CompensateCouponResponse> compensateCoupon(@RequestBody CompensateCouponRequest request) {
+        compensateCouponUseCase.compensateCoupon(request.couponNumber(), request.orderId());
+        return ApiResponse.success(buildCompensateResponse(request.couponNumber(), CouponStatus.AVAILABLE));
+    }
+//--- 생략 ...
+}
+```
+- 설명: 실패 시 보상 트랜잭션을 수행해 상태를 원복한다.
+
+### 605354d coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 주요 변경: coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/GlobalExceptionHandler.java`
+```java
+public class GlobalExceptionHandler {
+//--- 생략 ...
+    public ResponseEntity<ApiResponse<Object>> handleBadRequest(IllegalArgumentException ex) {
+        return responseEntityWithHttpStatus(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage());
+    }
+//--- 생략 ...
+}
+```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
+
+### 7d9e662 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 주요 변경: 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 핵심 코드: `bin_k8s/07_run_local_consumer.sh`
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+//--- 생략 ...
+```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
+## 1) OrderSagaConsumer 모듈 추가 및 기본 컨슈머 구성
+- 새 모듈 `order-saga-consumer` 추가(기존 `OrderSagaConsumer`에서 이름 변경).
+//--- 생략 ...
+```
+- 설명: Kafka 컨슈머가 이벤트를 수신해 confirm/compensate 흐름을 이어간다.
+
+### 35b85e3 API 응답 에러 명시적으로 변경 중
+- 주요 변경: API 응답 에러 명시적으로 변경 중
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
+```java
+public class CouponController {
+//--- 생략 ...
+    public ApiResponse<CompensateCouponResponse> compensateCoupon(@RequestBody CompensateCouponRequest request) {
+        compensateCouponUseCase.compensateCoupon(request.couponNumber(), request.orderId());
+        return ApiResponse.success(buildCompensateResponse(request.couponNumber(), CouponStatus.AVAILABLE));
+    }
+//--- 생략 ...
+}
+```
+- 설명: 실패 시 보상 트랜잭션을 수행해 상태를 원복한다.
+
+### 605354d coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 주요 변경: coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/GlobalExceptionHandler.java`
+```java
+public class GlobalExceptionHandler {
+//--- 생략 ...
+    public ResponseEntity<ApiResponse<Object>> handleBadRequest(IllegalArgumentException ex) {
+        return responseEntityWithHttpStatus(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage());
+    }
+//--- 생략 ...
+}
+```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
+
+### 7d9e662 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 주요 변경: 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 핵심 코드: `bin_k8s/07_run_local_consumer.sh`
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+//--- 생략 ...
+```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
+## 1) OrderSagaConsumer 모듈 추가 및 기본 컨슈머 구성
+- 새 모듈 `order-saga-consumer` 추가(기존 `OrderSagaConsumer`에서 이름 변경).
+//--- 생략 ...
+```
+- 설명: Kafka 컨슈머가 이벤트를 수신해 confirm/compensate 흐름을 이어간다.
+
+### 35b85e3 API 응답 에러 명시적으로 변경 중
+- 주요 변경: API 응답 에러 명시적으로 변경 중
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
+```java
+public class CouponController {
+//--- 생략 ...
+    public ApiResponse<CompensateCouponResponse> compensateCoupon(@RequestBody CompensateCouponRequest request) {
+        compensateCouponUseCase.compensateCoupon(request.couponNumber(), request.orderId());
+        return ApiResponse.success(buildCompensateResponse(request.couponNumber(), CouponStatus.AVAILABLE));
+    }
+//--- 생략 ...
+}
+```
+- 설명: 실패 시 보상 트랜잭션을 수행해 상태를 원복한다.
+
+### 605354d coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 주요 변경: coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/GlobalExceptionHandler.java`
+```java
+public class GlobalExceptionHandler {
+//--- 생략 ...
+    public ResponseEntity<ApiResponse<Object>> handleBadRequest(IllegalArgumentException ex) {
+        return responseEntityWithHttpStatus(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage());
+    }
+//--- 생략 ...
+}
+```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
+
+### 7d9e662 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 주요 변경: 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 핵심 코드: `bin_k8s/07_run_local_consumer.sh`
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+//--- 생략 ...
+```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
+## 1) OrderSagaConsumer 모듈 추가 및 기본 컨슈머 구성
+- 새 모듈 `order-saga-consumer` 추가(기존 `OrderSagaConsumer`에서 이름 변경).
+//--- 생략 ...
+```
+- 설명: Kafka 컨슈머가 이벤트를 수신해 confirm/compensate 흐름을 이어간다.
+
+### 35b85e3 API 응답 에러 명시적으로 변경 중
+- 주요 변경: API 응답 에러 명시적으로 변경 중
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
+```java
+public class CouponController {
+//--- 생략 ...
+    public ApiResponse<CompensateCouponResponse> compensateCoupon(@RequestBody CompensateCouponRequest request) {
+        compensateCouponUseCase.compensateCoupon(request.couponNumber(), request.orderId());
+        return ApiResponse.success(buildCompensateResponse(request.couponNumber(), CouponStatus.AVAILABLE));
+    }
+//--- 생략 ...
+}
+```
+- 설명: 실패 시 보상 트랜잭션을 수행해 상태를 원복한다.
+
+### 605354d coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 주요 변경: coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/GlobalExceptionHandler.java`
+```java
+public class GlobalExceptionHandler {
+//--- 생략 ...
+    public ResponseEntity<ApiResponse<Object>> handleBadRequest(IllegalArgumentException ex) {
+        return responseEntityWithHttpStatus(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage());
+    }
+//--- 생략 ...
+}
+```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
+
+### 7d9e662 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 주요 변경: 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 핵심 코드: `bin_k8s/07_run_local_consumer.sh`
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+//--- 생략 ...
+```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
+## 1) OrderSagaConsumer 모듈 추가 및 기본 컨슈머 구성
+- 새 모듈 `order-saga-consumer` 추가(기존 `OrderSagaConsumer`에서 이름 변경).
+- `OSC_application.yaml` 구성: `order-orchestrator`의 `orderOS_application.yaml` 내용을 복사하고 `sql.init` 제거.
+- Kafka 컨슈머 생성: 토픽 메시지 payload 출력 포맷을 `KafkaTopicPrinter` 스타일로 출력.
+- `OrderSagaConsumerApplication` 실행 시 `spring.profiles.active` 미지정이면 `test`가 기본이 되도록 설정.
+- 실행 스크립트 추가: `bin_k8s/07_dev_consumer.sh`, `bin_k8s/07_test_consumer.sh`.
+//--- 생략 ...
+```
+- 설명: Kafka 컨슈머가 이벤트를 수신해 confirm/compensate 흐름을 이어간다.
+
+### 35b85e3 API 응답 에러 명시적으로 변경 중
+- 주요 변경: API 응답 에러 명시적으로 변경 중
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
+```java
+public class CouponController {
+//--- 생략 ...
+    public ApiResponse<ReserveCouponResponse> reserveCoupon(@RequestBody ReserveCouponRequest request) {
+        reserveCouponUseCase.reserve(request.couponNumber(), request.orderId());
+
+        return ApiResponse.success(buildReserveResponse(request.couponNumber(), CouponStatus.RESERVED));
+    }
+//--- 생략 ...
+}
+```
+- 설명: 오케스트레이터가 쿠폰/포인트 예약을 병렬 호출해 분산 트랜잭션의 시작점을 만든다.
+
+### 605354d coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 주요 변경: coupon 서비스에도 오류 메시지 명시적으로 리턴하도록 확장
+- 핵심 코드: `coupon-service/src/main/java/com/example/couponservice/adapter/in/web/GlobalExceptionHandler.java`
+```java
+public class GlobalExceptionHandler {
+//--- 생략 ...
+    public ResponseEntity<ApiResponse<Object>> handleBadRequest(IllegalArgumentException ex) {
+        return responseEntityWithHttpStatus(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage());
+    }
+//--- 생략 ...
+}
+```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
+
+### 7d9e662 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 주요 변경: 이미 확정한 point, coupon 중복 확정 시 오류없이 처리(멱등성)
+- 핵심 코드: `bin_k8s/07_run_local_consumer.sh`
+```bash
+//--- 생략 ...
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+"${ROOT_DIR}/gradlew" :order-saga-consumer:bootRun \
+  -Dspring.profiles.active=test
+```
+- 설명: Kafka 컨슈머가 이벤트를 수신해 confirm/compensate 흐름을 이어간다.

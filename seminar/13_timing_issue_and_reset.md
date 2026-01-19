@@ -33,243 +33,362 @@
 - 리셋: `bin_common/05_reset_test_data.sh`
 - 보상 테스트: `bin_istio_test/05_test_saga_compensation.sh`
 
-## 코드 발췌 및 설명
-- `bin_common/05_reset_test_data.sh`: 스냅샷 기반 리셋으로 반복 테스트
-```bash
-kubectl -n msa exec -i deploy/mysql -- \
-  mysql -uroot -prootpw -e "CALL order_orchestrator_db.sp_truncate_order_orchestrator_test_data(); CALL coupon_db.sp_reset_coupon_test_data(); CALL point_db.sp_reset_point_test_data();"
-```
-- 왜 필요한가: 리셋 스크립트가 왜 필요한지 보여줘, 반복 테스트와 타이밍 이슈 재현/해결을 설명할 수 있다.
-
 ## 커밋 상세
 ### c4401c7 Istio 설치. 강제 타임아웃 테스트용 로직 추가, *** 보상 트랜잭션 타이밍 오류 존재함 ***
-- 변경 요약: Istio 설치. 강제 타임아웃 테스트용 로직 추가, *** 보상 트랜잭션 타이밍 오류 존재함 ***
-- 핵심 로직: 회로 차단/타임아웃 구성
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `bin_common/00_prepare_mysql_kafka.sh`, `bin_common/02_prepare_k8s_order_saga_Local_Consumer.sh`
-- 코드 발췌: `bin_common/00_prepare_mysql_kafka.sh`
-```diff
-+#!/usr/bin/env bash
-+set -euo pipefail
-+
-+COMMON_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-+# shellcheck disable=SC1091
-+source "${COMMON_DIR}/lib.sh"
-+
-+# 1) MySQL/Kafka 포트포워드 정리
+- 주요 변경: Istio 설치. 강제 타임아웃 테스트용 로직 추가, *** 보상 트랜잭션 타이밍 오류 존재함 ***
+- 핵심 코드: `point-service/src/main/java/com/example/pointservice/application/service/ReservePointService.java`
+```java
+public class ReservePointService implements ReservePointUseCase, ConfirmPointUseCase, CompensatePointUseCase {
+//--- 생략 ...
+    public void reserve(String pointNumber, String orderId) {
+        maybeDelay(pointNumber);
+        updateStatus(pointNumber, PointStatus.RESERVED, this::validateReservable);
+    }
+//--- 생략 ...
+}
 ```
-- 코드 발췌: `bin_common/02_prepare_k8s_order_saga_Local_Consumer.sh`
-```diff
-+#!/usr/bin/env bash
-+set -euo pipefail
-+
-+COMMON_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-+# shellcheck disable=SC1091
-+source "${COMMON_DIR}/lib.sh"
-+
-+ISTIO_ENABLED="${ISTIO_ENABLED:-false}"
-```
+- 설명: 오케스트레이터가 쿠폰/포인트 예약을 병렬 호출해 분산 트랜잭션의 시작점을 만든다.
 
 ### a16fa0c Timing Issue를 잡기 위한 로직 추가
-- 변경 요약: Timing Issue를 잡기 위한 로직 추가
-- 핵심 로직: 핵심 로직 추가/구조 변경
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `bin_k8s/sql/create_test_snapshots.sql`, `coupon-service/src/main/java/com/example/couponservice/adapter/out/persistence/CouponReservationPersistenceAdapter.java`
-- 변경 전/후 비교: `bin_k8s/sql/create_test_snapshots.sql`
-- diff 스타일
-```diff
-@@ -7,12 +7,20 @@ INSERT INTO coupon_snapshot
- SELECT *
- FROM coupon;
- 
-+CREATE TABLE IF NOT EXISTS coupon_reservation_snapshot LIKE coupon_reservation;
-+TRUNCATE TABLE coupon_reservation_snapshot;
-+INSERT INTO coupon_reservation_snapshot
-+SELECT *
-+FROM coupon_reservation;
-+
- DROP PROCEDURE IF EXISTS sp_reset_coupon_test_data;
- DELIMITER $$
- CREATE PROCEDURE sp_reset_coupon_test_data()
- BEGIN
-   TRUNCATE TABLE coupon;
-+  TRUNCATE TABLE coupon_reservation;
+- 주요 변경: Timing Issue를 잡기 위한 로직 추가
+- 핵심 코드: `point-service/src/test/java/com/example/pointservice/application/service/ReservePointServiceTest.java`
+```java
+class ReservePointServiceTest {
+//--- 생략 ...
+    void reserve_shouldChangeStatusToReserved_andSave() {
+        // given
+        String pointNumber = "PNT-UNIT-AVAILABLE-001";
+        LocalDateTime now = LocalDateTime.now();
+        Point availablePoint = new Point(pointNumber, PointStatus.AVAILABLE, now.minusDays(1), now.plusDays(1));
+
+        when(loadPointPort.loadPoint(pointNumber)).thenReturn(Optional.of(availablePoint));
+
+        // when
+        reservePointService.reserve(pointNumber, "ORD-001");
+
+        // then
+        verify(loadPointPort, times(1)).loadPoint(pointNumber);
+        verify(savePointPort, times(1)).save(argThat(saved ->
+                saved.pointNumber().equals(pointNumber)
+                        && saved.status() == PointStatus.RESERVED
+        ));
+    }
+//--- 생략 ...
+}
 ```
-- 코드 발췌: `bin_k8s/sql/create_test_snapshots.sql`
-```diff
-+CREATE TABLE IF NOT EXISTS coupon_reservation_snapshot LIKE coupon_reservation;
-+TRUNCATE TABLE coupon_reservation_snapshot;
-+INSERT INTO coupon_reservation_snapshot
-+SELECT *
-+FROM coupon_reservation;
-+
-+  TRUNCATE TABLE coupon_reservation;
-+  INSERT INTO coupon_reservation SELECT * FROM coupon_reservation_snapshot;
-```
-- 코드 발췌: `coupon-service/src/main/java/com/example/couponservice/adapter/out/persistence/CouponReservationPersistenceAdapter.java`
-```diff
-+package com.example.couponservice.adapter.out.persistence;
-+
-+import com.example.couponservice.adapter.out.persistence.jpa.CouponReservationJpaEntity;
-+import com.example.couponservice.adapter.out.persistence.jpa.CouponReservationJpaRepository;
-+import com.example.couponservice.application.port.out.LoadCouponReservationPort;
-+import com.example.couponservice.application.port.out.SaveCouponReservationPort;
-+import com.example.couponservice.domain.model.CouponReservation;
-+import com.example.couponservice.domain.model.status.ReservationStatus;
-```
+- 설명: 오케스트레이터가 쿠폰/포인트 예약을 병렬 호출해 분산 트랜잭션의 시작점을 만든다.
 
 ### bfa985f 타이밍 이슈 작업 완료
-- 변경 요약: 타이밍 이슈 작업 완료
-- 핵심 로직: API 엔드포인트 처리 흐름
-- 구조 변화: 오케스트레이터 책임/상태 관리 강화
-- 주요 파일: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`, `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/webclient/CouponServiceClient.java`
-- 변경 전/후 비교: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
-- diff 스타일
-```diff
-@@ -2,28 +2,22 @@ package com.example.orderorchestrator.adapter.in.web;
- 
- import com.example.orderorchestrator.adapter.in.web.dto.request.CreateOrderRequest;
- import com.example.orderorchestrator.adapter.in.web.dto.response.CreateOrderResponse;
--import com.example.orderorchestrator.adapter.out.webclient.CouponServiceClient;
--import com.example.orderorchestrator.adapter.out.webclient.PointServiceClient;
- import com.example.orderorchestrator.application.port.in.CreateOrderUseCase;
- import com.example.orderorchestrator.application.port.in.UpdateOrderSagaStatusUseCase;
- import com.example.orderorchestrator.application.port.in.UpdateOutboxMessageUseCase;
- import com.example.orderorchestrator.application.port.in.command.CreateOrderCommand;
- import com.example.orderorchestrator.application.port.in.result.CreateOrderResult;
--import com.example.orderorchestrator.application.port.out.OrderSagaEventPublisher;
--import com.example.orderorchestrator.domain.event.OrderSagaEvent;
-+import com.example.orderorchestrator.application.service.OrderSagaEventService;
-+import com.example.orderorchestrator.application.service.ReserveExternalResourcesService;
- import com.example.orderorchestrator.domain.event.OrderSagaEventType;
+- 주요 변경: 타이밍 이슈 작업 완료
+- 핵심 코드: `order-orchestrator/src/main/java/com/example/orderorchestrator/application/service/ReserveExternalResourcesService.java`
+```java
+public class ReserveExternalResourcesService {
+//--- 생략 ...
+    public Mono<Void> reserveExternalResources(String orderId, String couponNumber, String pointNumber) {
+        List<Mono<?>> calls = new ArrayList<>();
+        // Reserve independently; failures are collected and surfaced after all attempts.
+        if (StringUtils.hasText(couponNumber)) {
+            calls.add(reserveCoupon(couponNumber, orderId));
+        }
+        if (StringUtils.hasText(pointNumber)) {
+            calls.add(reservePoint(pointNumber, orderId));
+        }
+        if (calls.isEmpty()) {
+            return Mono.empty();
+        }
+        return Mono.whenDelayError(calls).then();
+    }
+//--- 생략 ...
+}
 ```
-- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
-```diff
-+import com.example.orderorchestrator.application.service.OrderSagaEventService;
-+import com.example.orderorchestrator.application.service.ReserveExternalResourcesService;
-+    private final ReserveExternalResourcesService reserveExternalResourcesService;
-+    private final OrderSagaEventService orderSagaEventService;
-+        return reserveExternalResourcesService.reserveExternalResources(
-+                        result.orderId(),
-+                        request.couponNumber(),
-+                        request.pointNumber()
-```
-- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/webclient/CouponServiceClient.java`
-```diff
-+import com.example.orderorchestrator.adapter.out.webclient.dto.WebApiResponse;
-+import com.example.orderorchestrator.application.port.out.ReserveCouponPort;
-+public class CouponServiceClient implements ReserveCouponPort {
-+    @Override
-+    public Mono<Void> reserveCoupon(String couponNumber, String orderId) {
-+                .bodyToMono(new ParameterizedTypeReference<WebApiResponse<ReserveCouponResponse>>() {})
-+                })
-+                .then();
-```
+- 설명: 오케스트레이터가 쿠폰/포인트 예약을 병렬 호출해 분산 트랜잭션의 시작점을 만든다.
 
 ### 1864862 timing issue 테스트 케이스 추가
-- 변경 요약: timing issue 테스트 케이스 추가
-- 핵심 로직: 테스트 케이스 확장
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `bin_k8s/sql/QueryTestData.sql`, `bin_k8s/sql/create_test_snapshots.sql`
-- 코드 발췌: `bin_k8s/sql/QueryTestData.sql`
-```diff
-+SELECT * FROM order_orchestrator_db.OUTBOX_MESSAGE ;
-+SELECT * FROM order_orchestrator_db.ORDER_SAGA ;
-+SELECT * FROM order_orchestrator_db.ORDER_ITEM ;
-+
-+SELECT * FROM point_db.point;
-+SELECT * FROM point_db.point_reservation;
-+SELECT * FROM coupon_db.coupon;
-+SELECT * FROM coupon_db.coupon_reservation;
-```
-- 코드 발췌: `bin_k8s/sql/create_test_snapshots.sql`
+- 주요 변경: timing issue 테스트 케이스 추가
+- 핵심 코드: `bin_k8s/sql/create_test_snapshots.sql`
 ```sql
-CREATE DATABASE IF NOT EXISTS coupon_db;
-USE coupon_db;
-
-CREATE TABLE IF NOT EXISTS coupon_snapshot LIKE coupon;
-TRUNCATE TABLE coupon_snapshot;
+//--- 생략 ...
 INSERT INTO coupon_snapshot
 SELECT *
 FROM coupon;
-```
 
-### eeca8aa Saga 반복 테스트 가능하도록 데이터 초기화(OUTBOX_MESSAGE, ORDER_SAGA, ORDER_ITEM)
-- 변경 요약: Saga 반복 테스트 가능하도록 데이터 초기화(OUTBOX_MESSAGE, ORDER_SAGA, ORDER_ITEM)
-- 핵심 로직: 테스트 케이스 확장
-- 구조 변화: 운영/실행 스크립트 표준화
-- 주요 파일: `bin_common/05_reset_test_data.sh`, `bin_k8s/sql/create_test_snapshots.sql`
-- 변경 전/후 비교: `bin_common/05_reset_test_data.sh`
-- diff 스타일
-```diff
-@@ -2,6 +2,6 @@
- set -euo pipefail
- 
- kubectl -n msa exec -i deploy/mysql -- \
--  mysql -uroot -prootpw -e "CALL coupon_db.sp_reset_coupon_test_data(); CALL point_db.sp_reset_point_test_data();"
-+  mysql -uroot -prootpw -e "CALL order_orchestrator_db.sp_truncate_order_orchestrator_test_data(); CALL coupon_db.sp_reset_coupon_test_data(); CALL point_db.sp_reset_point_test_data();"
- 
- echo "Test data reset from snapshots."
-```
-- 코드 발췌: `bin_common/05_reset_test_data.sh`
-```diff
-+  mysql -uroot -prootpw -e "CALL order_orchestrator_db.sp_truncate_order_orchestrator_test_data(); CALL coupon_db.sp_reset_coupon_test_data(); CALL point_db.sp_reset_point_test_data();"
-```
-- 코드 발췌: `bin_k8s/sql/create_test_snapshots.sql`
-```diff
-+CREATE DATABASE IF NOT EXISTS order_orchestrator_db;
-+USE order_orchestrator_db;
-+
-+DROP PROCEDURE IF EXISTS sp_truncate_order_orchestrator_test_data;
-+DELIMITER $$
-+CREATE PROCEDURE sp_truncate_order_orchestrator_test_data()
-+BEGIN
-+  SET FOREIGN_KEY_CHECKS = 0;
-```
-
-### c1100d4 Snapshot 생성 시점을 sh에서 각 서비스 기동 스크립트(*schema.sql)로 변경
-- 변경 요약: Snapshot 생성 시점을 sh에서 각 서비스 기동 스크립트(*schema.sql)로 변경
-- 핵심 로직: DB 스키마/테스트 데이터
-- 구조 변화: 쿠폰/포인트 서비스의 계약 또는 테스트 동시 확장
-- 주요 파일: `bin_common/02_prepare_k8s_order_saga_Local_Consumer.sh`, `bin_k8s/sql/create_test_snapshots.sql`
-- 변경 전/후 비교: `bin_common/02_prepare_k8s_order_saga_Local_Consumer.sh`
-- diff 스타일
-```diff
-@@ -43,20 +43,22 @@ echo "==> [5/8] MSA 이미지 빌드 및 배포"
- "${ROOT_DIR}/point-service/scripts/deploy_k8s.sh"
- "${ROOT_DIR}/order-orchestrator/scripts/deploy_k8s.sh"
- 
--# 6) 테스트 스냅샷 준비
--echo "==> [6/8] 테스트 스냅샷 준비"
--"${ROOT_DIR}/bin_common/04_create_test_snapshot_procs.sh"
--
--# 7) MSA 재기동 및 포트포워드
--echo "==> [7/8] MSA 재기동 및 포트포워드"
-+# 6) MSA 재기동 및 포트포워드
-+echo "==> [6/8] MSA 재기동 및 포트포워드"
- kubectl -n msa rollout restart deployment/coupon-service
- kubectl -n msa rollout restart deployment/point-service
- kubectl -n msa rollout restart deployment/order-orchestrator
-+kubectl -n msa rollout status deployment/coupon-service
-```
-- 코드 발췌: `bin_common/02_prepare_k8s_order_saga_Local_Consumer.sh`
-```diff
-+# 6) MSA 재기동 및 포트포워드
-+echo "==> [6/8] MSA 재기동 및 포트포워드"
-+kubectl -n msa rollout status deployment/coupon-service
-+kubectl -n msa rollout status deployment/point-service
-+# 7) 테스트 스냅샷 준비
-+echo "==> [7/8] 테스트 스냅샷 준비"
-+"${ROOT_DIR}/bin_common/04_create_test_snapshot_procs.sh"
-```
-- 코드 발췌: `bin_k8s/sql/create_test_snapshots.sql`
-```sql
-CREATE DATABASE IF NOT EXISTS coupon_db;
-USE coupon_db;
 
 DROP PROCEDURE IF EXISTS sp_reset_coupon_test_data;
 DELIMITER $$
 CREATE PROCEDURE sp_reset_coupon_test_data()
 BEGIN
-  TRUNCATE TABLE coupon;
+//--- 생략 ...
 ```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
+
+### eeca8aa Saga 반복 테스트 가능하도록 데이터 초기화(OUTBOX_MESSAGE, ORDER_SAGA, ORDER_ITEM)
+- 주요 변경: Saga 반복 테스트 가능하도록 데이터 초기화(OUTBOX_MESSAGE, ORDER_SAGA, ORDER_ITEM)
+- 핵심 코드: `bin_k8s/sql/create_test_snapshots.sql`
+```sql
+//--- 생략 ...
+END$$
+DELIMITER ;
+
+CREATE DATABASE IF NOT EXISTS order_orchestrator_db;
+USE order_orchestrator_db;
+
+DROP PROCEDURE IF EXISTS sp_truncate_order_orchestrator_test_data;
+DELIMITER $$
+CREATE PROCEDURE sp_truncate_order_orchestrator_test_data()
+//--- 생략 ...
+```
+- 설명: 핵심 흐름을 구성하는 로직을 추가한다.
+
+### c1100d4 Snapshot 생성 시점을 sh에서 각 서비스 기동 스크립트(*schema.sql)로 변경
+- 주요 변경: Snapshot 생성 시점을 sh에서 각 서비스 기동 스크립트(*schema.sql)로 변경
+- 핵심 코드: `order-orchestrator/src/test/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationIntegrationTest.java`
+```java
+class OrderOrchestrationIntegrationTest {
+//--- 생략 ...
+            ServiceContext context = startService(
+                    PointServiceApplication.class,
+                    "point_application",
+                    "point_schema.sql",
+                    8082,
+                    "point"
+            );
+            pointContext = context.context();
+            pointPort = context.port();
+        }
+
+        registry.add("external.point.base-url", () -> "http://localhost:" + pointPort);
+    }
+
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    @Autowired
+    private OrderSagaJpaRepository orderSagaJpaRepository;
+
+    @Autowired
+    private OutboxMessageJpaRepository outboxMessageJpaRepository;
+
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
+
+    //@AfterEach
+    void tearDown() {
+        outboxMessageJpaRepository.deleteAll();
+        orderSagaJpaRepository.deleteAll();
+    }
+
+    // 쿠폰과 포인트 모두 예약 가능한 경우
+    @Test
+    void createOrder_withCouponAndPoint_shouldPersistOrderSaga_and_OutboxMessage() {
+        // given: 주문 생성 요청 바디
+        Map<String, Object> requestBody = Map.of(
+                "couponNumber", "CPN-INT-BOTH-001",
+                "pointNumber", "PNT-INT-BOTH-001",
+                "paymentNumber", "PAY-001",
+                "paymentAmount", 35000L,
+                "orderItems", List.of(
+                        Map.of("itemNumber", "ITEM-001", "quantity", 2),
+                        Map.of("itemNumber", "ITEM-002", "quantity", 1)
+                )
+        );
+
+        assertOrderCreated(requestBody, MSAStatus.Reserved, MSAStatus.Reserved, OrderSagaStatus.Reserved);
+    }
+
+    // 쿠폰만 사용하는 경우
+    @Test
+    void createOrder_withCouponOnly_shouldPersistOrderSaga_and_OutboxMessage() {
+        Map<String, Object> requestBody = Map.of(
+                "couponNumber", "CPN-INT-ONLY-001",
+                "paymentNumber", "PAY-001",
+                "paymentAmount", 35000L,
+                "orderItems", List.of(
+                        Map.of("itemNumber", "ITEM-001", "quantity", 2),
+                        Map.of("itemNumber", "ITEM-002", "quantity", 1)
+                )
+        );
+
+        assertOrderCreated(requestBody, MSAStatus.Reserved, MSAStatus.NotUsed, OrderSagaStatus.Reserved);
+    }
+
+    // 포인트만 사용하는 경우
+    @Test
+    void createOrder_withPointOnly_shouldPersistOrderSaga_and_OutboxMessage() {
+        Map<String, Object> requestBody = Map.of(
+                "pointNumber", "PNT-INT-ONLY-001",
+                "paymentNumber", "PAY-001",
+                "paymentAmount", 35000L,
+                "orderItems", List.of(
+                        Map.of("itemNumber", "ITEM-001", "quantity", 2),
+                        Map.of("itemNumber", "ITEM-002", "quantity", 1)
+                )
+        );
+
+        assertOrderCreated(requestBody, MSAStatus.NotUsed, MSAStatus.Reserved, OrderSagaStatus.Reserved);
+    }
+
+    // 쿠폰/포인트 없이 주문하는 경우
+    @Test
+    void createOrder_withoutCouponAndPoint_shouldPersistOrderSaga_and_OutboxMessage() {
+        Map<String, Object> requestBody = Map.of(
+                "paymentNumber", "PAY-001",
+                "paymentAmount", 35000L,
+                "orderItems", List.of(
+                        Map.of("itemNumber", "ITEM-001", "quantity", 2),
+                        Map.of("itemNumber", "ITEM-002", "quantity", 1)
+                )
+        );
+
+        assertOrderCreated(requestBody, MSAStatus.NotUsed, MSAStatus.NotUsed, OrderSagaStatus.Reserved);
+    }
+
+    // 쿠폰은 이미 예약되어 실패하고, 포인트는 예약 가능한 경우
+    @Test
+    void createOrder_withReservedCouponAndAvailablePoint_shouldMarkCouponFailedAndPointReserved() {
+        Map<String, Object> requestBody = Map.of(
+                "couponNumber", "CPN-INT-BOTH-RESERVED-001",
+                "pointNumber", "PNT-INT-BOTH-AVAILABLE-001",
+                "paymentNumber", "PAY-001",
+                "paymentAmount", 35000L,
+                "orderItems", List.of(
+                        Map.of("itemNumber", "ITEM-001", "quantity", 2),
+                        Map.of("itemNumber", "ITEM-002", "quantity", 1)
+                )
+        );
+
+        assertOrderCreatedWithExternalFailure(requestBody, MSAStatus.Failed, MSAStatus.Reserved, OrderSagaStatus.Compensating);
+    }
+
+    private void assertOrderCreated(
+            Map<String, Object> requestBody,
+            MSAStatus expectedCouponStatus,
+            MSAStatus expectedPointStatus,
+            OrderSagaStatus expectedSagaStatus
+    ) {
+        HttpEntity<Map<String, Object>> httpEntity = buildHttpEntity(requestBody);
+
+        // when: /api/v1/orders 호출
+        ResponseEntity<CreateOrderResponse> response = restTemplate.exchange(
+                "/api/v1/orders",
+                HttpMethod.POST,
+                httpEntity,
+                CreateOrderResponse.class
+        );
+
+        // then: HTTP 응답 검증
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+
+        CreateOrderResponse body = response.getBody();
+        String orderId = body.orderId();
+        String sagaId = body.sagaId();
+        String status = body.status();
+
+        assertThat(orderId).isNotBlank();
+        assertThat(sagaId).isNotBlank();
+        assertThat(status).isEqualTo(OrderSagaStatus.InProgress.name());
+
+        // 그리고 H2 DB에 order_saga, outbox_message 가 잘 들어갔는지 확인
+
+        // 1) order_saga 테이블
+        Optional<OrderSagaJpaEntity> sagaOpt = orderSagaJpaRepository.findByOrderId(orderId);
+        assertThat(sagaOpt).isPresent();
+
+        OrderSagaJpaEntity sagaEntity = sagaOpt.get();
+        assertOrderSaga(
+                sagaEntity,
+                orderId,
+                sagaId,
+                readString(requestBody, "pointNumber"),
+                expectedSagaStatus
+        );
+        assertOutbox(orderId, expectedCouponStatus, expectedPointStatus, expectedSagaStatus, true);
+    }
+
+    private void assertOrderCreatedWithExternalFailure(
+            Map<String, Object> requestBody,
+            MSAStatus expectedCouponStatus,
+            MSAStatus expectedPointStatus,
+            OrderSagaStatus expectedSagaStatus
+    ) {
+        HttpEntity<Map<String, Object>> httpEntity = buildHttpEntity(requestBody);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/v1/orders",
+                HttpMethod.POST,
+                httpEntity,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        OrderSagaJpaEntity sagaEntity = findLatestSaga();
+        String orderId = sagaEntity.getOrderId();
+
+        assertOrderSaga(
+                sagaEntity,
+                orderId,
+                sagaEntity.getSagaId(),
+                readString(requestBody, "pointNumber"),
+                expectedSagaStatus
+        );
+        assertOutbox(orderId, expectedCouponStatus, expectedPointStatus, expectedSagaStatus, false);
+    }
+
+    private HttpEntity<Map<String, Object>> buildHttpEntity(Map<String, Object> requestBody) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        return new HttpEntity<>(requestBody, headers);
+    }
+
+    private OrderSagaJpaEntity findLatestSaga() {
+        List<OrderSagaJpaEntity> sagas = orderSagaJpaRepository.findAll();
+        assertThat(sagas).isNotEmpty();
+        return sagas.stream()
+                .max(Comparator.comparing(OrderSagaJpaEntity::getId))
+                .orElseThrow();
+    }
+
+    private void assertOrderSaga(
+            OrderSagaJpaEntity sagaEntity,
+            String orderId,
+            String sagaId,
+            String expectedPointNumber,
+            OrderSagaStatus expectedSagaStatus
+    ) {
+        assertThat(orderId).isNotBlank();
+        assertThat(sagaId).isNotBlank();
+        assertThat(sagaEntity.getOrderId()).isEqualTo(orderId);
+        assertThat(sagaEntity.getSagaId()).isEqualTo(sagaId);
+        assertThat(sagaEntity.getPointNumber()).isEqualTo(expectedPointNumber);
+        assertThat(sagaEntity.getStatus()).isEqualTo(expectedSagaStatus);
+        assertThat(sagaEntity.getItems()).hasSize(2);
+    }
+
+    private String readString(Map<String, Object> requestBody, String key) {
+        Object value = requestBody.get(key);
+        return value == null ? null : value.toString();
+    }
+
+    private void assertOutbox(
+            String orderId,
+            MSAStatus expectedCouponStatus,
+            MSAStatus expectedPointStatus,
+            OrderSagaStatus expectedSagaStatus,
+            boolean expectPayload
+    ) {
+        Optional<OutboxMessageJpaEntity> outboxOpt = outboxMessageJpaRepository.findByOrderId(orderId);
+        assertThat(outboxOpt).isPresent();
+
+        OutboxMessageJpaEntity outboxEntity = outboxOpt.get();
+        assertThat(outboxEntity.getOrderId()).isEqualTo(orderId);
+        assertThat(outboxEntity.getCouponStatus()).isEqualTo(expectedCouponStatus);
+        assertThat(outboxEntity.getPointStatus()).isEqualTo(expectedPointStatus);
+        assertThat(outboxEntity.getOrderStatus()).isEqualTo(MSAStatus.InProgress);
+        assertThat(outboxEntity.getSagaStatus()).isEqualTo(expectedSagaStatus);
+        if (expectPayload) {
+//--- 생략 ...
+}
+```
+- 설명: Kafka 이벤트를 발행해 서비스 간 비동기 연계를 구성한다.

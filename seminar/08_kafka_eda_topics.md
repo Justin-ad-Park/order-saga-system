@@ -30,195 +30,308 @@
 ## 데모/실습
 - 카프카 테스트 코드: `order-orchestrator/src/test/java/.../adapter/out/kafka/*`
 
-## 코드 발췌 및 설명
-- `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/kafka/OrderSagaTopicConfig.java`: 테스트 프로파일에서 토픽 설정/초기화
-```java
-    @Bean
-    public KafkaAdmin.NewTopics orderSagaEventsTopic(
-            @Value("${order.saga.events.topic:order-saga-events}") String topic
-    ) {
-        return new KafkaAdmin.NewTopics(
-                TopicBuilder.name(topic)
-                        .config(TopicConfig.RETENTION_MS_CONFIG, "30000")
-                        .build()
-        );
-    }
-
-    @Bean
-    public ApplicationRunner recreateTestTopicWithConfig(
-            KafkaAdmin kafkaAdmin,
-            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers,
-            @Value("${order.saga.events.topic:order-saga-events}") String topic
-    ) {
-        return args -> {
-            kafkaAdmin.initialize();
-        };
-    }
-```
-- 왜 필요한가: 테스트 토픽 구성과 초기화가 어디서 이뤄지는지 보여줘, EDA 검증 방법을 설명할 수 있다.
-
 ## 커밋 상세
 ### 499aff6 Kafka 브로커 구성 및 포트 포워드
-- 변경 요약: Kafka 브로커 구성 및 포트 포워드
-- 핵심 로직: Kafka 토픽/이벤트 설정
-- 구조 변화: 운영/실행 스크립트 표준화
-- 주요 파일: `bin_k8s/06_deploy_kafka.sh`, `bin_k8s/_06_kill_kafka.sh`
-- 코드 발췌: `bin_k8s/06_deploy_kafka.sh`
-```diff
-+#!/usr/bin/env bash
-+# bash를 엄격한 모드로 실행하는 옵션 설정
-+#  -e: 어떤 명령이 실패(비정상 종료)하면 즉시 스크립트 종료
-+#  -u: 선언되지 않은 변수를 사용하면 에러로 처리
-+#  -o pipefail: 파이프라인에서 앞 단계가 실패해도 전체 실패로 인식 (기본은 마지막 명령만 체크)
-+set -euo pipefail
-+
-+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+- 주요 변경: Kafka 브로커 구성 및 포트 포워드
+- 핵심 코드: `bin_k8s/kafka.yaml`
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: msa
+spec:
+//--- 생략 ...
 ```
-- 코드 발췌: `bin_k8s/_06_kill_kafka.sh`
-```diff
-+#!/usr/bin/env bash
-+# bash를 엄격한 모드로 실행하는 옵션 설정
-+#  -e: 어떤 명령이 실패(비정상 종료)하면 즉시 스크립트 종료
-+#  -u: 선언되지 않은 변수를 사용하면 에러로 처리
-+#  -o pipefail: 파이프라인에서 앞 단계가 실패해도 전체 실패로 인식 (기본은 마지막 명령만 체크)
-+set -euo pipefail
-+
-+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-```
+- 설명: Kafka/Consumer 배포 설정을 추가해 실행 환경을 고정한다.
 
 ### 10270ba 토픽 생성, 기존 토픽 삭제, 이벤트(토픽) 발행, 브로커 접속 테스트, 이벤트 소비 테스트 추가
-- 변경 요약: 토픽 생성, 기존 토픽 삭제, 이벤트(토픽) 발행, 브로커 접속 테스트, 이벤트 소비 테스트 추가
-- 핵심 로직: Kafka 토픽/이벤트 설정
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `bin_k8s/06_deploy_kafka.sh`
-- 변경 전/후 비교: `bin_k8s/06_deploy_kafka.sh`
-- diff 스타일
-```diff
-@@ -6,10 +6,16 @@
- set -euo pipefail
- 
- ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-+PID_FILE="${ROOT_DIR}/kafka-port-forward.pid"
- 
- kubectl -n msa apply -f "${ROOT_DIR}/kafka.yaml"
- kubectl -n msa rollout status deployment/kafka
- 
-+if [[ -f "${PID_FILE}" ]]; then
-+  kill "$(cat "${PID_FILE}")" || true
-+  rm -f "${PID_FILE}"
-+fi
-+
- kubectl -n msa port-forward svc/kafka 9094:9094 > "${ROOT_DIR}/kafka-port-forward.log" 2>&1 &
--echo $! > "${ROOT_DIR}/kafka-port-forward.pid"
+- 주요 변경: 토픽 생성, 기존 토픽 삭제, 이벤트(토픽) 발행, 브로커 접속 테스트, 이벤트 소비 테스트 추가
+- 핵심 코드: `bin_k8s/06_deploy_kafka.sh`
+```bash
+//--- 생략 ...
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PID_FILE="${ROOT_DIR}/kafka-port-forward.pid"
+
+kubectl -n msa apply -f "${ROOT_DIR}/kafka.yaml"
+kubectl -n msa rollout status deployment/kafka
+
+if [[ -f "${PID_FILE}" ]]; then
+//--- 생략 ...
 ```
-- 코드 발췌: `bin_k8s/06_deploy_kafka.sh`
-```diff
-+PID_FILE="${ROOT_DIR}/kafka-port-forward.pid"
-+if [[ -f "${PID_FILE}" ]]; then
-+  kill "$(cat "${PID_FILE}")" || true
-+  rm -f "${PID_FILE}"
-+fi
-+
-+echo $! > "${PID_FILE}"
-```
+- 설명: 실행/테스트 스크립트를 통해 분산 시나리오를 재현한다.
 
 ### 9a613a8 토픽 생성, 기존 토픽 삭제, 이벤트(토픽) 발행, 브로커 접속 테스트, 이벤트 소비 테스트 추가
-- 변경 요약: 토픽 생성, 기존 토픽 삭제, 이벤트(토픽) 발행, 브로커 접속 테스트, 이벤트 소비 테스트 추가
-- 핵심 로직: Kafka 토픽/이벤트 설정
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `bin_k8s/06_deploy_kafka.sh`
-- 변경 전/후 비교: `bin_k8s/06_deploy_kafka.sh`
-- diff 스타일
-```diff
-@@ -6,10 +6,16 @@
- set -euo pipefail
- 
- ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-+PID_FILE="${ROOT_DIR}/kafka-port-forward.pid"
- 
- kubectl -n msa apply -f "${ROOT_DIR}/kafka.yaml"
- kubectl -n msa rollout status deployment/kafka
- 
-+if [[ -f "${PID_FILE}" ]]; then
-+  kill "$(cat "${PID_FILE}")" || true
-+  rm -f "${PID_FILE}"
-+fi
-+
- kubectl -n msa port-forward svc/kafka 9094:9094 > "${ROOT_DIR}/kafka-port-forward.log" 2>&1 &
--echo $! > "${ROOT_DIR}/kafka-port-forward.pid"
+- 주요 변경: 토픽 생성, 기존 토픽 삭제, 이벤트(토픽) 발행, 브로커 접속 테스트, 이벤트 소비 테스트 추가
+- 핵심 코드: `bin_k8s/06_deploy_kafka.sh`
+```bash
+//--- 생략 ...
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PID_FILE="${ROOT_DIR}/kafka-port-forward.pid"
+
+kubectl -n msa apply -f "${ROOT_DIR}/kafka.yaml"
+kubectl -n msa rollout status deployment/kafka
+
+if [[ -f "${PID_FILE}" ]]; then
+//--- 생략 ...
 ```
-- 코드 발췌: `bin_k8s/06_deploy_kafka.sh`
-```diff
-+PID_FILE="${ROOT_DIR}/kafka-port-forward.pid"
-+if [[ -f "${PID_FILE}" ]]; then
-+  kill "$(cat "${PID_FILE}")" || true
-+  rm -f "${PID_FILE}"
-+fi
-+
-+echo $! > "${PID_FILE}"
-```
+- 설명: 실행/테스트 스크립트를 통해 분산 시나리오를 재현한다.
 
 ### aeceecc 테스트 토픽 분리 & 토픽 발행 테스트 OrderSagaEventPublishIntegrationTest
-- 변경 요약: 테스트 토픽 분리 & 토픽 발행 테스트 OrderSagaEventPublishIntegrationTest
-- 핵심 로직: Kafka 토픽/이벤트 설정
-- 구조 변화: 오케스트레이터 책임/상태 관리 강화
-- 주요 파일: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/kafka/OrderSagaEventKafkaPublisher.java`, `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/kafka/OrderSagaTopicConfig.java`
-- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/kafka/OrderSagaEventKafkaPublisher.java`
-```diff
-+package com.example.orderorchestrator.adapter.out.kafka;
-+
-+import com.example.orderorchestrator.application.port.out.OrderSagaEventPublisher;
-+import com.example.orderorchestrator.domain.event.OrderSagaEvent;
-+import com.fasterxml.jackson.core.JsonProcessingException;
-+import com.fasterxml.jackson.databind.ObjectMapper;
-+import org.slf4j.Logger;
-+import org.slf4j.LoggerFactory;
+- 주요 변경: 테스트 토픽 분리 & 토픽 발행 테스트 OrderSagaEventPublishIntegrationTest
+- 핵심 코드: `order-orchestrator/src/test/java/com/example/orderorchestrator/adapter/out/kafka/OrderSagaEventPublishIntegrationTest.java`
+```java
+class OrderSagaEventPublishIntegrationTest {
+//--- 생략 ...
+                .send(topic, key, payload)
+                .get(10, TimeUnit.SECONDS);
+
+        RecordMetadata metadata = result.getRecordMetadata();
+        assertThat(metadata).isNotNull();
+        assertThat(metadata.topic()).isEqualTo(topic);
+    }
+
+    private void assertKafkaAvailable() throws Exception {
+//--- 생략 ...
+}
 ```
-- 코드 발췌: `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/kafka/OrderSagaTopicConfig.java`
-```diff
-+package com.example.orderorchestrator.adapter.out.kafka;
-+
-+import org.apache.kafka.common.config.TopicConfig;
-+import org.springframework.beans.factory.annotation.Value;
-+import org.springframework.context.annotation.Bean;
-+import org.springframework.context.annotation.Configuration;
-+import org.springframework.context.annotation.Profile;
-+import org.springframework.kafka.config.TopicBuilder;
-```
+- 설명: Kafka 이벤트를 발행해 서비스 간 비동기 연계를 구성한다.
 
 ### 9aa633c 통합 테스트 카프카 토픽 로그 추가
-- 변경 요약: 통합 테스트 카프카 토픽 로그 추가
-- 핵심 로직: Kafka 토픽/이벤트 설정
-- 구조 변화: 모듈/기능 추가로 책임 분리
-- 주요 파일: `order-orchestrator/src/test/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationIntegrationTest.java`
-- 변경 전/후 비교: `order-orchestrator/src/test/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationIntegrationTest.java`
-- diff 스타일
-```diff
-@@ -10,8 +10,14 @@ import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OrderSag
- import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OutboxMessageJpaEntity;
- import com.example.orderorchestrator.domain.model.status.MSAStatus;
- import com.example.orderorchestrator.domain.model.status.OrderSagaStatus;
-+import org.apache.kafka.clients.admin.AdminClient;
-+import org.apache.kafka.clients.admin.AdminClientConfig;
-+import org.apache.kafka.clients.consumer.ConsumerConfig;
-+import org.apache.kafka.clients.consumer.KafkaConsumer;
-+import org.apache.kafka.common.serialization.StringDeserializer;
- import org.junit.jupiter.api.AfterAll;
- import org.junit.jupiter.api.Test;
-+import org.junit.jupiter.api.TestInstance;
- import org.springframework.beans.factory.annotation.Autowired;
- import org.springframework.boot.test.context.SpringBootTest;
- import org.springframework.boot.test.web.client.TestRestTemplate;
-@@ -25,11 +31,16 @@ import org.springframework.context.ConfigurableApplicationContext;
+- 주요 변경: 통합 테스트 카프카 토픽 로그 추가
+- 핵심 코드: `order-orchestrator/src/test/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationIntegrationTest.java`
+```java
+class OrderOrchestrationIntegrationTest {
+//--- 생략 ...
+            ServiceContext context = startService(
+                    PointServiceApplication.class,
+                    "point_application",
+                    "point_schema.sql",
+                    8082,
+                    "point"
+            );
+            pointContext = context.context();
+            pointPort = context.port();
+        }
+
+        registry.add("external.point.base-url", () -> "http://localhost:" + pointPort);
+    }
+
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    @Autowired
+    private OrderSagaJpaRepository orderSagaJpaRepository;
+
+    @Autowired
+    private OutboxMessageJpaRepository outboxMessageJpaRepository;
+
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
+
+    //@AfterEach
+    void tearDown() {
+        outboxMessageJpaRepository.deleteAll();
+        orderSagaJpaRepository.deleteAll();
+    }
+
+    // 쿠폰과 포인트 모두 예약 가능한 경우
+    @Test
+    void createOrder_withCouponAndPoint_shouldPersistOrderSaga_and_OutboxMessage() {
+        // given: 주문 생성 요청 바디
+        Map<String, Object> requestBody = Map.of(
+                "couponNumber", "CPN-INT-BOTH-001",
+                "pointNumber", "PNT-INT-BOTH-001",
+                "paymentNumber", "PAY-001",
+                "paymentAmount", 35000L,
+                "orderItems", List.of(
+                        Map.of("itemNumber", "ITEM-001", "quantity", 2),
+                        Map.of("itemNumber", "ITEM-002", "quantity", 1)
+                )
+        );
+
+        assertOrderCreated(requestBody, MSAStatus.Reserved, MSAStatus.Reserved, OrderSagaStatus.Reserved);
+    }
+
+    // 쿠폰만 사용하는 경우
+    @Test
+    void createOrder_withCouponOnly_shouldPersistOrderSaga_and_OutboxMessage() {
+        Map<String, Object> requestBody = Map.of(
+                "couponNumber", "CPN-INT-ONLY-001",
+                "paymentNumber", "PAY-001",
+                "paymentAmount", 35000L,
+                "orderItems", List.of(
+                        Map.of("itemNumber", "ITEM-001", "quantity", 2),
+                        Map.of("itemNumber", "ITEM-002", "quantity", 1)
+                )
+        );
+
+        assertOrderCreated(requestBody, MSAStatus.Reserved, MSAStatus.NotUsed, OrderSagaStatus.Reserved);
+    }
+
+    // 포인트만 사용하는 경우
+    @Test
+    void createOrder_withPointOnly_shouldPersistOrderSaga_and_OutboxMessage() {
+        Map<String, Object> requestBody = Map.of(
+                "pointNumber", "PNT-INT-ONLY-001",
+                "paymentNumber", "PAY-001",
+                "paymentAmount", 35000L,
+                "orderItems", List.of(
+                        Map.of("itemNumber", "ITEM-001", "quantity", 2),
+                        Map.of("itemNumber", "ITEM-002", "quantity", 1)
+                )
+        );
+
+        assertOrderCreated(requestBody, MSAStatus.NotUsed, MSAStatus.Reserved, OrderSagaStatus.Reserved);
+    }
+
+    // 쿠폰/포인트 없이 주문하는 경우
+    @Test
+    void createOrder_withoutCouponAndPoint_shouldPersistOrderSaga_and_OutboxMessage() {
+        Map<String, Object> requestBody = Map.of(
+                "paymentNumber", "PAY-001",
+                "paymentAmount", 35000L,
+                "orderItems", List.of(
+                        Map.of("itemNumber", "ITEM-001", "quantity", 2),
+                        Map.of("itemNumber", "ITEM-002", "quantity", 1)
+                )
+        );
+
+        assertOrderCreated(requestBody, MSAStatus.NotUsed, MSAStatus.NotUsed, OrderSagaStatus.Reserved);
+    }
+
+    // 쿠폰은 이미 예약되어 실패하고, 포인트는 예약 가능한 경우
+    @Test
+    void createOrder_withReservedCouponAndAvailablePoint_shouldMarkCouponFailedAndPointReserved() {
+        Map<String, Object> requestBody = Map.of(
+                "couponNumber", "CPN-INT-BOTH-RESERVED-001",
+                "pointNumber", "PNT-INT-BOTH-AVAILABLE-001",
+                "paymentNumber", "PAY-001",
+                "paymentAmount", 35000L,
+                "orderItems", List.of(
+                        Map.of("itemNumber", "ITEM-001", "quantity", 2),
+                        Map.of("itemNumber", "ITEM-002", "quantity", 1)
+                )
+        );
+
+        assertOrderCreatedWithExternalFailure(requestBody, MSAStatus.Failed, MSAStatus.Reserved, OrderSagaStatus.Compensating);
+    }
+
+    private void assertOrderCreated(
+            Map<String, Object> requestBody,
+            MSAStatus expectedCouponStatus,
+            MSAStatus expectedPointStatus,
+            OrderSagaStatus expectedSagaStatus
+    ) {
+        HttpEntity<Map<String, Object>> httpEntity = buildHttpEntity(requestBody);
+
+        // when: /api/v1/orders 호출
+        ResponseEntity<CreateOrderResponse> response = restTemplate.exchange(
+                "/api/v1/orders",
+                HttpMethod.POST,
+                httpEntity,
+                CreateOrderResponse.class
+        );
+
+        // then: HTTP 응답 검증
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+
+        CreateOrderResponse body = response.getBody();
+        String orderId = body.orderId();
+        String sagaId = body.sagaId();
+        String status = body.status();
+
+        assertThat(orderId).isNotBlank();
+        assertThat(sagaId).isNotBlank();
+        assertThat(status).isEqualTo(OrderSagaStatus.InProgress.name());
+
+        // 그리고 H2 DB에 order_saga, outbox_message 가 잘 들어갔는지 확인
+
+        // 1) order_saga 테이블
+        Optional<OrderSagaJpaEntity> sagaOpt = orderSagaJpaRepository.findByOrderId(orderId);
+        assertThat(sagaOpt).isPresent();
+
+        OrderSagaJpaEntity sagaEntity = sagaOpt.get();
+        assertOrderSaga(sagaEntity, orderId, sagaId, expectedSagaStatus);
+        assertOutbox(orderId, expectedCouponStatus, expectedPointStatus, expectedSagaStatus, true);
+    }
+
+    private void assertOrderCreatedWithExternalFailure(
+            Map<String, Object> requestBody,
+            MSAStatus expectedCouponStatus,
+            MSAStatus expectedPointStatus,
+            OrderSagaStatus expectedSagaStatus
+    ) {
+        HttpEntity<Map<String, Object>> httpEntity = buildHttpEntity(requestBody);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/v1/orders",
+                HttpMethod.POST,
+                httpEntity,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        OrderSagaJpaEntity sagaEntity = findLatestSaga();
+        String orderId = sagaEntity.getOrderId();
+
+        assertOrderSaga(sagaEntity, orderId, sagaEntity.getSagaId(), expectedSagaStatus);
+        assertOutbox(orderId, expectedCouponStatus, expectedPointStatus, expectedSagaStatus, false);
+    }
+
+    private HttpEntity<Map<String, Object>> buildHttpEntity(Map<String, Object> requestBody) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        return new HttpEntity<>(requestBody, headers);
+    }
+
+    private OrderSagaJpaEntity findLatestSaga() {
+        List<OrderSagaJpaEntity> sagas = orderSagaJpaRepository.findAll();
+        assertThat(sagas).isNotEmpty();
+        return sagas.stream()
+                .max(Comparator.comparing(OrderSagaJpaEntity::getId))
+                .orElseThrow();
+    }
+
+    private void assertOrderSaga(
+            OrderSagaJpaEntity sagaEntity,
+            String orderId,
+            String sagaId,
+            OrderSagaStatus expectedSagaStatus
+    ) {
+        assertThat(orderId).isNotBlank();
+        assertThat(sagaId).isNotBlank();
+        assertThat(sagaEntity.getOrderId()).isEqualTo(orderId);
+        assertThat(sagaEntity.getSagaId()).isEqualTo(sagaId);
+        assertThat(sagaEntity.getStatus()).isEqualTo(expectedSagaStatus);
+        assertThat(sagaEntity.getItems()).hasSize(2);
+    }
+
+    private void assertOutbox(
+            String orderId,
+            MSAStatus expectedCouponStatus,
+            MSAStatus expectedPointStatus,
+            OrderSagaStatus expectedSagaStatus,
+            boolean expectPayload
+    ) {
+        Optional<OutboxMessageJpaEntity> outboxOpt = outboxMessageJpaRepository.findByOrderId(orderId);
+        assertThat(outboxOpt).isPresent();
+
+        OutboxMessageJpaEntity outboxEntity = outboxOpt.get();
+        assertThat(outboxEntity.getOrderId()).isEqualTo(orderId);
+        assertThat(outboxEntity.getCouponStatus()).isEqualTo(expectedCouponStatus);
+        assertThat(outboxEntity.getPointStatus()).isEqualTo(expectedPointStatus);
+        assertThat(outboxEntity.getOrderStatus()).isEqualTo(MSAStatus.InProgress);
+        assertThat(outboxEntity.getSagaStatus()).isEqualTo(expectedSagaStatus);
+        if (expectPayload) {
+//--- 생략 ...
+}
 ```
-- 코드 발췌: `order-orchestrator/src/test/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationIntegrationTest.java`
-```diff
-+import org.apache.kafka.clients.admin.AdminClient;
-+import org.apache.kafka.clients.admin.AdminClientConfig;
-+import org.apache.kafka.clients.consumer.ConsumerConfig;
-+import org.apache.kafka.clients.consumer.KafkaConsumer;
-+import org.apache.kafka.common.serialization.StringDeserializer;
-+import org.junit.jupiter.api.TestInstance;
-+import org.springframework.beans.factory.annotation.Value;
-+import java.util.Set;
-```
+- 설명: Kafka 이벤트를 발행해 서비스 간 비동기 연계를 구성한다.
