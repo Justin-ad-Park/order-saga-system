@@ -1,14 +1,14 @@
-# 06. Resilience tests (delay / circuit / compensation)
+# 06. 복원력 테스트(지연 / 서킷 / 보상)
 
-## Goal
-Validate that the SAGA flow behaves correctly under failures and timeouts.
+## 목표
+실패/타임아웃 상황에서도 SAGA 흐름이 정상 동작하는지 검증한다.
 
-## Core flow
-- Induce delay to open circuit
-- Observe failed requests
-- Verify compensation makes resources AVAILABLE
+## 핵심 흐름
+- 지연을 유도해 서킷 오픈  
+- 실패 요청 관찰  
+- 보상 후 AVAILABLE 복구 확인
 
-## Circuit breaker scenario
+## 서킷 브레이커 시나리오
 `bin_istio_test/04_test_circuit_breaker.sh`
 ```bash
 ORDER_URL="http://localhost:8099/api/v1/orders"
@@ -25,7 +25,7 @@ for i in "${!COUPON_FORCE_DELAY_LIST[@]}"; do
 done
 ```
 
-## Compensation verification
+## 보상 검증
 `bin_istio_test/05_test_saga_compensation.sh`
 ```bash
 COUPON_FAIL="CPN-INT-FORCE-DELAY1"
@@ -41,6 +41,6 @@ post_order "point-fail" "${COUPON_OK}" "${POINT_FAIL}"
 wait_for_available "point-fail" "${COUPON_OK}" "${POINT_FAIL}"
 ```
 
-## Hands-on checkpoints
-- Ensure circuit open/close behavior is visible in response times
-- Confirm coupon/point rows return to AVAILABLE after compensation
+## 실습 체크포인트
+- 응답 시간으로 서킷 오픈/복구 확인
+- 보상 후 쿠폰/포인트 상태가 AVAILABLE로 복구되는지 확인

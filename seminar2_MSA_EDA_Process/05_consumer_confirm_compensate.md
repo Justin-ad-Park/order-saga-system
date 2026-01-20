@@ -1,14 +1,14 @@
-# 05. Consumer: confirm and compensate
+# 05. 컨슈머: confirm / compensate
 
-## Goal
-Show how the consumer decides confirm vs compensate and calls coupon/point services.
+## 목표
+컨슈머가 confirm/compensate를 어떻게 분기하고 쿠폰/포인트 호출로 이어지는지 이해한다.
 
-## Core flow
-- Read saga status from event
-- If Reserved -> confirm
-- If Compensating -> compensate
+## 핵심 흐름
+- 이벤트에서 saga status 읽기  
+- Reserved -> confirm  
+- Compensating -> compensate
 
-## Consumer processing
+## 컨슈머 처리 로직
 `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/application/service/ProcessOrderSagaEventService.java`
 ```java
 @Service
@@ -99,7 +99,7 @@ public class ProcessOrderSagaEventService implements ProcessOrderSagaEventUseCas
 }
 ```
 
-## Coupon confirm/compensate
+## 쿠폰 confirm/compensate
 `coupon-service/src/main/java/com/example/couponservice/application/service/ReserveCouponService.java`
 ```java
 @Service
@@ -152,7 +152,7 @@ public class ReserveCouponService implements ReserveCouponUseCase, ConfirmCoupon
 }
 ```
 
-## Point confirm/compensate
+## 포인트 confirm/compensate
 `point-service/src/main/java/com/example/pointservice/application/service/ReservePointService.java`
 ```java
 @Service
@@ -205,6 +205,6 @@ public class ReservePointService implements ReservePointUseCase, ConfirmPointUse
 }
 ```
 
-## Hands-on checkpoints
-- Verify coupon/point status transitions after consumer runs
-- Confirm saga status becomes Completed or Compensated
+## 실습 체크포인트
+- 컨슈머 실행 후 쿠폰/포인트 상태 전이 확인
+- 사가 상태가 Completed 또는 Compensated로 전환되는지 확인

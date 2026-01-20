@@ -1,14 +1,14 @@
-# 03. Saga creation + Outbox persistence
+# 03. 사가 생성 + Outbox 저장
 
-## Goal
-Show how order creation and outbox write happen in a single transaction, preparing event delivery.
+## 목표
+주문 생성과 Outbox 저장이 하나의 트랜잭션으로 묶이는 이유를 이해한다.
 
-## Core flow
-- Generate order/saga IDs
-- Persist OrderSaga
-- Persist OutboxMessage
+## 핵심 흐름
+- 주문/사가 ID 생성  
+- OrderSaga 저장  
+- OutboxMessage 저장
 
-## Create order and write outbox
+## 주문 생성 + Outbox 저장
 `order-orchestrator/src/main/java/com/example/orderorchestrator/application/service/CreateOrderService.java`
 ```java
 @Service
@@ -61,7 +61,7 @@ public class CreateOrderService implements CreateOrderUseCase {
 }
 ```
 
-## Outbox write + status updates
+## Outbox 저장 + 상태 업데이트
 `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/persistence/OutboxMessagePersistenceAdapter.java`
 ```java
 @Repository
@@ -107,6 +107,6 @@ public class OutboxMessagePersistenceAdapter implements SaveOutboxMessagePort, U
 }
 ```
 
-## Hands-on checkpoints
-- Verify: `order_saga`, `outbox_message` rows after order creation
-- Confirm saga status and outbox status changes
+## 실습 체크포인트
+- 주문 생성 후 `order_saga`, `outbox_message` 레코드 확인
+- 사가 상태 및 Outbox 상태 변경 확인

@@ -1,14 +1,14 @@
-# 02. Orchestrator + distributed reservation
+# 02. 오케스트레이터 + 분산 예약
 
-## Goal
-Explain how the orchestrator coordinates distributed calls and starts a saga.
+## 목표
+오케스트레이터가 분산 호출을 묶어 사가를 시작하는 방식을 이해한다.
 
-## Core flow
-1) Create order + saga record
-2) Call coupon/point reservation in parallel
-3) Update saga status and emit event
+## 핵심 흐름
+1) 주문/사가 생성  
+2) 쿠폰/포인트 예약 병렬 호출  
+3) 사가 상태 업데이트 + 이벤트 발행
 
-## Orchestrator entry point
+## 오케스트레이터 진입점
 `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
 ```java
 @RestController
@@ -57,7 +57,7 @@ public class OrderOrchestrationController {
 }
 ```
 
-## Distributed reservation
+## 분산 예약 처리
 `order-orchestrator/src/main/java/com/example/orderorchestrator/application/service/ReserveExternalResourcesService.java`
 ```java
 @Service
@@ -104,6 +104,46 @@ public class ReserveExternalResourcesService {
 }
 ```
 
-## Hands-on checkpoints
-- Call API: `POST /api/v1/orders` with coupon/point
-- Expect saga status to move to Reserved or Compensating
+## 쿠폰 Reserve 처리 흐름
+`coupon-service/src/main/java/com/example/couponservice/adapter/in/web/CouponController.java`
+```java
+@RestController
+@RequestMapping("/api/v1/coupons")
+@RequiredArgsConstructor
+public class CouponController {
+    private final ReserveCouponUseCase reserveCouponUseCase;
+
+    @PostMapping("/reserve")
+    public ApiResponse<ReserveCouponResponse> reserveCoupon(@RequestBody ReserveCouponRequest request) {
+        reserveCouponUseCase.reserve(request.couponNumber(), request.orderId());
+        return ApiResponse.ok(ReserveCouponResponse.of(request.couponNumber(), request.orderId()));
+    }
+}
+```
+
+`coupon-service/src/main/java/com/example/couponservice/application/service/ReserveCouponService.java`
+```java
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class ReserveCouponService implements ReserveCouponUseCase, ConfirmCouponUseCase, CompensateCouponUseCase {
+
+    @Override
+    public void reserve(String couponNumber, String orderId) {
+        if (isReservationCancelled(orderId)) {
+            return;
+        }
+        verifyReservationNotAlreadyReserved(orderId);
+        updateStatus(couponNumber, CouponStatus.RESERVED, this::validateReservable);
+        saveCouponReservationPort.saveReservation(new CouponReservation(
+                orderId,
+                couponNumber,
+                ReservationStatus.RESERVED
+        ));
+    }
+}
+```
+
+## 실습 체크포인트
+- API 호출: `POST /api/v1/orders` (coupon/point 포함)
+- 기대 결과: 사가 상태가 Reserved 또는 Compensating으로 이동

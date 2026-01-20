@@ -1,13 +1,13 @@
-# 04. Kafka event publish and consume entry
+# 04. Kafka 이벤트 발행과 소비 진입
 
-## Goal
-Show how saga events are published and how the consumer receives them.
+## 목표
+사가 이벤트가 어떻게 발행되고, 컨슈머가 이를 어떻게 수신하는지 이해한다.
 
-## Core flow
-- Orchestrator publishes event after reservation outcome
-- Consumer reads the event from Kafka
+## 핵심 흐름
+- 오케스트레이터가 예약 결과에 따라 이벤트 발행  
+- 컨슈머가 Kafka 이벤트를 수신
 
-## Event publish
+## 이벤트 발행
 `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/kafka/OrderSagaEventKafkaPublisher.java`
 ```java
 @Component
@@ -30,7 +30,7 @@ public class OrderSagaEventKafkaPublisher implements OrderSagaEventPublisher {
 }
 ```
 
-## Event consume entry
+## 이벤트 소비 진입점
 `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/adapter/in/kafka/OrderSagaEventConsumer.java`
 ```java
 @Component
@@ -53,6 +53,6 @@ public class OrderSagaEventConsumer {
 }
 ```
 
-## Hands-on checkpoints
-- Kafka topic: `order-saga-events`
-- Verify producer log + consumer receive log
+## 실습 체크포인트
+- Kafka 토픽: `order-saga-events`
+- 프로듀서/컨슈머 로그 확인
