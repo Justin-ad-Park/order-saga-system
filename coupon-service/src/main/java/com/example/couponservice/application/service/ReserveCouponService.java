@@ -28,10 +28,14 @@ public class ReserveCouponService implements ReserveCouponUseCase, ConfirmCoupon
 
     @Override
     public void reserve(String couponNumber, String orderId) {
+        // 이미 보상 처리된 주문이면 예약 진행하지 않음
         if (isReservationCancelled(orderId)) {
             return;
         }
+
+        //이미 예약된 주문이면 예약 진행하지 않음
         verifyReservationNotAlreadyReserved(orderId);
+
         updateStatus(couponNumber, CouponStatus.RESERVED, this::validateReservable);
         saveCouponReservationPort.saveReservation(new CouponReservation(
                 orderId,

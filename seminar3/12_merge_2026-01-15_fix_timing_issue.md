@@ -18,6 +18,237 @@
 - API 요청 수신 -> 유스케이스/서비스 처리 -> 외부 서비스 호출/연동
 
 ## 핵심 로직 스니펫(머지 시점 기준)
+## coupon_reservation 테이블로 타이밍 이슈 해결
+- 보상 요청이 먼저 도착해도 `CANCELLED` 상태를 기록해 이후 예약 요청을 무시한다.
+- 예약 성공 시 `RESERVED`, 보상 시 `CANCELLED`를 기록해 순서 뒤바뀜을 흡수한다.
+
+- `coupon-service/src/main/resources/coupon_schema.sql`
+```sql
+CREATE TABLE IF NOT EXISTS coupon_reservation (
+    order_id VARCHAR(255) PRIMARY KEY,
+    coupon_number VARCHAR(255) NOT NULL,
+    status VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
+```
+- `coupon-service/src/main/java/com/example/couponservice/domain/model/CouponReservation.java`
+```java
+package com.example.couponservice.domain.model;
+
+import com.example.couponservice.domain.model.status.ReservationStatus;
+
+public class CouponReservation {
+
+    private final String orderId;
+    private final String couponNumber;
+    private final ReservationStatus status;
+
+    public CouponReservation(String orderId, String couponNumber, ReservationStatus status) {
+        this.orderId = orderId;
+        this.couponNumber = couponNumber;
+        this.status = status;
+    }
+
+    public String orderId() { return orderId; }
+    public String couponNumber() { return couponNumber; }
+    public ReservationStatus status() { return status; }
+}
+```
+- `coupon-service/src/main/java/com/example/couponservice/domain/model/status/ReservationStatus.java`
+```java
+package com.example.couponservice.domain.model.status;
+
+public enum ReservationStatus {
+    RESERVED,
+    CANCELLED
+}
+```
+- `coupon-service/src/main/java/com/example/couponservice/adapter/out/persistence/CouponReservationPersistenceAdapter.java`
+```java
+package com.example.couponservice.adapter.out.persistence;
+
+import com.example.couponservice.adapter.out.persistence.jpa.CouponReservationJpaEntity;
+import com.example.couponservice.adapter.out.persistence.jpa.CouponReservationJpaRepository;
+import com.example.couponservice.application.port.out.LoadCouponReservationPort;
+import com.example.couponservice.application.port.out.SaveCouponReservationPort;
+import com.example.couponservice.domain.model.CouponReservation;
+import com.example.couponservice.domain.model.status.ReservationStatus;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+@Component
+public class CouponReservationPersistenceAdapter implements LoadCouponReservationPort, SaveCouponReservationPort {
+
+    private final CouponReservationJpaRepository couponReservationJpaRepository;
+
+    public CouponReservationPersistenceAdapter(CouponReservationJpaRepository couponReservationJpaRepository) {
+        this.couponReservationJpaRepository = couponReservationJpaRepository;
+    }
+
+    @Override
+    public Optional<CouponReservation> loadReservation(String orderId) {
+        return couponReservationJpaRepository.findById(orderId)
+                .map(entity -> new CouponReservation(
+                        entity.getOrderId(),
+                        entity.getCouponNumber(),
+                        entity.getStatus()
+                ));
+    }
+
+    @Override
+    public CouponReservation saveReservation(CouponReservation reservation) {
+        LocalDateTime now = LocalDateTime.now();
+        CouponReservationJpaEntity entity = couponReservationJpaRepository.findById(reservation.orderId())
+                .map(existing -> new CouponReservationJpaEntity(
+                        existing.getOrderId(),
+                        reservation.couponNumber(),
+                        reservation.status(),
+                        existing.getCreatedAt(),
+                        now
+                ))
+                .orElseGet(() -> new CouponReservationJpaEntity(
+                        reservation.orderId(),
+                        reservation.couponNumber(),
+                        reservation.status(),
+                        now,
+                        now
+                ));
+
+        CouponReservationJpaEntity saved = couponReservationJpaRepository.save(entity);
+        return new CouponReservation(
+                saved.getOrderId(),
+                saved.getCouponNumber(),
+                saved.getStatus()
+        );
+    }
+}
+```
+- `coupon-service/src/main/java/com/example/couponservice/application/service/ReserveCouponService.java`
+```java
+package com.example.couponservice.application.service;
+
+import com.example.couponservice.application.port.in.CompensateCouponUseCase;
+import com.example.couponservice.application.port.in.ConfirmCouponUseCase;
+import com.example.couponservice.application.port.in.ReserveCouponUseCase;
+import com.example.couponservice.application.port.out.LoadCouponPort;
+import com.example.couponservice.application.port.out.LoadCouponReservationPort;
+import com.example.couponservice.application.port.out.SaveCouponPort;
+import com.example.couponservice.application.port.out.SaveCouponReservationPort;
+import com.example.couponservice.domain.model.Coupon;
+import com.example.couponservice.domain.model.CouponReservation;
+import com.example.couponservice.domain.model.status.CouponStatus;
+import com.example.couponservice.domain.model.status.ReservationStatus;
+import jakarta.transaction.Transactional;
+import java.util.function.Consumer;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class ReserveCouponService implements ReserveCouponUseCase, ConfirmCouponUseCase, CompensateCouponUseCase {
+
+    private final LoadCouponPort loadCouponPort;
+    private final SaveCouponPort saveCouponPort;
+    private final LoadCouponReservationPort loadCouponReservationPort;
+    private final SaveCouponReservationPort saveCouponReservationPort;
+
+    @Override
+    public void reserve(String couponNumber, String orderId) {
+        // 이미 보상 처리된 주문이면 예약 진행하지 않음
+        if (isReservationCancelled(orderId)) {
+            return;
+        }
+
+        //이미 예약된 주문이면 예약 진행하지 않음
+        verifyReservationNotAlreadyReserved(orderId);
+        
+        updateStatus(couponNumber, CouponStatus.RESERVED, this::validateReservable);
+        saveCouponReservationPort.saveReservation(new CouponReservation(
+                orderId,
+                couponNumber,
+                ReservationStatus.RESERVED
+        ));
+    }
+
+    @Override
+    public void compensateCoupon(String couponNumber, String orderId) {
+        Coupon coupon = loadCouponPort.loadCoupon(couponNumber)
+                .orElse(null);
+        if (coupon == null) {
+            saveReservationCancelled(orderId, couponNumber);
+            return;
+        }
+        if (coupon.status() == CouponStatus.USED) {
+            throw new IllegalStateException("보상 불가능한 쿠폰입니다: " + coupon.couponNumber());
+        }
+
+        saveReservationCancelled(orderId, couponNumber);
+        if (coupon.status() != CouponStatus.RESERVED) {
+            return;
+        }
+
+        Coupon updated = new Coupon(
+                coupon.couponNumber(),
+                CouponStatus.AVAILABLE,
+                coupon.issuedAt(),
+                coupon.expiredAt()
+        );
+        saveCouponPort.save(updated);
+    }
+
+    private boolean isReservationCancelled(String orderId) {
+        return loadCouponReservationPort.loadReservation(orderId)
+                .map(reservation -> reservation.status() == ReservationStatus.CANCELLED)
+                .orElse(false);
+    }
+
+    private void verifyReservationNotAlreadyReserved(String orderId) {
+        loadCouponReservationPort.loadReservation(orderId)
+                .filter(reservation -> reservation.status() == ReservationStatus.RESERVED)
+                .ifPresent(reservation -> {
+                    throw new IllegalStateException("이미 예약된 주문입니다: " + reservation.orderId());
+                });
+    }
+
+    private void saveReservationCancelled(String orderId, String couponNumber) {
+        saveCouponReservationPort.saveReservation(new CouponReservation(
+                orderId,
+                couponNumber,
+                ReservationStatus.CANCELLED
+        ));
+    }
+
+    private void updateStatus(
+            String couponNumber,
+            CouponStatus targetStatus,
+            Consumer<Coupon> validator
+    ) {
+        Coupon coupon = loadCouponPort.loadCoupon(couponNumber)
+                .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다: " + couponNumber));
+
+        validator.accept(coupon);
+
+        Coupon updated = new Coupon(
+                coupon.couponNumber(),
+                targetStatus,
+                coupon.issuedAt(),
+                coupon.expiredAt()
+        );
+
+        saveCouponPort.save(updated);
+    }
+
+    private void validateReservable(Coupon coupon) {
+        if (!coupon.isAvailable()) {
+            throw new IllegalStateException("예약 불가능한 쿠폰입니다: " + coupon.couponNumber());
+        }
+    }
+}
+```
 - `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/OrderOrchestrationController.java`
 ```java
 package com.example.orderorchestrator.adapter.in.web;
