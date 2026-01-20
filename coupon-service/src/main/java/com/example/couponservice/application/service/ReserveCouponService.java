@@ -71,7 +71,7 @@ public class ReserveCouponService implements ReserveCouponUseCase, ConfirmCoupon
         }
 
         saveReservationCancelled(orderId, couponNumber);
-        if (coupon.status() != CouponStatus.RESERVED) {
+        if (coupon.status() != CouponStatus.RESERVED) { // RESERVED 일 때만 보상 처리
             return;
         }
 

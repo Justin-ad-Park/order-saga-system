@@ -71,7 +71,7 @@ public class ReservePointService implements ReservePointUseCase, ConfirmPointUse
         }
 
         saveReservationCancelled(orderId, pointNumber);
-        if (point.status() != PointStatus.RESERVED) {
+        if (point.status() != PointStatus.RESERVED) {   // RESERVED 일 때만 보상처리
             return;
         }
 
