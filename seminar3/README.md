@@ -17,5 +17,6 @@ main에 머지된 브랜치를 기준으로 챕터를 구성한다.
 - 11_merge_2026-01-15_circuit-breaker.md
 - 11_1_initial_istio.md
 - 12_merge_2026-01-15_fix_timing_issue.md
+- 12_1_동시성_이슈_다이어그램.md
 - 13_merge_2026-01-16_int_test.md
 - 14_merge_2026-01-20_seminar.md
