@@ -158,54 +158,35 @@ msa namespace에 실제로 배포하는 것으로 스크립트를 구성해.
 - 마지막에 실행하는 Consumer의 system.out.log가 출력이 되도록 실행 스크립트를 만들어줘
 
 # Istio를 활용한 3회 실패(timeout) 시 circuit brreaker 동작하도록 환경 구성하는 프롬프트
-- Goal: After Istio install, make circuit-breaker reliably open after 3 failures and auto close ~15s later; provide a deterministic test script that validates this end-to-end.
-- Constraints:
-  - No manual fault removal; only use Istio + minimal app-side hooks if needed to reliably generate upstream 5xx/timeout.
-  - Avoid test flakiness from retries, propagation delay, or data reuse.
-  - Ensure test data can be reset quickly for repeat runs (snapshot + reset procedure).
-- Required changes:
-  1) Inspect actual call flow: OrderOrchestrator -> Coupon/Point WebClient; identify where errors are produced and how they surface (HTTP code, retries).
-  2) Make failure deterministic:
-     - Ensure upstream failures are real 5xx/timeout at envoy layer (disable retries on VS; align timeout settings).
-     - If needed, add explicit delay based on coupon/point prefix in reserve services to trigger timeouts.
-  3) Align Istio config:
-     - DestinationRule uses outlierDetection with consecutive5xxErrors: 3, baseEjectionTime: 10s, interval: 5s.
-     - VirtualService retries disabled (attempts: 0, retryOn: "") and timeout set to 2s.
-  4) Update test script:
-     - Use distinct coupon/point values for each failing call to avoid 409 reuse conflicts.
-     - Verify: 3 timeouts -> CB open; 2s later call fails; 15s later call succeeds.
-  5) Add reset tooling:
-     - Create snapshot tables + stored procs to reset coupon/point.
-     - Provide reset script for quick re-run.
-- Validation:
-  - Confirm envoy routes have timeout and retries disabled.
-  - Confirm 3 timeouts yield 5xx/timeout and CB opens.
-  - Confirm 15s later call succeeds.
-  - 
-- 한국어 버전(요약 프롬프트)
-  - 목표: Istio 설치 후 3회 실패로 circuit-breaker가 확실히 열리고, 약 15초 후 자동으로 닫히는 것을 재현/검증하는 테스트 스크립트를 만든다.
+  - 목표: Istio를 설치하고, 통합 테스트에서 3회 연속 내부 API 호출 실패 시 circuit-breaker가 확실히 열리고, 
+  - 약 15초 후 API 호출이 성공하면 Circuit이 자동으로 닫히는 것을 재현/검증하는 테스트 스크립트를 만든다.
+
   - 제약:
     - 수동 fault 제거 없이 Istio + 최소한의 앱 훅으로 업스트림 5xx/timeout을 안정적으로 생성한다.
     - retries, 전파 지연, 테스트 데이터 재사용으로 인한 플래키를 제거한다.
-    - 반복 테스트를 위해 스냅샷/리셋 기반 초기화 경로를 제공한다.
+      - 플래키(flaky behavior : 실없는 행동. 테스트 마다 결과가 들쑥날쑥한 상황)
+    - 반복 테스트를 위해 스냅샷/리셋 기반 테스트 데이터 초기화 기능을 제공한다.
   - 필수 작업:
     1) 호출 흐름 분석: OrderOrchestrator → Coupon/Point(WebClient) 경로, 실패 코드 및 재시도 처리 확인.
     2) 실패를 결정적으로 만들기:
-       - VS에서 retries 완전 비활성화, timeout 일치시키기.
+       - VS(Virtual Service)에서 retries 완전 비활성화, timeout 일치시키기.
        - 필요 시 쿠폰/포인트 서비스에 prefix 기반 지연 훅 추가.
     3) Istio 설정 정합:
        - DestinationRule outlierDetection: consecutive5xxErrors=3, baseEjectionTime=10s, interval=5s.
        - VirtualService timeout=2s, retries=0.
     4) 테스트 스크립트 정리:
        - 실패 호출마다 서로 다른 coupon/point 사용(409 재사용 실패 제거).
-       - 3회 timeout → CB open, 2초 후 실패, 15초 후 성공.
+       - 3회 timeout → CB open(Circuit Break 상태가 됨), 2초 후 재시도 시 여전히 서킷이 열려서 실패, 15초 후 호출하면 성공.
+       - 15초인 이유 : baseEjectionTime(10초) + interval(5초) 고려 최대 15초 후 API 호출은 서킷 테스트에 사용되며, 
+       - 이 테스트가 성공하면 서킷이 다시 닫힘(Circuit-close 서킷이 연결됨)
+       
     5) 리셋 도구:
        - 스냅샷 테이블 + 프로시저로 쿠폰/포인트 빠른 초기화.
   - 검증:
     - envoy route에 timeout/ retries 비활성화가 적용되었는지 확인.
     - timeout 3회가 5xx/timeout으로 집계되고 CB가 열리는지 확인.
-    - 15초 후 호출이 성공하는지 확인.
-
+    - CB 후 2초 후에 호출했을 때 정상 데이터로 호출해도 응답 실패(Timeout 발생)
+    - 15초 후 호출 시 응답 성공 -> Circuit-closed(서킷 복구됨)
 
 
 ## 31)  circuit-breaker를 구성안 검토
@@ -313,7 +294,7 @@ Istio를 비롯해서 현재 K8s(dev) 구성에서 circuit-breaker를 구성해�
 
 ### 제약/주의
 - 재사용으로 인한 409/비즈니스 실패가 테스트 결과에 섞이지 않게, **각 실패 호출마다 서로 다른 coupon/point 사용**
-- retries/전파지연 때문에 timeout이 200으로 복귀하지 않도록 **VS에서 retries 완전 비활성화**
+- retries/전파지연 때문에 timeout이 200으로 복귀하지 않도록 **VS(Virsual Service)에서 retries 완전 비활성화**
 - 수동 fault 제거 없이도 timeout이 안정적으로 발생하도록 **앱 레벨 delay 훅을 최소한으로 추가**
 
 ### 해야 할 작업
@@ -386,7 +367,9 @@ Istio를 비롯해서 현재 K8s(dev) 구성에서 circuit-breaker를 구성해�
 ## 35) 매번 프롬프트 로그 추가 및 요약
 - 사용자 :
   지금부터 내가 지시한 프롬프트를 *** 매번 *** `docs/codex_log.md`의 하단에 포맷에 맞게 저장하고, 너가 작업한 부분을 하단에 간략히 요약해줘.
+- docs/codex_log.md는 내가 수동으로 업데이트 하기도 하니까 매번 새로 파일을 읽어서 내가 작업한 부분이 유실되지 않도록 해.
   포맷은 아래와 같아.
+- 
   ## {no}) 요약 제목
     - 사용자 :
       {내가 지시한 프롬프트}
@@ -467,6 +450,11 @@ stale paths remain before summarizing next steps.
   bin_k8s/10_install_istio.sh 실행 로그 중 마지막에 `rg: command not found` 오류 발생.
 - Codex 응답 :
   rg 미설치로 인한 경고이며, `rg` 설치 또는 `grep`로 대체하도록 안내함.
+  => 수동으로 쉘에서 rg 설치함
+```shell
+
+brew install ripgrep
+```
 
 ## 44) MySQL 접속 변경 여부 확인 요청
 - 사용자 :
@@ -475,16 +463,7 @@ stale paths remain before summarizing next steps.
   최근 5일 내 MySQL 접속 방식 변경은 없었고, 공통 스크립트로 포트포워드 정리/재시작 로직만 이동된 것을 확인함.
 
 ## 45) MySQL 접속 확인 응답
-- 사용자 :
-  ok
-- Codex 응답 :
-  포트포워드 상태 확인/재시작 안내를 제안함.
-
 ## 46) 포트포워드 확인 방법 요청
-- 사용자 :
-  포트포워드 확인 방법을 안내한다면서?
-- Codex 응답 :
-  MySQL 포트포워드 확인 및 재시작 방법을 안내함.
 
 ## 47) order_orchestrator_db truncate 프로시저 추가 요청
 - 사용자 :
@@ -545,9 +524,14 @@ stale paths remain before summarizing next steps.
 
 ## 55) maybeDelay의 OOP 원칙 위배 여부 검토 요청
 - 사용자 :
-  ReservePointService와 ReserveCouponService의 maybeDelay();가 reserve() 메서드 안에 들어간 것은 OOP 원칙에 위배되는 것인지 검토하고, 어떤 원칙에 위배되고, 이를 OOP 원칙에 맞게 수정하려면 어떤 방안이 좋을지 분석 및 제안해줘.
+  ReservePointService와 ReserveCouponService의 maybeDelay();가 reserve() 메서드 안에 들어간 것은 OOP 원칙에 위배되는 것인지 검토하고, 
+- 어떤 원칙에 위배되고, 이를 OOP 원칙에 맞게 수정하려면 어떤 방안이 좋을지 분석 및 제안해줘.
 - Codex 응답 :
-  도메인 서비스에 테스트용 지연 로직이 섞여 SRP/관심사 분리에 어긋날 수 있으며, 데코레이터/프록시, AOP, 전략 주입 등으로 분리하는 개선 방안을 제안함.
+  도메인 서비스에 테스트용 지연 로직이 섞여 SRP/관심사 분리에 어긋날 수 있으며, 
+- 데코레이터/프록시, AOP, 전략 주입 등으로 분리하는 개선 방안을 제안함.
+- 
+ => 이후 몇 번의 대화를 통해 데코레이터/프록시 패턴으로 결정 리팩토링 진행함.
+
 
 ## 56) Logging Mode 추가
 - 사용자 :
@@ -666,27 +650,27 @@ DB 스키마/초기 데이터
 
 ## 61) 데코레이터 주입 방식 질문
 - 사용자 :
-  ReservePointUseCase를 구현한 구현체가 두 개 있는데, @Primary에 의해서 데코레이터가 빈 주입되는거야?
+  ReservePointUseCase를 구현한 구현체가 두 개 있는데, @Primary에 의해서 데코레이터로 빈 주입을 하도록 작업했네?
+  이렇게 하면 spring.profiles 구분없이 DelayDecorator만 사용하게 되잖아. profiles에 따라 빈주입을 결정하는 것이 상용 서비스까지 고려했을 때 더 나은 방법일 것 같은데
+
 - Codex 응답 :
   @Primary가 적용된 데코레이터 빈이 ReservePointUseCase 타입 주입 시 우선 선택되며, 내부에서 실제 서비스 구현을 위임하도록 설명함.
-
-## 62) 프로파일별 데코레이터 적용 요청
-- 사용자 :
-  이렇게 하면 spring.profiles 구분없이 DelayDecorator만 사용하게 되잖아. profiles에 따라 빈주입을 결정하는 것이 상용 서비스까지 고려했을 때 더 나은 방법일 것 같은데
-- Codex 응답 :
   dev/test 프로파일에서만 데코레이터가 활성화되도록 @Profile을 추가해 운영 환경에서는 순수 서비스만 주입되도록 조정함.
 
+``` java
 @Service
 @Primary
 @Profile({"dev", "test"})
 @RequiredArgsConstructor
 public class ReservePointDelayDecorator implements ReservePointUseCase {
+```
 
 ## 63) delay guard 추가
 - 사용자 :
-  prod에서 의도치 않게 delay 설정이 들어와도 무시되도록 별도 guard를 추가해
+  prod에서 의도치 않게 delay 설정이 들어와도 무시되도록 방어로직(guard)을 추가해
 - Codex 응답 :
   delay-enabled 플래그를 추가해 데코레이터 지연이 명시적으로 활성화된 경우에만 동작하도록 설정을 보강함.
+
 
 ## 64) timeout 보상 트랜잭션 문제 분석 요청
 - 사용자 :
@@ -814,7 +798,11 @@ public class ReservePointDelayDecorator implements ReservePointUseCase {
                                            
 
 ## 67) 보상 마커 방식 구체화 요청
-› *schema.sql과 create_test_snapshots.sql를 비롯해서 위와 같이 테이블이 추가되면 함꼐 수정해야 할 코드들이 있는데, 이를 포함해서 다시 정리해줘.
+› *schema.sql과 create_test_snapshots.sql를 비롯해서 위와 같이 테이블이 추가되면 함께 수정해야 할 코드들이 있는데, 이를 포함해서 다시 정리해줘.
+
+Tip) 많은 변경이 필요한 작업이라 즉시 코드를 수정하기에 앞서 수정 범위의 검토를 지시함  
+변경 대상이 정확하게 파악되었는지 직접(개발자가) 검증 후에 작업을 지시함
+
 
 • I'm planning to include schema/SQL changes and code updates, then log the summary to codex_log.md after reading the file; next, I'll update the file using shell commands and apply the patch.
 
@@ -1606,6 +1594,9 @@ Search ReservePointService in java
 
 • Edited docs/codex_log.md (+6 -1)
 
+
+
+
 ## 68) 보상 마커 방식 실제 반영
 - 사용자 :
   실제로 작업을 진행해
@@ -2033,3 +2024,6 @@ git 명령어를 적절히 활용해서 문서를 업데이트 해.
 기존 방법을 사용하지 말고, MDA + EDA로 진행된 본 프로젝트를 MSA + EDA, SAGA 교육용 자료로 활용하기 위해 
 체계적으로 교육할 수 있는 자료를 만들 방안을 제안해봐.
 이와 유사한 케이스에서 기존에 잘 만들어진 교육 자료를 만든 방식을 참고하는 것도 좋겠어. 
+
+=> 이후에도 세미나 자료를 보강하기 위해 약 20번 내외의 개선을 진행함
+(그럼에도 불구하고 직접 자료를 만드는 것보다 최소 5배~20배 수준의 생산성이 있음)
