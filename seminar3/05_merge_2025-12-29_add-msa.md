@@ -165,16 +165,8 @@ echo "order-orchestrator rollout 체크 중..."
 kubectl -n msa rollout status deployment/order-orchestrator
 kubectl port-forward -n msa svc/order-orchestrator 8099:8099
 ```
-- `order-orchestrator/src/main/resources/orderOS_cleanup.sql`
-```sql
-SET FOREIGN_KEY_CHECKS = 0;
 
-DELETE FROM order_item;
-DELETE FROM outbox_message;
-DELETE FROM order_saga;
 
-SET FOREIGN_KEY_CHECKS = 1;
-```
 - `order-orchestrator/src/main/resources/orderOS_schema.sql`
 ```sql
 SET FOREIGN_KEY_CHECKS = 0;

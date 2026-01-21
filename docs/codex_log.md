@@ -49,7 +49,7 @@
 
 ## 7) 보상 처리 예외 정책 변경
 - coupon-service/point-service의 compensate 메서드에서 status가 USED인 경우 예외를 반환하도록 변경.
-- RESERVED가 아닌 경우(AVAILABLE 등)에는 기존대로 no-op 유지.
+- RESERVED가 아닌 경우(AVAILABLE 등)에는 기존대로 no-op(No Operation = do noting) 유지.
 - 관련 단위/Mock 테스트에 USED 케이스 추가.
 
 ## 8) 보상 완료 상태 변경 요청
@@ -1862,6 +1862,10 @@ OFF도 최초 성공과 실패(아직 서킷 연결전), circuit재연결 후 �
   bin_common/02_prepare_k8s_order_saga_Local_Consumer.sh에서 쿠폰/포인트 재기동 및 롤아웃 완료 후 스냅샷을 생성하도록 순서를 변경하고, 쿠폰/포인트 rollout status 대기를 추가함.
 
 
+
+
+# -------------------- 세미나 자료 작성 -----------------------------
+
 ## 84) Git 히스토리 기반 교육 과정 제안 요청
 - 사용자 :
   프로젝트의 1개월 개발 과정을 Git 히스토리로 분석해 교육용 설명/제안 요청
@@ -2011,13 +2015,19 @@ index ab64391..ee0432c 100644
 seminar의 전체 코드를 대상으로 작업하고, diff 당시의 클래스, 메서드 코드로 내용이 정리가 되어야 하니까
 git 명령어를 적절히 활용해서 문서를 업데이트 해.
 
-
-
 ## 96) 세미나 코드 발췌/변경 표기 보강
 - 사용자 :
   변경된 코드에 +/-, 클래스/메서드 선언과 중괄호를 보존하고 생략 표기를 넣으라는 요청
 - Codex 응답 :
   seminar 문서의 커밋 상세를 재생성해 diff는 +/− 유지, 클래스/메서드 선언부와 중괄호를 포함하고 생략 구간을 //--- 생략 ...으로 표기하도록 정리함.
+
+
+
+
+### <font color=red> 다수의 개선 지시에도 불구하고, 세미나 자료의 퀄리티 향상에 결국 실패함 <br> -> AI의 파악 능력에 문제가 있기 보다는 지시 자체가 AI가 의도를 파악하기에 어려운 것으로 판단 </font>
+
+
+# -------------------- 세미나 자료 작성 방향 선회 -----------------------------
 
 ### 97) 세미나 자료 획기적인 방법 제안
 지금까지 여러 방법으로 seminar 자료를 개선하려고 시도해 봤지만, 유의미한 성과없이 난해한 컨텐츠로 업데이트가 반복되고 있어.
@@ -2027,3 +2037,120 @@ git 명령어를 적절히 활용해서 문서를 업데이트 해.
 
 => 이후에도 세미나 자료를 보강하기 위해 약 20번 내외의 개선을 진행함
 (그럼에도 불구하고 직접 자료를 만드는 것보다 최소 5배~20배 수준의 생산성이 있음)
+
+
+### 98) Seminar2 작성용 프롬프트
+
+프로젝트: order-saga-system
+목표: Seminar2 자료를 “개념 흐름 중심 커리큘럼 + 충분한 코드 스니펫”으로 다시 작성해줘.
+
+요구사항:
+- 폴더: seminar2_MSA_EDA_Process
+- 문서 구성: README + 챕터별 md (MSA/EDA/SAGA 흐름 순서 기반)
+- 서술은 한국어, 코드 스니펫/명령어는 원문 유지
+- 핵심 흐름: Controller → Service → Outbox → Kafka Publisher → Consumer → Confirm/Compensate
+- 스니펫은 너무 짧지 않게, 클래스/메서드 선언부와 {} 포함, 중간 생략은 “//--- 생략 ...” 사용
+- 동일 내용을 java+diff로 중복하지 말 것(코드 스니펫만 사용)
+- account 모듈은 전체 문서에서 제외
+- 각 챕터에 실습/검증 포인트(명령어 포함) 추가
+
+중요 코드:
+- OrderOrchestrationController.createOrder
+- CreateOrderService (또는 Saga 이벤트 발행 서비스)
+- ReserveExternalResourcesService
+- Outbox 저장/업데이트
+- Kafka publisher/consumer
+- coupon/point confirm & compensate
+- 테스트 스크립트 (bin_istio_test)
+
+요약: MSA + EDA + SAGA 학습 흐름이 한눈에 이해되도록 스토리라인 + 코드 스니펫 중심으로 작성
+
+
+Seminar2 자동 생성 파이프라인 프롬프트
+
+역할: Codex CLI 자동 문서 생성기
+대상: order-saga-system
+목표: seminar2_MSA_EDA_Process 재생성
+
+파이프라인
+1) 파일 구성
+- seminar2_MSA_EDA_Process/README.md
+- seminar2_MSA_EDA_Process/01_problem_to_msa.md
+- seminar2_MSA_EDA_Process/02_orchestrator_and_reserve.md
+- seminar2_MSA_EDA_Process/03_saga_outbox.md
+- seminar2_MSA_EDA_Process/04_kafka_publish.md
+- seminar2_MSA_EDA_Process/05_consumer_confirm_compensate.md
+- seminar2_MSA_EDA_Process/06_resilience_and_tests.md
+
+2) 공통 규칙
+- 서술은 한국어, 코드/명령어는 원문 유지
+- 스니펫: 클래스/메서드 선언부와 {} 포함, 중간 생략은 //--- 생략 ...
+- diff 금지, 스니펫만 사용
+- account 모듈 제외
+
+3) 챕터별 스니펫 기준
+- 02: OrderOrchestrationController.createOrder, ReserveExternalResourcesService, coupon reserve 흐름
+- 03: CreateOrderService + Outbox 저장/업데이트
+- 04: OrderSagaEventKafkaPublisher + topic 설정
+- 05: OrderSagaEventConsumer + confirm/compensate 서비스 + coupon/point confirm/compensate API
+- 06: bin_istio_test 기반 회복/서킷 테스트 스니펫
+
+4) 완성 기준
+- 각 챕터에 목표/핵심 흐름/스니펫/실습 체크포인트 포함
+
+
+### 99) Seminar3 작성용 프롬프트
+프로젝트: order-saga-system
+목표: main에 머지된 브랜치 흐름 기준으로 Seminar3를 작성해줘.
+
+요구사항:
+- 폴더: seminar3
+- 기준: `git branch --merged main` 목록의 각 브랜치를 챕터로 구성
+- 각 챕터는 “머지 직전 main 상태” vs “브랜치 tip” 비교 기준 명시
+- 커밋 메시지 요약 + MSA/EDA/SAGA 관점 요약 포함
+- 스니펫 수: 평균 6개 내외 (최소 4개 이상), 주요 로직 위주
+- 이벤트 흐름이 보이도록 Controller/Service/Outbox/Publisher/Consumer/Confirm/Compensate 우선
+- Istio/회복/테스트는 관련 챕터에 스크립트 포함
+- account 모듈 제외
+- 서술은 한국어, 코드/명령어는 원문 유지
+- 스니펫은 클래스/메서드 선언부와 {} 포함, 생략은 “//--- 생략 ...”
+- diff 출력은 금지, 스니펫만 사용
+
+추가 문서:
+- 11_1_initial_istio.md (설치/CB 설정/모니터링)
+- 12_1_동시성_이슈_다이어그램.md (보상 타이밍 충돌 다이어그램)
+
+
+Seminar3 자동 생성 파이프라인 프롬프트
+
+역할: Codex CLI 자동 문서 생성기
+대상: order-saga-system
+목표: seminar3 생성 (브랜치 머지 흐름 기반)
+
+파이프라인
+1) 브랜치 기준
+- git branch --merged main 결과를 챕터로 구성
+- 각 챕터: "직전 main 상태 vs 브랜치 tip" 비교 기준 명시
+
+2) 공통 규칙
+- 서술은 한국어, 코드/명령어는 원문 유지
+- 스니펫: 클래스/메서드 선언부와 {} 포함, 중간 생략은 //--- 생략 ...
+- diff 금지, 스니펫만 사용
+- account 모듈 제외
+
+3) 스니펫 구성 기준
+- 평균 6개 내외 (최소 4개 이상)
+- 이벤트 흐름 우선: Controller → Service → Outbox → Publisher → Consumer → Confirm/Compensate
+- 주요 스크립트/설정: Kafka/Istio/서킷 테스트 관련 문서 포함
+
+4) 완성 기준
+- 각 챕터에 “커밋 메시지 요약 / MSA-EDA-SAGA 관점 / 연결된 로직 흐름 / 스니펫” 포함
+
+
+### 100) 추가 문서 생성
+- seminar3/11_1_initial_istio.md
+    - 10_install_istio.sh, 09_apply_istio_cb.sh, circuit-breaker.yaml, 11_start_istio_monitoring.sh
+- seminar3/12_1_동시성_이슈_다이어그램.md
+    - 타임아웃 → compensate 선처리 → reserve 지연 도착 시나리오
+    - coupon_reservation 상태 기록으로 해결 다이어그램 포함
+

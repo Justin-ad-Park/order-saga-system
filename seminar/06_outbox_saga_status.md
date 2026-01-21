@@ -31,48 +31,33 @@
 - 테이블/엔티티 확인: `order-orchestrator/src/main/java/.../OutboxMessage.java`
 - 상태 업데이트 로직 확인: `order-orchestrator/.../OutboxMessageStatusJdbcAdapter.java`
 
-## 커밋 상세
-### d95cb17 outbox_message MSA 상태 저장 로직 추가
-- 주요 변경: outbox_message MSA 상태 저장 로직 추가
-- 핵심 코드: `order-orchestrator/src/main/java/com/example/orderorchestrator/domain/outbox/OutboxMessage.java`
-```java
-public class OutboxMessage {
-//--- 생략 ...
-    public static OutboxMessage initial(
-            String orderId,
-            String payload,
-            MSAStatus couponStatus,
-            MSAStatus pointStatus
-    ) {
-        return new OutboxMessage(
-                orderId,
-                payload,
-                couponStatus,
-                pointStatus,
-                MSAStatus.InProgress,  // 주문 MSA 요청 시작
-                MSAStatus.InProgress,  // 결제 MSA 요청 시작
-                OrderSagaStatus.InProgress,
-                LocalDateTime.now(),
-                LocalDateTime.now()
-        );
-    }
-//--- 생략 ...
-}
-```
-- 설명: Outbox에 이벤트를 적재해 DB 트랜잭션과 이벤트 발행을 분리한다.
 
-### 0d2221b outboxMessage에 pointStatus 컬럼 추가
-- 주요 변경: outboxMessage에 pointStatus 컬럼 추가
-- 핵심 코드: `order-orchestrator/src/main/java/com/example/orderorchestrator/domain/outbox/OutboxMessage.java`
+# 사가 상태 + Outbox 저장
+
+## 목표
+사가 상태와 Outbox 기록이 왜 필요한지 이해한다.
+
+
+## Outbox 모델
+`order-orchestrator/src/main/java/com/example/orderorchestrator/domain/outbox/OutboxMessage.java`
 ```java
+package com.example.orderorchestrator.domain.outbox;
+
+import java.time.Instant;
+
+import com.example.common.status.MSAStatus;
+import com.example.common.status.OrderSagaStatus;
+
+import java.time.LocalDateTime;
+
 public class OutboxMessage {
-//--- 생략 ...
+
+    private final String orderId;               // 주문 ID
     private final String payload;               // 메시지 payload(JSON)
 
     private MSAStatus couponStatus;
     private MSAStatus pointStatus;
     private MSAStatus orderStatus;
-    private MSAStatus paymentStatus;
 
     private OrderSagaStatus sagaStatus;
 
@@ -85,7 +70,6 @@ public class OutboxMessage {
             MSAStatus couponStatus,
             MSAStatus pointStatus,
             MSAStatus orderStatus,
-            MSAStatus paymentStatus,
             OrderSagaStatus sagaStatus,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
@@ -95,36 +79,148 @@ public class OutboxMessage {
         this.couponStatus = couponStatus;
         this.pointStatus = pointStatus;
         this.orderStatus = orderStatus;
-        this.paymentStatus = paymentStatus;
         this.sagaStatus = sagaStatus;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
-//--- 생략 ...
-}
-```
-- 설명: Outbox에 이벤트를 적재해 DB 트랜잭션과 이벤트 발행을 분리한다.
 
-### 982ec0a saga_status가 결과에 맞게 Reserved 또는 Compensating으로 업데이트 되도록 로직 수정
-- 주요 변경: saga_status가 결과에 맞게 Reserved 또는 Compensating으로 업데이트 되도록 로직 수정
-- 핵심 코드: `order-orchestrator/src/main/java/com/example/orderorchestrator/application/service/UpdateOrderSagaStatusService.java`
-```java
-public class UpdateOrderSagaStatusService implements UpdateOrderSagaStatusUseCase {
-//--- 생략 ...
-    public UpdateOrderSagaStatusService(UpdateOrderSagaStatusPort updateOrderSagaStatusPort) {
-        this.updateOrderSagaStatusPort = updateOrderSagaStatusPort;
+    // Outbox 최초 생성 시 사용하는 팩토리
+    public static OutboxMessage initial(
+            String orderId,
+            String payload,
+            MSAStatus couponStatus,
+            MSAStatus pointStatus
+    ) {
+        return new OutboxMessage(
+                orderId,
+                payload,
+                couponStatus,
+                pointStatus,
+                MSAStatus.InProgress,  // 주문 MSA 요청 시작
+                OrderSagaStatus.InProgress,
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
     }
-//--- 생략 ...
-}
-```
-- 설명: Saga 상태 전이를 명시해 흐름의 단계가 코드로 드러나게 한다.
 
-### 0531530 updateSagaStatus 메서드 리팩터링
-- 주요 변경: updateSagaStatus 메서드 리팩터링
-- 핵심 코드: `order-saga-consumer/src/main/java/com/example/ordersagaconsumer/application/port/out/UpdateOutboxMessagePort.java`
-```java
-public interface UpdateOutboxMessagePort {
-//--- 생략 ...
+    // getter
+    public String orderId() { return orderId; }
+    public String payload() { return payload; }
+
+    public MSAStatus couponStatus() { return couponStatus; }
+    public MSAStatus pointStatus() { return pointStatus; }
+    public MSAStatus orderStatus() { return orderStatus; }
+
+    public OrderSagaStatus sagaStatus() { return sagaStatus; }
+
+    public LocalDateTime createdAt() { return createdAt; }
+    public LocalDateTime updatedAt() { return updatedAt; }
+
+    // 상태 변경 로직
+    public void updateSagaStatus(OrderSagaStatus newStatus) {
+        this.sagaStatus = newStatus;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void markCouponStatus(MSAStatus status) {
+        this.couponStatus = status;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void markPointStatus(MSAStatus status) {
+        this.pointStatus = status;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void markOrderStatus(MSAStatus status) {
+        this.orderStatus = status;
+        this.updatedAt = LocalDateTime.now();
+    }
 }
+
 ```
-- 설명: Outbox에 이벤트를 적재해 DB 트랜잭션과 이벤트 발행을 분리한다.
+
+## Outbox 저장/업데이트
+`order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/persistence/OutboxMessagePersistenceAdapter.java`
+```java
+// src/main/java/com/example/orderorchestrator/adapter/out/persistence/OutboxMessagePersistenceAdapter.java
+package com.example.orderorchestrator.adapter.out.persistence;
+
+import com.example.orderorchestrator.application.port.out.SaveOutboxMessagePort;
+import com.example.orderorchestrator.application.port.out.UpdateOutboxMessagePort;
+import com.example.orderorchestrator.domain.outbox.OutboxMessage;
+import com.example.common.status.MSAStatus;
+import com.example.common.status.OrderSagaStatus;
+import com.example.orderorchestrator.adapter.out.persistence.jpa.OutboxMessageJpaRepository;
+import com.example.orderorchestrator.adapter.out.persistence.jpa.entity.OutboxMessageJpaEntity;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+
+@Repository
+@Transactional
+public class OutboxMessagePersistenceAdapter implements SaveOutboxMessagePort, UpdateOutboxMessagePort {
+
+    private final OutboxMessageJpaRepository outboxMessageJpaRepository;
+
+    public OutboxMessagePersistenceAdapter(OutboxMessageJpaRepository outboxMessageJpaRepository) {
+        this.outboxMessageJpaRepository = outboxMessageJpaRepository;
+    }
+
+    @Override
+    public OutboxMessage save(OutboxMessage message) {
+        OutboxMessageJpaEntity entity = new OutboxMessageJpaEntity(
+                message.orderId(),
+                message.payload(),
+                message.couponStatus(),
+                message.pointStatus(),
+                message.orderStatus(),
+                message.sagaStatus(),
+                message.createdAt(),
+                message.updatedAt()
+        );
+
+        OutboxMessageJpaEntity saved = outboxMessageJpaRepository.save(entity);
+
+        // id는 현재 도메인 OutboxMessage에 없으니,
+        // 필요하면 나중에 OutboxMessage에 id 필드를 추가하고 여기서 반영해도 됨.
+        return new OutboxMessage(
+                saved.getOrderId(),
+                saved.getPayload(),
+                saved.getCouponStatus(),
+                saved.getPointStatus(),
+                saved.getOrderStatus(),
+                saved.getSagaStatus(),
+                saved.getCreatedAt(),
+                saved.getUpdatedAt()
+        );
+    }
+
+    @Override
+    public void updateCouponStatus(String orderId, MSAStatus status) {
+        int updated = outboxMessageJpaRepository.updateCouponStatus(orderId, status, LocalDateTime.now());
+        if (updated == 0) {
+            throw new IllegalArgumentException("Outbox message not found: " + orderId);
+        }
+    }
+
+    @Override
+    public void updatePointStatus(String orderId, MSAStatus status) {
+        int updated = outboxMessageJpaRepository.updatePointStatus(orderId, status, LocalDateTime.now());
+        if (updated == 0) {
+            throw new IllegalArgumentException("Outbox message not found: " + orderId);
+        }
+    }
+
+    @Override
+    public void updateSagaStatus(String orderId, OrderSagaStatus status) {
+        int updated = outboxMessageJpaRepository.updateSagaStatus(orderId, status, LocalDateTime.now());
+        if (updated == 0) {
+            throw new IllegalArgumentException("Outbox message not found: " + orderId);
+        }
+    }
+}
+
+```
+

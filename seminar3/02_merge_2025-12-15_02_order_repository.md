@@ -147,59 +147,8 @@ public class ApiResponse<T> {
     public ApiError getError() { return error; }
 }
 ```
-- `common/src/main/java/com/example/common/api/uuid/UUIDGenerator.java`
-```java
-package com.example.common.api.uuid;
-
-import java.util.UUID;
-public class UUIDGenerator {
-    public static UUID createUuid() {
-        return UUID.randomUUID();
-    }
-}
-```
-- `order-orchestrator/build.gradle`
-```
-plugins {
-    id 'org.springframework.boot'
-    id 'io.spring.dependency-management' version '1.1.5'
-    id 'java'
-}
-
-dependencies {
-    // Web API (기존 ver08과 동일하게 MVC 기반으로 시작)
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
-
-    // 오케스트레이터용 DB
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
-    runtimeOnly 'com.h2database:h2'
-
-    // mybatis
-    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
 
 
-    // 헥사고날 구조 검증용 ArchUnit
-    testImplementation 'com.tngtech.archunit:archunit-junit5:1.3.0'
-
-    // Spring Boot 테스트 (TDD)
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-
-    // (ver08에서 사용하던 UUID 관련 라이브러리 – 그대로 가져옴, 필요 없으면 제거해도 됨)
-    testImplementation 'com.fasterxml.uuid:java-uuid-generator:5.0.0'   // UUIDv7
-    testImplementation 'com.github.f4b6a3:ulid-creator:5.2.0'           // ULID
-    testImplementation 'com.github.ksuid:ksuid:1.1.2'                   // KSUID
-
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
-
-    testCompileOnly 'org.projectlombok:lombok'
-    testAnnotationProcessor 'org.projectlombok:lombok'
-
-    implementation project(':common')
-}
-```
 - `order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/in/web/GlobalExceptionHandler.java`
 ```java
 package com.example.orderorchestrator.adapter.in.web;
@@ -247,5 +196,61 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.failure(ApiError.of(NOT_FOUND, ex)));
     }
 
+}
+```
+
+- `common/src/main/java/com/example/common/api/uuid/UUIDGenerator.java`
+```java
+package com.example.common.api.uuid;
+
+import java.util.UUID;
+public class UUIDGenerator {
+    public static UUID createUuid() {
+        return UUID.randomUUID();
+    }
+}
+```
+
+- `order-orchestrator/build.gradle`
+
+``` text
+plugins {
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management' version '1.1.5'
+    id 'java'
+}
+
+dependencies {
+    // Web API (기존 ver08과 동일하게 MVC 기반으로 시작)
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // 오케스트레이터용 DB
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    runtimeOnly 'com.h2database:h2'
+
+    // mybatis
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
+
+
+    // 헥사고날 구조 검증용 ArchUnit
+    testImplementation 'com.tngtech.archunit:archunit-junit5:1.3.0'
+
+    // Spring Boot 테스트 (TDD)
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    // (ver08에서 사용하던 UUID 관련 라이브러리 – 그대로 가져옴, 필요 없으면 제거해도 됨)
+    testImplementation 'com.fasterxml.uuid:java-uuid-generator:5.0.0'   // UUIDv7
+    testImplementation 'com.github.f4b6a3:ulid-creator:5.2.0'           // ULID
+    testImplementation 'com.github.ksuid:ksuid:1.1.2'                   // KSUID
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+
+    implementation project(':common')
 }
 ```

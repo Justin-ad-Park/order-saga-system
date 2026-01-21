@@ -79,26 +79,152 @@ kubectl -n msa rollout status deployment/kafka
 if [[ -f "${PID_FILE}" ]]; then
 //--- 생략 ...
 ```
-- 설명: 실행/테스트 스크립트를 통해 분산 시나리오를 재현한다.
 
-### aeceecc 테스트 토픽 분리 & 토픽 발행 테스트 OrderSagaEventPublishIntegrationTest
-- 주요 변경: 테스트 토픽 분리 & 토픽 발행 테스트 OrderSagaEventPublishIntegrationTest
-- 핵심 코드: `order-orchestrator/src/test/java/com/example/orderorchestrator/adapter/out/kafka/OrderSagaEventPublishIntegrationTest.java`
+
+## 목표
+사가 이벤트가 Kafka로 발행되는 지점을 이해한다.
+
+
+## 토픽 설정
+`order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/kafka/OrderSagaTopicConfig.java`
 ```java
-class OrderSagaEventPublishIntegrationTest {
-//--- 생략 ...
-                .send(topic, key, payload)
-                .get(10, TimeUnit.SECONDS);
+package com.example.orderorchestrator.adapter.out.kafka;
 
-        RecordMetadata metadata = result.getRecordMetadata();
-        assertThat(metadata).isNotNull();
-        assertThat(metadata.topic()).isEqualTo(topic);
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.common.config.TopicConfig;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.kafka.config.TopicBuilder;
+import org.springframework.kafka.core.KafkaAdmin;
+
+@Configuration
+@Profile("test")
+public class OrderSagaTopicConfig {
+    @Bean
+    public KafkaAdmin.NewTopics orderSagaEventsTopic(
+            @Value("${order.saga.events.topic:order-saga-events}") String topic
+    ) {
+        return new KafkaAdmin.NewTopics(
+                TopicBuilder.name(topic)
+                        .config(TopicConfig.RETENTION_MS_CONFIG, "30000")   // 30초가 지나면 세그먼트(토픽이 물리적으로 저장되는 단위. 1세그먼트에 여러 토픽이 관리됨) 삭제됨
+                        .build()
+        );
     }
 
-    private void assertKafkaAvailable() throws Exception {
-//--- 생략 ...
+    @Bean
+    public ApplicationRunner recreateTestTopicWithConfig(
+            KafkaAdmin kafkaAdmin,
+            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers,
+            @Value("${order.saga.events.topic:order-saga-events}") String topic
+    ) {
+        return args -> {
+            // deleteTopicIfExists(bootstrapServers, topic);
+            kafkaAdmin.initialize();
+        };
+    }
+
+```
+
+## 이벤트 모델
+`order-orchestrator/src/main/java/com/example/orderorchestrator/domain/event/OrderSagaEvent.java`
+```java
+package com.example.orderorchestrator.domain.event;
+
+import com.example.common.status.OrderSagaStatus;
+
+public record OrderSagaEvent(
+        String orderId,
+        String sagaId,
+        OrderSagaEventType type,
+        OrderSagaStatus status
+) {
+}
+
+```
+
+
+## Kafka Publisher
+`order-orchestrator/src/main/java/com/example/orderorchestrator/adapter/out/kafka/OrderSagaEventKafkaPublisher.java`
+```java
+package com.example.orderorchestrator.adapter.out.kafka;
+
+import com.example.orderorchestrator.application.port.out.OrderSagaEventPublisher;
+import com.example.orderorchestrator.domain.event.OrderSagaEvent;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Component;
+
+@Component
+public class OrderSagaEventKafkaPublisher implements OrderSagaEventPublisher {
+    private static final Logger log = LoggerFactory.getLogger(OrderSagaEventKafkaPublisher.class);
+
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
+    private final String topic;
+
+    public OrderSagaEventKafkaPublisher(
+            KafkaTemplate<String, String> kafkaTemplate,
+            ObjectMapper objectMapper,
+            @Value("${order.saga.events.topic:order-saga-events}") String topic
+    ) {
+        this.kafkaTemplate = kafkaTemplate;
+        this.objectMapper = objectMapper;
+        this.topic = topic;
+    }
+
+    @Override
+    public void publish(OrderSagaEvent event) {
+        try {
+            String payload = objectMapper.writeValueAsString(event);
+            kafkaTemplate.send(topic, event.orderId(), payload);
+        } catch (JsonProcessingException ex) {
+            log.error("Failed to serialize OrderSagaEvent: orderId={}", event.orderId(), ex);
+        }
+    }
+}
+
+```
+
+
+
+## 사가 이벤트 생성 서비스
+`order-orchestrator/src/main/java/com/example/orderorchestrator/application/service/OrderSagaEventService.java`
+```java
+package com.example.orderorchestrator.application.service;
+
+import com.example.common.status.OrderSagaStatus;
+import com.example.orderorchestrator.application.port.out.OrderSagaEventPublisher;
+import com.example.orderorchestrator.domain.event.OrderSagaEvent;
+import com.example.orderorchestrator.domain.event.OrderSagaEventType;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class OrderSagaEventService {
+
+    private final OrderSagaEventPublisher orderSagaEventPublisher;
+
+    public void publish(String orderId, String sagaId, OrderSagaStatus status, OrderSagaEventType type) {
+        OrderSagaEvent event = new OrderSagaEvent(orderId, sagaId, type, status);
+        orderSagaEventPublisher.publish(event);
+    }
 }
 ```
+
+
 - 설명: Kafka 이벤트를 발행해 서비스 간 비동기 연계를 구성한다.
 
 ### 9aa633c 통합 테스트 카프카 토픽 로그 추가
@@ -173,21 +299,7 @@ class OrderOrchestrationIntegrationTest {
         assertOrderCreated(requestBody, MSAStatus.Reserved, MSAStatus.NotUsed, OrderSagaStatus.Reserved);
     }
 
-    // 포인트만 사용하는 경우
-    @Test
-    void createOrder_withPointOnly_shouldPersistOrderSaga_and_OutboxMessage() {
-        Map<String, Object> requestBody = Map.of(
-                "pointNumber", "PNT-INT-ONLY-001",
-                "paymentNumber", "PAY-001",
-                "paymentAmount", 35000L,
-                "orderItems", List.of(
-                        Map.of("itemNumber", "ITEM-001", "quantity", 2),
-                        Map.of("itemNumber", "ITEM-002", "quantity", 1)
-                )
-        );
-
-        assertOrderCreated(requestBody, MSAStatus.NotUsed, MSAStatus.Reserved, OrderSagaStatus.Reserved);
-    }
+    //.... 생략
 
     // 쿠폰/포인트 없이 주문하는 경우
     @Test
@@ -334,4 +446,25 @@ class OrderOrchestrationIntegrationTest {
 //--- 생략 ...
 }
 ```
-- 설명: Kafka 이벤트를 발행해 서비스 간 비동기 연계를 구성한다.
+
+
+- 설명: 실행/테스트 스크립트를 통해 분산 시나리오를 재현한다.
+
+### aeceecc 테스트 토픽 분리 & 토픽 발행 테스트 OrderSagaEventPublishIntegrationTest
+- 주요 변경: 테스트 토픽 분리 & 토픽 발행 테스트 OrderSagaEventPublishIntegrationTest
+- 핵심 코드: `order-orchestrator/src/test/java/com/example/orderorchestrator/adapter/out/kafka/OrderSagaEventPublishIntegrationTest.java`
+```java
+class OrderSagaEventPublishIntegrationTest {
+//--- 생략 ...
+                .send(topic, key, payload)
+                .get(10, TimeUnit.SECONDS);
+
+        RecordMetadata metadata = result.getRecordMetadata();
+        assertThat(metadata).isNotNull();
+        assertThat(metadata.topic()).isEqualTo(topic);
+    }
+
+    private void assertKafkaAvailable() throws Exception {
+//--- 생략 ...
+}
+```

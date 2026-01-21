@@ -24,7 +24,7 @@ public class OrderSagaTopicConfig {
     ) {
         return new KafkaAdmin.NewTopics(
                 TopicBuilder.name(topic)
-                        .config(TopicConfig.RETENTION_MS_CONFIG, "30000")
+                        .config(TopicConfig.RETENTION_MS_CONFIG, "30000")   // 30초가 지나면 세그먼트(토픽이 물리적으로 저장되는 단위. 1세그먼트에 여러 토픽이 관리됨) 삭제됨
                         .build()
         );
     }
