@@ -2766,3 +2766,15 @@ gemini_seminar2에 교육 자료를 어제 만들 때 토큰 부족으로 모델
 *   "특정 코드 스니펫에 대한 주석 설명이 더 상세했으면 합니다."
 
 와 같이 구체적인 피드백을 주시면, 해당 부분에 대해 현재 모델을 활용하여 훨씬 더 깊이 있고 정교하게 내용을 보완해 드릴 수 있습니다.
+
+
+--- 
+
+## User
+이 가이드를 바탕으로 지금 프로젝트에 대한 컨텍스트를 작성해줘.
+› ## Building and running
+Before submitting any changes, it is crucial to validate them by running the full preflight check.
+Thsi command will build the repository, run all tasks, check for type errors, and lint the code.
+To run the full suite of checks, execute the following command:
+
+
